@@ -53,7 +53,7 @@ export function createApp(directory = path.join(root, 'data')) {
         }
         return send(res, 405, { error: 'Método no permitido' });
       }
-      const files = { '/': ['portal.html','text/html'], '/admin': ['index.html','text/html'], '/portal.js': ['portal.js','text/javascript'], '/app.js': ['app.js','text/javascript'], '/style.css': ['style.css','text/css'] };
+      const files = { '/favicon.svg': ['favicon.svg','image/svg+xml'], '/': ['portal.html','text/html'], '/admin': ['index.html','text/html'], '/portal.js': ['portal.js','text/javascript'], '/app.js': ['app.js','text/javascript'], '/style.css': ['style.css','text/css'] };
       if (!files[url.pathname] || req.method !== 'GET') return send(res, 404, { error: 'Página no encontrada' });
       const [file, type] = files[url.pathname];
       res.writeHead(200, { 'Content-Type': `${type}; charset=utf-8`, 'Content-Security-Policy': "default-src 'self'; style-src 'self' 'unsafe-inline' https://unpkg.com; script-src 'self' https://unpkg.com; img-src 'self' data: https://tile.openstreetmap.org https://unpkg.com; frame-ancestors 'none'", 'X-Content-Type-Options': 'nosniff' });
