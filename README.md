@@ -11,7 +11,10 @@ node server.mjs
 ```
 Abrir http://127.0.0.1:3000. Para comprobar la base: `node --test`.
 
+El mapa utiliza Leaflet y cartografía de OpenStreetMap. Necesita internet para cargar la biblioteca y las calles. Las coordenadas se guardan localmente; no hay búsqueda automática por dirección.
+
 ## Funciones
+- Mapa centrado en Barquisimeto: marcadores de inmuebles y acceso a su ficha. Pulsar el mapa permite registrar la ubicación; también se pueden introducir coordenadas manualmente.
 - Dashboard: inmuebles activos, leads abiertos, reformas pendientes y seguimientos vencidos.
 - Crear y editar inmuebles, leads y reformas; búsqueda y filtros de estado.
 - Vincular leads y reformas a inmuebles existentes.
@@ -24,7 +27,7 @@ server.test.mjs: pruebas de persistencia, edición y validación.
 data/: almacenamiento local, excluido de Git.
 
 ## Límites de esta entrega
-Solo uso local: escucha en 127.0.0.1 y no incluye inicio de sesión ni roles. No desplegarla para acceso compartido antes de implementar autenticación y permisos. No incluye mapa, fotos, presupuestos separados, eliminación ni exportación. Los importes no se suman entre monedas. Los datos se guardan en este ordenador; copiar data/radar.sqlite con la aplicación detenida para una copia de respaldo.
+Solo uso local: escucha en 127.0.0.1 y no incluye inicio de sesión ni roles. No desplegarla para acceso compartido antes de implementar autenticación y permisos. No incluye fotos, presupuestos separados, eliminación ni exportación. Los importes no se suman entre monedas. Los datos se guardan en este ordenador; copiar data/radar.sqlite con la aplicación detenida para una copia de respaldo.
 
 ## Próximos incrementos
 1. Usuarios, permisos y almacenamiento compartido.

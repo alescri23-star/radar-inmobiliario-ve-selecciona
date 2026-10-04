@@ -24,7 +24,7 @@ export function createApp(directory = path.join(root, 'data')) {
         if (req.method === 'POST' && !id || req.method === 'PUT' && id) {
           let body = ''; for await (const chunk of req) { body += chunk; if (body.length > 32768) return send(res, 413, { error: 'Registro demasiado grande' }); }
           let input; try { input = JSON.parse(body); } catch { return send(res, 400, { error: 'JSON inválido' }); }
-          const fields = kind === 'inmuebles' ? ['titulo', 'zona', 'operacion', 'precio', 'moneda', 'fuente', 'estado'] : kind === 'leads' ? ['nombre', 'contacto', 'inmuebleId', 'estado', 'proximaAccion', 'fecha'] : ['titulo', 'inmuebleId', 'importe', 'moneda', 'estado'];
+          const fields = kind === 'inmuebles' ? ['titulo', 'zona', 'operacion', 'precio', 'moneda', 'fuente', 'estado', 'latitud', 'longitud', 'direccion'] : kind === 'leads' ? ['nombre', 'contacto', 'inmuebleId', 'estado', 'proximaAccion', 'fecha'] : ['titulo', 'inmuebleId', 'importe', 'moneda', 'estado'];
           const record = Object.fromEntries(fields.map(f => [f, String(input?.[f] ?? '').trim()]));
           if (!(record.titulo || record.nombre)) return send(res, 400, { error: 'Falta el título o nombre' });
           if (Object.values(record).some(v => v.length > 2000)) return send(res, 400, { error: 'Campo demasiado largo' });
@@ -32,6 +32,10 @@ export function createApp(directory = path.join(root, 'data')) {
           if (!states[kind].includes(record.estado)) return send(res, 400, { error: 'Estado inválido' });
           if (kind === 'inmuebles' && !['venta','alquiler'].includes(record.operacion)) return send(res, 400, { error: 'Operación inválida' });
           if (record.moneda && !['USD','VES'].includes(record.moneda)) return send(res, 400, { error: 'Moneda inválida' });
+          if (kind === 'inmuebles') {
+            const hasLat = record.latitud !== '', hasLng = record.longitud !== '';
+            if (hasLat !== hasLng || hasLat && (!Number.isFinite(Number(record.latitud)) || !Number.isFinite(Number(record.longitud)) || Math.abs(Number(record.latitud)) > 90 || Math.abs(Number(record.longitud)) > 180)) return send(res, 400, { error: 'Indica latitud y longitud válidas, o deja ambas vacías' });
+          }
           const amount = kind === 'inmuebles' ? 'precio' : 'importe';
           if (record[amount] !== undefined && record[amount] !== '' && (!Number.isFinite(Number(record[amount])) || Number(record[amount]) < 0)) return send(res, 400, { error: 'Importe inválido' });
           if (record.fecha && !/^\d{4}-\d{2}-\d{2}$/.test(record.fecha)) return send(res, 400, { error: 'Fecha inválida' });
@@ -47,7 +51,7 @@ export function createApp(directory = path.join(root, 'data')) {
       const files = { '/': ['index.html','text/html'], '/app.js': ['app.js','text/javascript'], '/style.css': ['style.css','text/css'] };
       if (!files[url.pathname] || req.method !== 'GET') return send(res, 404, { error: 'Página no encontrada' });
       const [file, type] = files[url.pathname];
-      res.writeHead(200, { 'Content-Type': `${type}; charset=utf-8`, 'Content-Security-Policy': "default-src 'self'; style-src 'self'; script-src 'self'; frame-ancestors 'none'", 'X-Content-Type-Options': 'nosniff' });
+      res.writeHead(200, { 'Content-Type': `${type}; charset=utf-8`, 'Content-Security-Policy': "default-src 'self'; style-src 'self' 'unsafe-inline' https://unpkg.com; script-src 'self' https://unpkg.com; img-src 'self' data: https://tile.openstreetmap.org https://unpkg.com; frame-ancestors 'none'", 'X-Content-Type-Options': 'nosniff' });
       res.end(readFileSync(path.join(root, 'public', file)));
     } catch (err) { console.error(err); send(res, 500, { error: 'No se pudo completar la operación' }); }
   });
