@@ -27,7 +27,7 @@ export function createApp(directory = path.join(root, 'data')) {
         if (req.method === 'POST' && !id || req.method === 'PUT' && id) {
           let body = ''; for await (const chunk of req) { body += chunk; if (body.length > 32768) return send(res, 413, { error: 'Registro demasiado grande' }); }
           let input; try { input = JSON.parse(body); } catch { return send(res, 400, { error: 'JSON inválido' }); }
-          const fields = kind === 'inmuebles' ? ['titulo', 'zona', 'operacion', 'precio', 'moneda', 'fuente', 'estado', 'latitud', 'longitud', 'direccion', 'municipio', 'parroquia', 'calle', 'tipo', 'habitaciones', 'banos', 'superficie'] : kind === 'leads' ? ['nombre', 'contacto', 'inmuebleId', 'estado', 'proximaAccion', 'fecha'] : ['titulo', 'inmuebleId', 'importe', 'moneda', 'estado'];
+          const fields = kind === 'inmuebles' ? ['titulo', 'zona', 'operacion', 'precio', 'moneda', 'fuente', 'estado', 'latitud', 'longitud', 'direccion', 'municipio', 'parroquia', 'calle', 'tipo', 'habitaciones', 'banos', 'superficie', 'ubicacionPrecision'] : kind === 'leads' ? ['nombre', 'contacto', 'inmuebleId', 'estado', 'proximaAccion', 'fecha'] : ['titulo', 'inmuebleId', 'importe', 'moneda', 'estado'];
           const record = Object.fromEntries(fields.map(f => [f, String(input?.[f] ?? '').trim()]));
           if (!(record.titulo || record.nombre)) return send(res, 400, { error: 'Falta el título o nombre' });
           if (Object.values(record).some(v => v.length > 2000)) return send(res, 400, { error: 'Campo demasiado largo' });
@@ -36,6 +36,7 @@ export function createApp(directory = path.join(root, 'data')) {
           if (kind === 'inmuebles' && !['venta','alquiler'].includes(record.operacion)) return send(res, 400, { error: 'Operación inválida' });
           if (record.moneda && !['USD','VES'].includes(record.moneda)) return send(res, 400, { error: 'Moneda inválida' });
           if (kind === 'inmuebles') {
+            if (record.ubicacionPrecision && !['publicada','aproximada','verificada'].includes(record.ubicacionPrecision)) return send(res, 400, { error: 'Precisión de ubicación inválida' });
             const hasLat = record.latitud !== '', hasLng = record.longitud !== '';
             if (hasLat !== hasLng || hasLat && (!Number.isFinite(Number(record.latitud)) || !Number.isFinite(Number(record.longitud)) || Math.abs(Number(record.latitud)) > 90 || Math.abs(Number(record.longitud)) > 180)) return send(res, 400, { error: 'Indica latitud y longitud válidas, o deja ambas vacías' });
           }
