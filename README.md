@@ -26,6 +26,9 @@ node collector.mjs --file archivo.html venta
 ```
 En esta sesión se capturaron 24 anuncios públicos y se repitió la captura: 0 nuevos, 24 actualizados. Los datos y cuentas locales no se incluyen en GitHub.
 
+## Capturar RE/MAX
+Ejecuta `node remax.mjs`. Recorre los enlaces de paginación publicados de Express, Galaxy, Royal y Synergy, con una pausa mínima de 2 segundos y respeto de robots.txt. Selecciona únicamente apartamentos en venta/alquiler cuya localidad publicada es Barquisimeto y región Lara. Incluye dirección, precio USD, características, enlace y coordenadas publicadas válidas. No usa la ubicación de la oficina como ubicación del inmueble. No representa todas las oficinas de RE/MAX ni resuelve duplicados con otros portales. Si una página falla, la pasada no se importa parcialmente. Conserva las ubicaciones corregidas y no retira anuncios por ausencias en esta consulta.
+
 ## Web del usuario
 Filtros por operación, municipio, parroquia, sector/urbanización, calle, tipo, precio y moneda. Las opciones provienen de datos presentes en los anuncios; no se inventan catálogos administrativos ni calles. Lara y Barquisimeto están fijados por el piloto. Mapa y listado, enlace al anuncio original, registro e inicio de sesión y solicitud de información con consentimiento. Las solicitudes generan leads privados.
 
@@ -41,6 +44,7 @@ server.mjs: servidor y validación de registros.
 portal.mjs: cuentas, sesiones, autorización y consultas.
 collector.mjs: capturador e importación con historial.
 geolocate.mjs: extracción de coordenadas publicadas en las fichas.
+remax.mjs: captura paginada de apartamentos de cuatro oficinas RE/MAX.
 public/portal.html y portal.js: web del usuario.
 public/index.html y app.js: dashboard.
 data/radar.sqlite: anuncios, contactos, cuentas y sesiones locales, excluidos de Git.

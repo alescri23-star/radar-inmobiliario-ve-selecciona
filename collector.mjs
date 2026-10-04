@@ -16,14 +16,14 @@ export function parseRah(html,operation){
   return {sourceId:'rentahouse',sourceCode:code,titulo:title,zona:zone,municipio:'',parroquia:'',calle:'',tipo:'Apartamento',operacion:operation,precio:price??'',moneda:'USD',fuente:url,estado:'activo',habitaciones:cell('dormitorio'),banos:cell('baño'),superficie:cell('superficie').replace(/\s*m\s*2$/,''),descripcion:plain(block.match(/class="card-text truncate">([\s\S]*?)<\/div>/)?.[1]||''),latitud:'',longitud:'',direccion:''};
  }).filter(p=>p.sourceCode&&p.fuente&&p.titulo&&p.zona);
 }
-export function importRah(db,records){
+export function importRah(db,records,metadata={}){
  let added=0,updated=0,changes=0;db.exec('BEGIN IMMEDIATE');
  try{const existing=db.prepare("SELECT body FROM records WHERE kind='inmuebles'").all().map(r=>JSON.parse(r.body));
  for(const input of records){const previous=existing.find(p=>p.sourceId===input.sourceId&&p.sourceCode===input.sourceCode&&p.operacion===input.operacion);const now=new Date().toISOString();const history=previous?.historial||[];if(!previous||previous.precio!==input.precio){history.push({precio:input.precio,moneda:input.moneda,observadoEn:now});if(previous)changes++;}
  const record={...previous,...input,id:previous?.id||randomUUID(),creadoEn:previous?.creadoEn||now,actualizadoEn:now,ultimaDeteccion:now,historial:history};
- for(const key of ['latitud','longitud','direccion','municipio','parroquia','calle'])if(previous?.[key])record[key]=previous[key];
+ for(const key of ['latitud','longitud','direccion','municipio','parroquia','calle','ubicacionPrecision','ubicacionFuente','ubicacionConsultadaEn'])if(previous?.[key])record[key]=previous[key];
  db.prepare('INSERT OR REPLACE INTO records VALUES(?,?,?)').run(record.id,'inmuebles',JSON.stringify(record));if(previous)updated++;else{added++;existing.push(record);}}
- const run={id:randomUUID(),source:'Rent-A-House',fecha:new Date().toISOString(),added,updated,changes,total:records.length,scope:'Primera página de apartamentos, Barquisimeto',status:'completada'};db.prepare('INSERT INTO records VALUES(?,?,?)').run(run.id,'runs',JSON.stringify(run));db.exec('COMMIT');return run;
+ const run={id:randomUUID(),source:metadata.source||'Rent-A-House',fecha:new Date().toISOString(),added,updated,changes,total:records.length,scope:metadata.scope||'Primera página de apartamentos, Barquisimeto',status:'completada'};db.prepare('INSERT INTO records VALUES(?,?,?)').run(run.id,'runs',JSON.stringify(run));db.exec('COMMIT');return run;
  }catch(e){db.exec('ROLLBACK');throw e;}
 }
 export function robotsAllowed(text,url){
