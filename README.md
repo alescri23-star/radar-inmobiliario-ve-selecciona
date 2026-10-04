@@ -10,7 +10,7 @@ node server.mjs
 Web de usuarios (requiere sesión): http://127.0.0.1:3000/
 Dashboard: http://127.0.0.1:3000/admin
 
-La primera visita al dashboard permite crear el administrador con nombre, email y contraseña de al menos 10 caracteres. Las cuentas creadas desde la web son clientes y no pueden leer leads internos ni modificar anuncios. Contraseñas con scrypt y salt aleatorio; sesión de 24 horas en cookie HttpOnly y SameSite. No hay recuperación de contraseña, verificación de email ni endurecimiento para exposición pública todavía.
+La primera visita al dashboard permite crear el administrador con nombre, email y contraseña de al menos 10 caracteres. Las cuentas creadas desde la web son clientes y no pueden leer leads internos ni modificar anuncios. Contraseñas con scrypt y salt aleatorio; sesión de 24 horas en cookie HttpOnly y SameSite. La recuperación de contraseña requiere configurar Resend. No hay verificación de email ni endurecimiento para exposición pública todavía.
 
 ## Capturar anuncios
 ```
@@ -58,7 +58,7 @@ node --test
 Pruebas: persistencia, edición, coordenadas, importación repetida, historial de precio, reglas de rutas, acceso privado, separación de roles y creación de leads por consultas. Revisión en navegador: listado real, filtro de alquiler (12 resultados), mapa y acceso previo a pedir información.
 
 ## Pendiente
-Verificación de ubicaciones publicadas, geocodificación de pendientes y catálogo territorial verificado; fotos y uso de contenido de terceros para publicación; fuentes adicionales; deduplicación entre portales; capturas programadas y diagnóstico de fallos; email verificado y recuperación de cuenta; despliegue con HTTPS y protección de autenticación para acceso remoto.
+Verificación de ubicaciones publicadas, geocodificación de pendientes y catálogo territorial verificado; fotos y uso de contenido de terceros para publicación; fuentes adicionales; deduplicación entre portales; capturas programadas y diagnóstico de fallos; email verificado y activación del correo de recuperación; despliegue con HTTPS y protección de autenticación para acceso remoto.
 
 Repositorio principal: alescri23-star/radar-inmobiliario-ve-selecciona.
 Repositorio estratégico: alescri23-star/radar-venezuela-20268-2030, sin modificaciones.
@@ -67,3 +67,8 @@ Catálogo territorial inicial: https://es.wikipedia.org/wiki/Anexo:Parroquias_de
 
 Acceso al radar: sin sesión se muestra únicamente la pantalla de entrada; la API de consulta de anuncios exige autenticación. Al salir, se invalida la sesión en el servidor, se borran anuncios y marcadores de la pantalla y se notifica el cierre a otras pestañas del mismo origen. La sesión se vuelve a comprobar al regresar a la pestaña y cada 30 segundos. El registro de clientes sigue disponible; el panel de administración continúa reservado al administrador.
 `nFondo de acceso: mapa vectorial decorativo de Venezuela con punto del piloto Barquisimeto. Geometría simplificada de https://github.com/johan/world.geo.json/blob/master/countries/VEN.geo.json; no sustituye cartografía administrativa. Integrado en el HTML, sin imágenes remotas para el fondo.
+
+## Recuperación de contraseña
+«¿Olvidaste tu contraseña?» permite solicitar un enlace por correo y elegir una nueva contraseña. Tokens aleatorios guardados solo como hash, válidos 30 minutos y de un uso. Una solicitud nueva invalida la anterior; cambiar la contraseña revoca todas las sesiones. Límite de solicitudes por IP y respuesta idéntica para correos registrados y desconocidos.
+
+Envío mediante Resend (https://resend.com/docs/api-reference/emails/send-email). Copia .env.example a .env, configura RESEND_API_KEY y RADAR_MAIL_FROM con un remitente verificado, y RADAR_PUBLIC_URL con la URL real del portal. Ejecuta `node --env-file=.env server.mjs`. Nunca subir .env a GitHub. La URL localhost solo sirve en el equipo donde corre el piloto; para clientes remotos configurar el dominio HTTPS. Sin configuración, la pantalla informa que la recuperación por correo aún no está habilitada; no simula un envío. Pruebas con entrega simulada: expiración, invalidación de enlaces anteriores, uso único, nueva contraseña y cierre de sesiones. Entrega real pendiente de configurar Resend.

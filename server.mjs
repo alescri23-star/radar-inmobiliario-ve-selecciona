@@ -7,11 +7,11 @@ import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 
 const root = path.dirname(fileURLToPath(import.meta.url));
-export function createApp(directory = path.join(root, 'data')) {
+export function createApp(directory = path.join(root, 'data'), options = {}) {
   mkdirSync(directory, { recursive: true });
   const db = new DatabaseSync(path.join(directory, 'radar.sqlite'));
   db.exec('PRAGMA foreign_keys=ON; CREATE TABLE IF NOT EXISTS records (id TEXT PRIMARY KEY, kind TEXT NOT NULL, body TEXT NOT NULL)');
-  const handlePortal=portal(db);
+  const handlePortal=portal(db,options);
   const kinds = ['inmuebles', 'leads', 'reformas'];
   const list = kind => db.prepare('SELECT body FROM records WHERE kind=?').all(kind).map(r => JSON.parse(r.body));
   const send = (res, status, value) => { res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(value)); };

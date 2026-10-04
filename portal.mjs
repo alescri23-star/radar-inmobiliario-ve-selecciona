@@ -1,6 +1,8 @@
 import { randomBytes, scryptSync, timingSafeEqual, createHash } from 'node:crypto';
 const hash = v => createHash('sha256').update(v).digest('hex');
-export function portal(db) {
+import { recovery } from './recovery.mjs';
+export function portal(db,options={}) {
+ const handleRecovery=recovery(db,options);
  db.exec('CREATE TABLE IF NOT EXISTS users(id TEXT PRIMARY KEY,email TEXT UNIQUE,name TEXT,role TEXT,salt TEXT,password TEXT); CREATE TABLE IF NOT EXISTS sessions(token TEXT PRIMARY KEY,user_id TEXT,expires INTEGER)');
  const send=(res,status,value)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(value));};
  const body=async req=>{let text='';for await(const chunk of req){text+=chunk;if(text.length>32768)throw Error('Solicitud demasiado grande');}return JSON.parse(text||'{}');};
@@ -11,6 +13,7 @@ export function portal(db) {
   req.user=session(req);
   if(!url.pathname.startsWith('/api/'))return false;
   if(req.headers.origin && req.headers.origin!==`http://${req.headers.host}`){send(res,403,{error:'Origen no permitido'});return true;}
+  if(await handleRecovery(req,res,url))return true;
   if(url.pathname==='/api/session' && req.method==='GET'){send(res,200,{user:req.user||null,setupRequired:!db.prepare("SELECT id FROM users WHERE role='admin'").get()});return true;}
   if(['/api/register','/api/login','/api/setup'].includes(url.pathname) && req.method==='POST'){
    try{
