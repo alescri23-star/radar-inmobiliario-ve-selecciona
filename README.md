@@ -7,7 +7,7 @@ Requiere Node.js 24. No hay paquetes que instalar.
 ```
 node server.mjs
 ```
-Web de usuarios: http://127.0.0.1:3000/
+Web de usuarios (requiere sesión): http://127.0.0.1:3000/
 Dashboard: http://127.0.0.1:3000/admin
 
 La primera visita al dashboard permite crear el administrador con nombre, email y contraseña de al menos 10 caracteres. Las cuentas creadas desde la web son clientes y no pueden leer leads internos ni modificar anuncios. Contraseñas con scrypt y salt aleatorio; sesión de 24 horas en cookie HttpOnly y SameSite. No hay recuperación de contraseña, verificación de email ni endurecimiento para exposición pública todavía.
@@ -64,3 +64,5 @@ Repositorio principal: alescri23-star/radar-inmobiliario-ve-selecciona.
 Repositorio estratégico: alescri23-star/radar-venezuela-20268-2030, sin modificaciones.
 
 Catálogo territorial inicial: https://es.wikipedia.org/wiki/Anexo:Parroquias_del_estado_Lara (nombres administrativos, cotejo del piloto Iribarren con https://mail.contraloriadebarquisimeto.gob.ve/index.php/la-institucion/resena-historica). Pendiente validar límites y clasificación de cada anuncio; este catálogo no amplía el alcance de los capturadores.
+
+Acceso al radar: sin sesión se muestra únicamente la pantalla de entrada; la API de consulta de anuncios exige autenticación. Al salir, se invalida la sesión en el servidor, se borran anuncios y marcadores de la pantalla y se notifica el cierre a otras pestañas del mismo origen. La sesión se vuelve a comprobar al regresar a la pestaña y cada 30 segundos. El registro de clientes sigue disponible; el panel de administración continúa reservado al administrador.

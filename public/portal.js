@@ -1,7 +1,7 @@
 const $=id=>document.getElementById(id);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let items=[],user=null,map=null,layer=null,mode='login',selected=null,markers=new Map();
-async function api(url,input){const r=await fetch(url,input?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(input)}:{});const v=await r.json();if(!r.ok)throw Error(v.error);return v;}
+async function api(url,input){const r=await fetch(url,input?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(input)}:{});const v=await r.json();if(!r.ok){if(r.status===401)lockRadar();throw Error(v.error);}return v;}
 const filterSpec=[['operacion','Operación'],['municipio','Municipio'],['parroquia','Parroquia'],['zona','Sector / urbanización'],['calle','Calle'],['tipo','Tipo']];
 const territory={
  'Andrés Eloy Blanco':['Quebrada Honda de Guache','Pío Tamayo','Yacambú'],
@@ -55,6 +55,20 @@ function draw(){
 function account(){mode='login';showAccount();}
 function showAccount(){ $('formTitle').textContent=mode==='register'?'Crea tu cuenta':'Entrar a Radar';$('fields').innerHTML=(mode==='register'?'<label>Nombre<input name="name" autocomplete="name" required></label>':'')+'<label>Email<input name="email" type="email" autocomplete="email" required></label><label>Contraseña<input name="password" type="password" minlength="10" autocomplete="'+(mode==='register'?'new-password':'current-password')+'" required></label><button type="button" id="switch">'+(mode==='register'?'Ya tengo cuenta':'Crear una cuenta')+'</button>';$('switch').onclick=()=>{mode=mode==='login'?'register':'login';showAccount();};$('formError').textContent='';if(!$('dialog').open)$('dialog').showModal();}
 function inquire(p){selected=p;if(!user){account();$('formError').textContent='Entra o crea tu cuenta para consultar este inmueble.';return;}mode='inquiry';$('formTitle').textContent='Pedir información';$('fields').innerHTML=`<p>${esc(p.titulo)}</p><label>Teléfono o email de contacto<input name="contacto" value="${esc(user.email)}" required maxlength="200"></label><label>¿Qué quieres saber?<textarea name="mensaje" rows="3" maxlength="2000"></textarea></label><label class="consent"><input name="consent" type="checkbox" required> Acepto que Radar me contacte sobre esta consulta.</label>`;$('formError').textContent='';$('dialog').showModal();}
-$('form').onsubmit=async e=>{e.preventDefault();$('submit').disabled=true;try{const input=Object.fromEntries(new FormData(e.target));if(mode==='inquiry'){await api('/api/inquiries',{...input,inmuebleId:selected.id,consent:input.consent==='on'});$('dialog').close();$('message').textContent='Consulta recibida. El equipo podrá contactarte sobre este inmueble.';selected=null;}else{const v=await api('/api/'+mode,input);user=v.user;updateAccount();$('dialog').close();if(selected)inquire(selected);}}catch(e){$('formError').textContent=e.message;}finally{$('submit').disabled=false;}};
-$('account').onclick=async()=>{if(user){await api('/api/logout',{});user=null;updateAccount();}else account();};$('close').onclick=()=>$('dialog').close();
-(async()=>{try{const state=await api('/api/session');user=state.user;if(user)$('account').textContent='Salir · '+user.name;items=await api('/api/public/inmuebles');if(window.L){map=L.map('map').setView([10.067,-69.347],13);L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'}).addTo(map);layer=L.layerGroup().addTo(map);}else $('map').textContent='El mapa no pudo cargarse. Comprueba internet.';filters();}catch(e){$('message').textContent=e.message;}})();
+$('form').onsubmit=async e=>{e.preventDefault();$('submit').disabled=true;try{const input=Object.fromEntries(new FormData(e.target));if(mode==='inquiry'){await api('/api/inquiries',{...input,inmuebleId:selected.id,consent:input.consent==='on'});$('dialog').close();$('message').textContent='Consulta recibida. El equipo podrá contactarte sobre este inmueble.';selected=null;}else{const v=await api('/api/'+mode,input);user=v.user;$('dialog').close();await openRadar();if(selected)inquire(selected);}}catch(e){$('formError').textContent=e.message;}finally{$('submit').disabled=false;}};
+$('account').onclick=async()=>{if(user){await api('/api/logout',{});lockRadar();try{localStorage.setItem('radar-logout',String(Date.now()));}catch{};}else account();};$('close').onclick=()=>$('dialog').close();
+function lockRadar(){
+ user=null;items=[];selected=null;markers.clear();if(map){map.remove();map=null;layer=null;}$('listings').replaceChildren();$('filters').replaceChildren();$('map').replaceChildren();$('count').textContent='';$('message').textContent='';$('radarContent').hidden=true;$('accessGate').hidden=false;if($('dialog').open)$('dialog').close();updateAccount();
+}
+async function openRadar(){
+ const data=await api('/api/public/inmuebles');if(!user)return;items=data;$('accessGate').hidden=true;$('radarContent').hidden=false;
+ if(window.L&&!map){map=L.map('map').setView([10.067,-69.347],13);L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'}).addTo(map);layer=L.layerGroup().addTo(map);}else if(!window.L)$('map').textContent='El mapa no pudo cargarse. Comprueba internet.';filters();updateAccount();
+}
+$('enterRadar').onclick=account;
+$('dialog').addEventListener('close',()=>{$('form').reset();$('fields').replaceChildren();});
+async function checkSession(){try{const state=await api('/api/session');if(!state.user){if(user||!radarContent.hidden||accessGate.hidden)lockRadar();return;}user=state.user;updateAccount();if($('radarContent').hidden)await openRadar();}catch{lockRadar();}}
+window.addEventListener('pageshow',checkSession);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')checkSession();});
+setInterval(checkSession,30000);
+
+window.addEventListener('storage',event=>{if(event.key==='radar-logout')lockRadar();});
