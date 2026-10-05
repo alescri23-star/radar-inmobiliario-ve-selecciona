@@ -38,7 +38,7 @@ export function portal(db,options={}) {
   if(url.pathname==='/api/logout' && req.method==='POST'){const token=req.headers.cookie?.match(/radar_session=([a-f0-9]+)/)?.[1];if(token)db.prepare('DELETE FROM sessions WHERE token=?').run(hash(token));res.setHeader('Set-Cookie','radar_session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0');send(res,200,{ok:true});return true;}
   if(url.pathname==='/api/public/inmuebles' && req.method==='GET'){
    if(!req.user){send(res,401,{error:'Inicia sesión para acceder al radar'});return true;}
-   send(res,200,records('inmuebles').filter(r=>r.estado==='activo').map(r=>Object.fromEntries(['id','titulo','zona','operacion','precio','moneda','latitud','longitud','municipio','parroquia','calle','tipo','habitaciones','banos','superficie','descripcion','fuente','actualizadoEn','ubicacionPrecision','ubicacionFuente','ubicacionConsultadaEn'].map(k=>[k,r[k]??'']))));return true;
+   send(res,200,records('inmuebles').filter(r=>r.estado==='activo').map(r=>Object.fromEntries(['id','titulo','foto','zona','operacion','precio','moneda','latitud','longitud','municipio','parroquia','calle','tipo','habitaciones','banos','superficie','descripcion','fuente','actualizadoEn','ubicacionPrecision','ubicacionFuente','ubicacionConsultadaEn'].map(k=>[k,r[k]??'']))));return true;
   }
   if(url.pathname==='/api/inquiries' && req.method==='POST'){
    if(!req.user){send(res,401,{error:'Regístrate o inicia sesión para pedir información'});return true;}

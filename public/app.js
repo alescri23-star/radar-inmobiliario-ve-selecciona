@@ -1,3 +1,5 @@
+function listingPhoto(p){const url=p.foto||'';if(!/^https:\/\/(cdn\.remax\.com\.ve|cdn\.photos\.sparkplatform\.com)\//.test(url))return '<div class="photo-placeholder">Foto no disponible</div>';return '<img class="listing-photo" src="'+escape(url)+'" alt="Foto del anuncio" loading="lazy" decoding="async" referrerpolicy="no-referrer">';}
+function photoFallback(){document.querySelectorAll('.listing-photo').forEach(img=>img.onerror=()=>{const box=document.createElement('div');box.className='photo-placeholder';box.textContent='Foto no disponible';img.replaceWith(box);});}
 const data = { inmuebles: [], leads: [], reformas: [] };
 let view = 'mapa', editing = null, map = null;
 const $ = id => document.getElementById(id);
@@ -49,7 +51,8 @@ async function render() {
 }
 function rows() {
   const query=$('search').value.toLocaleLowerCase(); const type=$('propertyType')?.value||''; const filtered=data[view].filter(r=>(!type||(type==='Todos los terrenos'?r.tipo?.startsWith('Terreno'):r.tipo===type)) && JSON.stringify(r).toLocaleLowerCase().includes(query) && (!$('status').value || r.estado===$('status').value));
-  $('rows').innerHTML=filtered.length?`<table><thead><tr><th>Registro</th><th>${view==='inmuebles'?'Zona':'Inmueble'}</th><th>${view==='leads'?'Contacto':'Importe'}</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>${filtered.map(r=>`<tr><td>${escape(r.titulo||r.nombre)}${view==='inmuebles'?'<br><small>'+escape(r.tipo||'Sin tipo')+'</small>':''}</td><td>${escape(view==='inmuebles'?r.zona:data.inmuebles.find(p=>p.id===r.inmuebleId)?.titulo||'Sin vincular')}</td><td>${escape(view==='leads'?r.contacto:(r.precio||r.importe)?`${r.precio||r.importe} ${r.moneda}`:'Sin estimación')}</td><td><span class="badge">${escape(r.estado)}</span></td><td><button data-edit="${r.id}">Editar</button></td></tr>`).join('')}</tbody></table>`:'<div class="empty">No hay registros para mostrar. Añade el primero o ajusta los filtros.</div>';
+  $('rows').innerHTML=filtered.length?`<table><thead><tr><th>Registro</th><th>${view==='inmuebles'?'Zona':'Inmueble'}</th><th>${view==='leads'?'Contacto':'Importe'}</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>${filtered.map(r=>`<tr><td>${view==='inmuebles'?listingPhoto(r):''}${escape(r.titulo||r.nombre)}${view==='inmuebles'?'<br><small>'+escape(r.tipo||'Sin tipo')+'</small>':''}</td><td>${escape(view==='inmuebles'?r.zona:data.inmuebles.find(p=>p.id===r.inmuebleId)?.titulo||'Sin vincular')}</td><td>${escape(view==='leads'?r.contacto:(r.precio||r.importe)?`${r.precio||r.importe} ${r.moneda}`:'Sin estimación')}</td><td><span class="badge">${escape(r.estado)}</span></td><td><button data-edit="${r.id}">Editar</button></td></tr>`).join('')}</tbody></table>`:'<div class="empty">No hay registros para mostrar. Añade el primero o ajusta los filtros.</div>';
+  photoFallback();
   document.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>openForm(data[view].find(r=>r.id===b.dataset.edit)));
 }
 function openForm(record=null) {

@@ -13,7 +13,7 @@ export function parseRah(html,operation){
   const zone=title.match(/(?:Venta|Alquiler)\s+(.*),\s*Barquisimeto/i)?.[1]||'';
   const price=block.match(/<strong>USD\s*([\d.,]+)/)?.[1]?.replace(/\./g,'').replace(',','.');
   const cell=name=>plain(block.match(new RegExp('<td class="'+name+'"[^>]*>([\\s\\S]*?)<\\/td>'))?.[1]||'');
-  return {sourceId:'rentahouse',sourceCode:code,titulo:title,zona:zone,municipio:'',parroquia:'',calle:'',tipo:'Apartamento',operacion:operation,precio:price??'',moneda:'USD',fuente:url,estado:'activo',habitaciones:cell('dormitorio'),banos:cell('baño'),superficie:cell('superficie').replace(/\s*m\s*2$/,''),descripcion:plain(block.match(/class="card-text truncate">([\s\S]*?)<\/div>/)?.[1]||''),latitud:'',longitud:'',direccion:''};
+  return {sourceId:'rentahouse',sourceCode:code,foto:block.match(/data-src="(https:\/\/cdn\.photos\.sparkplatform\.com\/ven\/[^"\s]+)"/)?.[1]||'',titulo:title,zona:zone,municipio:'',parroquia:'',calle:'',tipo:'Apartamento',operacion:operation,precio:price??'',moneda:'USD',fuente:url,estado:'activo',habitaciones:cell('dormitorio'),banos:cell('baño'),superficie:cell('superficie').replace(/\s*m\s*2$/,''),descripcion:plain(block.match(/class="card-text truncate">([\s\S]*?)<\/div>/)?.[1]||''),latitud:'',longitud:'',direccion:''};
  }).filter(p=>p.sourceCode&&p.fuente&&p.titulo&&p.zona);
 }
 export function importRah(db,records,metadata={}){
