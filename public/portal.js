@@ -14,7 +14,7 @@ const territory={
  'Torres':['Altagracia','Antonio Díaz','Camacaro','Castañeda','Cecilio Zubillaga','Chiquinquirá','El Blanco','Espinoza de los Monteros','Heriberto Arroyo','Lara','Las Mercedes','Manuel Morillo','Montaña Verde','Montes de Oca','Reyes Vargas','Torres','Trinidad Samuel'],
  'Urdaneta':['Xaguas','Siquisique','San Miguel','Moroturo']
 };
-const propertyTypes=['Apartamento','Casa','Terreno rústico','Terreno urbano','Otro'];
+const propertyTypes=['Apartamento','Casa','Terreno rústico','Terreno urbano','Terreno sin clasificar','Otro'];
 function updateAccount(){ $('account').textContent=user?'Cerrar sesión · '+user.name:'Registrarse / Entrar';$('adminLink').hidden=user?.role!=='admin'; }
 function filters(){
  $('filters').innerHTML='<label>Estado<select disabled><option>Lara</option></select></label><label>Ciudad<select disabled><option>Barquisimeto</option></select></label>'+filterSpec.map(([k,label])=>`<label>${label}<select id="f-${k}"><option value="">Todos</option></select></label>`).join('')+'<label>Precio máximo<input id="max" type="number" min="0" placeholder="Sin límite"></label><label>Moneda<select id="currency"><option value="">Todas</option><option>USD</option><option>VES</option></select></label>';
