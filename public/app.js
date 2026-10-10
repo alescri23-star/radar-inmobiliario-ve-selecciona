@@ -71,11 +71,14 @@ $('add').onclick=()=>{if(view==='mapa'){view='inmuebles';render();}openForm();};
 $('form').onsubmit=async e=>{e.preventDefault(); const button=e.submitter;button.disabled=true;try {await api('/api/'+view+(editing?'/'+editing.id:''),{method:editing?'PUT':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.fromEntries(new FormData(e.target)))});$('dialog').close();await load();}catch(err){$('formError').textContent=err.message;}finally{button.disabled=false;}};
 async function boot(){
  const session=await api('/api/session');
+ $('logout').hidden=!session.user;
+ document.querySelector('nav').hidden=session.user?.role!=='admin';
  if(session.user?.role==='admin'){load();return;}
  if(session.setupRequired){$('title').textContent='Configuración pendiente';$('add').hidden=true;document.querySelector('nav').hidden=true;$('content').innerHTML='<section class="panel"><h2>Administrador pendiente</h2><p>El responsable del servicio debe habilitar la cuenta de administración. Contacta con él para continuar.</p><a href="/">Volver al inicio</a></section>';return;}
  $('title').textContent='Acceso al dashboard';$('add').hidden=true;
  $('content').innerHTML='<form class="panel admin-login" id="access"><h2>Entrar como administrador</h2><label>Email<input name="email" type="email" required autocomplete="email"></label><label>Contraseña<input name="password" type="password" minlength="10" required autocomplete="current-password"></label><p>Usa al menos 10 caracteres.</p><button>Entrar</button><p id="accessError" role="alert"></p><a href="/">Volver a buscar inmuebles</a></form>';
  document.querySelector('nav').hidden=true;
- $('access').onsubmit=async e=>{e.preventDefault();try{const r=await api('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.fromEntries(new FormData(e.target)))});if(r.user.role!=='admin')throw Error('Esta cuenta es de cliente. Usa la web de búsqueda.');document.querySelector('nav').hidden=false;load();}catch(e){$('accessError').textContent=e.message;}};
+ $('access').onsubmit=async e=>{e.preventDefault();try{const r=await api('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.fromEntries(new FormData(e.target)))});if(r.user.role!=='admin')throw Error('Esta cuenta es de cliente. Usa la web de búsqueda.');document.querySelector('nav').hidden=false;$('logout').hidden=false;load();}catch(e){$('accessError').textContent=e.message;}};
 }
+$('logout').onclick=async()=>{const button=$('logout');button.disabled=true;try{await api('/api/logout',{method:'POST'});window.RadarGallery?.close();if(map){map.remove();map=null;}Object.keys(data).forEach(key=>data[key]=[]);if($('dialog').open)$('dialog').close();$('message').textContent='';try{localStorage.setItem('radar-logout',String(Date.now()));}catch{}await boot();}catch(error){$('message').textContent=error.message;}finally{button.disabled=false;}};
 boot().catch(e=>$('message').textContent=e.message);
