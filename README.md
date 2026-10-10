@@ -10,7 +10,7 @@ node server.mjs
 Web de usuarios (requiere sesión): http://127.0.0.1:3000/
 Dashboard: http://127.0.0.1:3000/admin
 
-La primera visita al dashboard permite crear el administrador con nombre, email y contraseña de al menos 10 caracteres. Las cuentas creadas desde la web son clientes y no pueden leer leads internos ni modificar anuncios. Contraseñas con scrypt y salt aleatorio; sesión de 24 horas en cookie HttpOnly y SameSite. La recuperación de contraseña requiere configurar Resend. No hay verificación de email ni endurecimiento para exposición pública todavía.
+El administrador inicial se crea exclusivamente desde el servidor con `node admin.mjs`, usando variables temporales RADAR_ADMIN_NAME, RADAR_ADMIN_EMAIL y RADAR_ADMIN_PASSWORD suministradas por un canal seguro. No pases contraseñas como argumentos ni las guardes en el repositorio. Retira esas variables después. El comando conserva las cuentas existentes y rechaza crear otro administrador o reutilizar un email. Las cuentas creadas desde la web son clientes y no pueden leer leads internos ni modificar anuncios. Contraseñas con scrypt y salt aleatorio; sesión de 24 horas en cookie HttpOnly y SameSite=Strict, con Secure cuando RADAR_PUBLIC_URL usa HTTPS. La recuperación de contraseña requiere configurar Resend. No hay verificación de email ni endurecimiento para exposición pública todavía.
 
 ## Capturar anuncios
 ```
@@ -76,3 +76,16 @@ Envío mediante Resend (https://resend.com/docs/api-reference/emails/send-email)
 Terrenos: RE/MAX incorpora también Terreno y Parcela en Barquisimeto. La superficie usa areaTerreno. Solo se asigna Terreno urbano/rústico cuando el título declara expresamente terreno urbano/rústico; los restantes quedan como Terreno sin clasificar. Es una clasificación del anuncio, no verificación catastral. El dashboard permite filtrar todos los terrenos y cada categoría.
 
 Fotos de anuncios: los capturadores guardan la URL de la foto principal publicada por cada fuente. Portal con foto en la tarjeta y dashboard con miniatura en la primera columna. URLs limitadas a los CDN de RE/MAX y Rent-A-House, carga diferida y sin referrer. No se descarga ni archiva contenido multimedia. Imagen ausente o fallida: Foto no disponible. La disponibilidad depende de la fuente; confirmar derechos antes de publicar fuera del piloto local.
+
+
+## Cambios de acceso y galería (2026-10-10)
+
+La raíz es la única aplicación ejecutable. La copia incompleta de outputs/radar-venezuela se consolidó aquí; su contenido anterior permanece en el historial Git. Se conserva SQLite, Node.js 24, Leaflet y el diseño existente. No se migran datos ni se despliega con este cambio.
+
+La galería se abre desde «Ver fotos» en el portal y el dashboard. Solo usuarios autenticados acceden a fotos; clientes solo ven anuncios activos. La consulta externa de galerías está desactivada por defecto. RADAR_GALLERY_REMOTE=true permite activarla únicamente después de autorizar la fuente y sus condiciones de uso. robots.txt no sustituye esa autorización.
+
+Para HTTPS detrás de un proxy, configura RADAR_PUBLIC_URL=https://tu-dominio.example y NODE_ENV=production. El proxy debe terminar TLS y reenviar al servidor que escucha en 127.0.0.1. No se confía en X-Forwarded-Proto ni en X-Forwarded-Host. El origen configurado es la autoridad; las peticiones que escriben deben incluir Origin exactamente igual. Clientes API también deben enviarlo. Sin RADAR_PUBLIC_URL solo se admiten hosts loopback con el puerto del servidor, para desarrollo local. Producción rechaza arrancar sin HTTPS configurado.
+
+GET /api/session conserva setupRequired como indicador de que falta un administrador; no habilita ningún alta web. /api/setup devuelve 403 siempre. POST /api/register siempre crea clientes. GET /api/gallery/:id devuelve fotos filtradas o un mensaje si no están disponibles (401 sin sesión, 404 para anuncios inexistentes o no visibles, 405 para otros métodos).
+
+Consulta docs/seguridad-y-validacion.md para pruebas, límites y reversión.

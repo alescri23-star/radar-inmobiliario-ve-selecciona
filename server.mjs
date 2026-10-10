@@ -1,3 +1,4 @@
+import {security} from './security.mjs';
 import http from 'node:http';
 import { portal } from './portal.mjs';
 import { DatabaseSync } from 'node:sqlite';
@@ -8,6 +9,7 @@ import { randomUUID } from 'node:crypto';
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 export function createApp(directory = path.join(root, 'data'), options = {}) {
+  options={...options,security:security(options)};
   mkdirSync(directory, { recursive: true });
   const db = new DatabaseSync(path.join(directory, 'radar.sqlite'));
   db.exec('PRAGMA foreign_keys=ON; CREATE TABLE IF NOT EXISTS records (id TEXT PRIMARY KEY, kind TEXT NOT NULL, body TEXT NOT NULL)');
@@ -20,7 +22,6 @@ export function createApp(directory = path.join(root, 'data'), options = {}) {
       const url = new URL(req.url, 'http://localhost');
       if(await handlePortal(req,res,url))return;
       if (url.pathname.startsWith('/api/')) {
-        if (req.headers.origin && req.headers.origin !== `http://${req.headers.host}`) return send(res, 403, { error: 'Origen no permitido' });
         const [, , kind, id] = url.pathname.split('/');
         if (!kinds.includes(kind)) return send(res, 404, { error: 'Recurso no encontrado' });
         if (req.method === 'GET' && !id) return send(res, 200, list(kind));
@@ -53,7 +54,7 @@ export function createApp(directory = path.join(root, 'data'), options = {}) {
         }
         return send(res, 405, { error: 'Método no permitido' });
       }
-      const files = { '/favicon.svg': ['favicon.svg','image/svg+xml'], '/': ['portal.html','text/html'], '/admin': ['index.html','text/html'], '/portal.js': ['portal.js','text/javascript'], '/app.js': ['app.js','text/javascript'], '/style.css': ['style.css','text/css'] };
+      const files = { '/gallery.js':['gallery.js','text/javascript'], '/favicon.svg': ['favicon.svg','image/svg+xml'], '/': ['portal.html','text/html'], '/admin': ['index.html','text/html'], '/portal.js': ['portal.js','text/javascript'], '/app.js': ['app.js','text/javascript'], '/style.css': ['style.css','text/css'] };
       if (!files[url.pathname] || req.method !== 'GET') return send(res, 404, { error: 'Página no encontrada' });
       const [file, type] = files[url.pathname];
       res.writeHead(200, { 'Content-Type': `${type}; charset=utf-8`, 'Content-Security-Policy': "default-src 'self'; style-src 'self' 'unsafe-inline' https://unpkg.com; script-src 'self' https://unpkg.com; img-src 'self' https://cdn.remax.com.ve https://cdn.photos.sparkplatform.com data: https://tile.openstreetmap.org https://unpkg.com; frame-ancestors 'none'", 'X-Content-Type-Options': 'nosniff' });

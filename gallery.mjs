@@ -36,6 +36,7 @@ export function gallery(db,options={}){
   if(!row)return send(404,{error:'Anuncio no encontrado'});const p=JSON.parse(row.body);
   if(req.user.role!=='admin'&&p.estado!=='activo')return send(404,{error:'Anuncio no disponible'});
   if(p.fotos?.length&&Date.now()-Date.parse(p.fotosConsultadasEn)<86400000)return send(200,{fotos:p.fotos.filter(safePhoto)});
+  if(!(options.galleryRemoteEnabled ?? process.env.RADAR_GALLERY_REMOTE==='true'))return send(200,{fotos:(p.fotos||[p.foto]).filter(safePhoto),message:'Se muestran las fotos guardadas. La consulta de fotos adicionales está desactivada.'});
   if(!pending.has(p.id))pending.set(p.id,collect(p).catch(()=>({fotos:(p.fotos||[p.foto]).filter(safePhoto),message:'No se pudieron recuperar más fotos. Puedes consultar el anuncio original.'})).finally(()=>pending.delete(p.id)));
   return send(200,await pending.get(p.id));
  };

@@ -1,7 +1,9 @@
+import {security} from './security.mjs';
 import {randomBytes,createHash,scryptSync} from 'node:crypto';
 const hash=s=>createHash('sha256').update(s).digest('hex');
 export function recovery(db,options={}){
  db.exec('CREATE TABLE IF NOT EXISTS password_resets(token TEXT PRIMARY KEY,user_id TEXT NOT NULL,expires INTEGER NOT NULL)');
+ const policy=options.security||security(options);
  const now=options.now||Date.now,limits=new Map();
  const configured=()=>options.sendReset||process.env.RESEND_API_KEY&&process.env.RADAR_MAIL_FROM&&process.env.RADAR_PUBLIC_URL;
  const send=(res,status,value)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(value));};
@@ -29,7 +31,7 @@ export function recovery(db,options={}){
    const token=String(input.token||''),password=String(input.password||'');if(!/^[a-f0-9]{64}$/.test(token))throw Error('El enlace no es válido o ha caducado');if(password.length<10||password.length>200)throw Error('La contraseña debe tener entre 10 y 200 caracteres');
    const reset=db.prepare('SELECT user_id FROM password_resets WHERE token=? AND expires>?').get(hash(token),now());if(!reset)throw Error('El enlace no es válido o ha caducado');
    const salt=randomBytes(16).toString('hex'),passwordHash=scryptSync(password,salt,64).toString('hex');db.exec('BEGIN IMMEDIATE');try{db.prepare('UPDATE users SET salt=?,password=? WHERE id=?').run(salt,passwordHash,reset.user_id);db.prepare('DELETE FROM password_resets WHERE user_id=?').run(reset.user_id);db.prepare('DELETE FROM sessions WHERE user_id=?').run(reset.user_id);db.exec('COMMIT');}catch(e){db.exec('ROLLBACK');throw e;}
-   res.setHeader('Set-Cookie','radar_session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0');send(res,200,{message:'Contraseña actualizada. Inicia sesión con tu nueva contraseña.'});
+   res.setHeader('Set-Cookie',policy.cookie());send(res,200,{message:'Contraseña actualizada. Inicia sesión con tu nueva contraseña.'});
   }catch(e){send(res,400,{error:e.message});}return true;
  };
 }

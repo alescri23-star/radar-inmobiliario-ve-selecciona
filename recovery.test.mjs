@@ -1,7 +1,7 @@
 import {test} from 'node:test';import assert from 'node:assert/strict';import {mkdtempSync,rmSync} from 'node:fs';import {tmpdir} from 'node:os';import path from 'node:path';import {createApp} from './server.mjs';
 test('recuperación: expiración, uso único, contraseña y revocación de sesiones',async()=>{
  const dir=mkdtempSync(path.join(tmpdir(),'radar-reset-'));let clock=Date.now(),mail;const server=createApp(dir,{now:()=>clock,publicUrl:'http://127.0.0.1:3000',sendReset:async m=>{mail=m;}});await new Promise(r=>server.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+server.address().port;
- const post=(route,body)=>fetch(base+'/api/'+route,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const email='reset@example.test';const token=()=>new URL(mail.link).hash.slice(7);
+ const post=(route,body)=>fetch(base+'/api/'+route,{method:'POST',headers:{Origin:'http://127.0.0.1:3000','Content-Type':'application/json'},body:JSON.stringify(body)});const email='reset@example.test';const token=()=>new URL(mail.link).hash.slice(7);
  try{
   const registered=await post('register',{name:'Prueba',email,password:'Anterior-12345'});const cookie=registered.headers.get('set-cookie').split(';')[0];
   const known=await post('forgot-password',{email});const first=token();const unknown=await post('forgot-password',{email:'nadie@example.test'});assert.deepEqual(await known.json(),await unknown.json());
