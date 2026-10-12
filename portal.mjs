@@ -1,16 +1,21 @@
 import {security} from './security.mjs';
 import {userSchema} from './admin.mjs';
+import {landLabels} from './land-labels.mjs';
+import {classifyLand} from './land.mjs';
+import {favorites} from './favorites.mjs';
 import {gallery} from './gallery.mjs';
 import { randomBytes, scryptSync, timingSafeEqual, createHash } from 'node:crypto';
 const hash = v => createHash('sha256').update(v).digest('hex');
 import { recovery } from './recovery.mjs';
 export function portal(db,options={}) {
  const policy=options.security||security(options);
- const handleRecovery=recovery(db,options);const handleGallery=gallery(db,options);
  db.exec(userSchema);
+ const handleLandLabels=landLabels(db);
+ const handleFavorites=favorites(db);
+ const handleRecovery=recovery(db,options);const handleGallery=gallery(db,options);
  const send=(res,status,value)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(value));};
  const body=async req=>{let text='';for await(const chunk of req){text+=chunk;if(text.length>32768)throw Error('Solicitud demasiado grande');}return JSON.parse(text||'{}');};
- const records=kind=>db.prepare('SELECT body FROM records WHERE kind=?').all(kind).map(r=>JSON.parse(r.body));
+ const records=kind=>db.prepare('SELECT body FROM records WHERE kind=?').all(kind).map(r=>classifyLand(JSON.parse(r.body)));
  const attempts=new Map();
  const session=req=>{const token=req.headers.cookie?.match(/(?:^|;\s*)radar_session=([a-f0-9]+)/)?.[1];return token?db.prepare('SELECT users.id, email, name, role FROM sessions JOIN users ON users.id=sessions.user_id WHERE token=? AND expires>?').get(hash(token),Date.now()):null;};
  return async(req,res,url)=>{
@@ -18,6 +23,8 @@ export function portal(db,options={}) {
   if(!url.pathname.startsWith('/api/'))return false;
   if(!policy.allows(req)){send(res,403,{error:'Origen no permitido'});return true;}
   if(url.pathname==='/api/setup'){send(res,403,{error:'La creación de administradores solo está disponible para el operador del servidor.'});return true;}
+  if(await handleLandLabels(req,res,url))return true;
+  if(await handleFavorites(req,res,url))return true;
   if(await handleRecovery(req,res,url))return true;
   if(await handleGallery(req,res,url))return true;
   if(url.pathname==='/api/session' && req.method==='GET'){send(res,200,{user:req.user||null,setupRequired:!db.prepare("SELECT id FROM users WHERE role='admin'").get()});return true;}
