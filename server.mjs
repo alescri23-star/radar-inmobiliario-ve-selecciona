@@ -15,7 +15,7 @@ export function createApp(directory = path.join(root, 'data'), options = {}) {
   const db = new DatabaseSync(path.join(directory, 'radar.sqlite'));
   db.exec('PRAGMA foreign_keys=ON; CREATE TABLE IF NOT EXISTS records (id TEXT PRIMARY KEY, kind TEXT NOT NULL, body TEXT NOT NULL)');
   const handlePortal=portal(db,options);
-  const kinds = ['inmuebles', 'leads', 'reformas'];
+  const kinds = ['inmuebles', 'leads', 'reformas', 'profesionales'];
   const list = kind => db.prepare('SELECT body FROM records WHERE kind=?').all(kind).map(r => classifyLand(JSON.parse(r.body)));
   const send = (res, status, value) => { res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(value)); };
   const server = http.createServer(async (req, res) => {
@@ -29,11 +29,11 @@ export function createApp(directory = path.join(root, 'data'), options = {}) {
         if (req.method === 'POST' && !id || req.method === 'PUT' && id) {
           let body = ''; for await (const chunk of req) { body += chunk; if (body.length > 32768) return send(res, 413, { error: 'Registro demasiado grande' }); }
           let input; try { input = JSON.parse(body); } catch { return send(res, 400, { error: 'JSON inválido' }); }
-          const fields = kind === 'inmuebles' ? ['titulo', 'zona', 'operacion', 'precio', 'moneda', 'fuente', 'estado', 'latitud', 'longitud', 'direccion', 'municipio', 'parroquia', 'calle', 'tipo', 'habitaciones', 'banos', 'superficie', 'ubicacionPrecision'] : kind === 'leads' ? ['nombre', 'contacto', 'inmuebleId', 'estado', 'proximaAccion', 'fecha'] : ['titulo', 'inmuebleId', 'importe', 'moneda', 'estado'];
+          const fields = kind === 'inmuebles' ? ['titulo', 'zona', 'operacion', 'precio', 'moneda', 'fuente', 'estado', 'latitud', 'longitud', 'direccion', 'municipio', 'parroquia', 'calle', 'tipo', 'habitaciones', 'banos', 'superficie', 'ubicacionPrecision'] : kind === 'leads' ? ['nombre', 'contacto', 'inmuebleId', 'estado', 'proximaAccion', 'fecha'] : kind === 'reformas' ? ['titulo', 'inmuebleId', 'importe', 'moneda', 'estado'] : ['nombre', 'tipoEmpresa', 'servicios', 'contacto', 'sitioWeb', 'direccion', 'cobertura', 'rif', 'responsableTecnico', 'fuente', 'observaciones', 'fechaRevision', 'estado'];
           const record = Object.fromEntries(fields.map(f => [f, String(input?.[f] ?? '').trim()]));
           if (!(record.titulo || record.nombre)) return send(res, 400, { error: 'Falta el título o nombre' });
           if (Object.values(record).some(v => v.length > 2000)) return send(res, 400, { error: 'Campo demasiado largo' });
-          const states = { inmuebles: ['borrador','activo','reservado','cerrado','archivado'], leads: ['nuevo','contactado','calificado','visita','negociacion','ganado','perdido'], reformas: ['detectada','evaluacion','presupuestada','aprobada','en ejecucion','completada','cancelada'] };
+          const states = { inmuebles: ['borrador','activo','reservado','cerrado','archivado'], leads: ['nuevo','contactado','calificado','visita','negociacion','ganado','perdido'], reformas: ['detectada','evaluacion','presupuestada','aprobada','en ejecucion','completada','cancelada'], profesionales: ['candidato','contactado','documentación pendiente','evaluado','aprobado','descartado'] };
           if (!states[kind].includes(record.estado)) return send(res, 400, { error: 'Estado inválido' });
           if (kind === 'inmuebles' && !['venta','alquiler'].includes(record.operacion)) return send(res, 400, { error: 'Operación inválida' });
           if (record.moneda && !['USD','VES'].includes(record.moneda)) return send(res, 400, { error: 'Moneda inválida' });
@@ -44,7 +44,7 @@ export function createApp(directory = path.join(root, 'data'), options = {}) {
           }
           const amount = kind === 'inmuebles' ? 'precio' : 'importe';
           if (record[amount] !== undefined && record[amount] !== '' && (!Number.isFinite(Number(record[amount])) || Number(record[amount]) < 0)) return send(res, 400, { error: 'Importe inválido' });
-          if (record.fecha && !/^\d{4}-\d{2}-\d{2}$/.test(record.fecha)) return send(res, 400, { error: 'Fecha inválida' });
+          if ((record.fecha || record.fechaRevision) && !/^\d{4}-\d{2}-\d{2}$/.test(record.fecha || record.fechaRevision)) return send(res, 400, { error: 'Fecha inválida' });
           if (record.inmuebleId && !list('inmuebles').some(p => p.id === record.inmuebleId)) return send(res, 400, { error: 'Inmueble no encontrado' });
           const previous = id ? list(kind).find(r => r.id === id) : null;
           if (id && !previous) return send(res, 404, { error: 'Registro no encontrado' });
