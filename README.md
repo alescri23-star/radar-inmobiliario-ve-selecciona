@@ -41,6 +41,8 @@ La primera consulta de fichas recuperó 21 ubicaciones de 24 anuncios; 3 quedaro
 ## Dashboard privado
 Indicadores de anuncios activos y leads, registro y edición internos, mapa, reformas y sección de fuentes con capturas e indicadores de cambios de precio. Incluye una sección privada de profesionales y empresas para registrar candidatos, servicios, contacto comercial público, cobertura, RIF pendiente de comprobar, responsable técnico, fuente, observaciones y fecha de revisión. Los estados son candidato, contactado, documentación pendiente, evaluado, aprobado y descartado. El registro no implica verificación ni recomendación; antes de aprobar deben comprobarse identidad, documentación, experiencia, referencias y condiciones del presupuesto. La ejecución del capturador se realiza desde el servidor; no hay agenda automática ni botón de captura en esta versión.
 
+La investigación inicial del 15 de octubre de 2026 está documentada en `docs/candidatos-reformas-2026-10-15.json`. Sus registros son candidatos basados en información comercial pública y no constituyen empresas verificadas, recomendaciones ni proveedores autorizados.
+
 ## Archivos y datos
 server.mjs: servidor y validación de registros.
 portal.mjs: cuentas, sesiones, autorización y consultas.
