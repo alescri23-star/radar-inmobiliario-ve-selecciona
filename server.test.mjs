@@ -30,12 +30,12 @@ test('persistencia, edición, referencias y validación', async () => {
   assert.equal((await request('leads',{nombre:'Ana',estado:'nuevo',inmuebleId:'no-existe'})).status,400);
   assert.equal((await request('leads',{nombre:'Ana',estado:'nuevo',inmuebleId:property.id})).status,201);
   assert.equal((await request('reformas',{titulo:'Cocina',estado:'detectada',inmuebleId:property.id,importe:'2000',moneda:'USD'})).status,201);
-  const professional=await request('profesionales',{nombre:'Empresa candidata',tipoEmpresa:'Empresa de reformas',servicios:'Reforma integral',contacto:'contacto público',cobertura:'Barquisimeto',fuente:'https://example.test',fechaRevision:'2026-10-15',estado:'candidato'});assert.equal(professional.status,201);
+  const professional=await request('profesionales',{nombre:'Empresa candidata',tipoEmpresa:'Empresa de reformas',servicios:'Reforma integral',contacto:'contacto público',whatsapp:'WhatsApp público',sitioWeb:'https://example.test',cobertura:'Barquisimeto',fuente:'https://example.test',fechaRevision:'2026-10-15',estado:'candidato'});assert.equal(professional.status,201);
   assert.equal((await request('profesionales',{nombre:'Estado inválido',estado:'verificado'})).status,400);
   assert.equal((await request('inmuebles/'+property.id,{...payload,estado:'reservado'},'PUT')).status,200);
   await new Promise(r=>server.close(r));server=createApp(dir);base=await start();
   const restored=await(await fetch(base+'/api/inmuebles',{headers:{Cookie:cookie}})).json();assert.equal(restored.length,1);assert.equal(restored[0].estado,'reservado');assert.equal(restored[0].latitud,'10.067');assert.equal(restored[0].longitud,'-69.347');assert.equal(restored[0].latitud,'10.067');assert.equal(restored[0].longitud,'-69.347');
-  const professionals=await(await fetch(base+'/api/profesionales',{headers:{Cookie:cookie}})).json();assert.equal(professionals.length,1);assert.equal(professionals[0].nombre,'Empresa candidata');
+  const professionals=await(await fetch(base+'/api/profesionales',{headers:{Cookie:cookie}})).json();assert.equal(professionals.length,1);assert.equal(professionals[0].nombre,'Empresa candidata');assert.equal(professionals[0].whatsapp,'WhatsApp público');
   assert.equal((await fetch(base+'/')).status,200);
   assert.equal((await fetch(base+'/server.mjs')).status,404);
   const customer=await fetch(base+'/api/register',{method:'POST',headers:{Origin:base,'Content-Type':'application/json'},body:JSON.stringify({name:'Cliente',email:'cliente@example.test',password:'Cliente-test-12345'})});assert.equal(customer.status,200);const clientCookie=customer.headers.get('set-cookie').split(';')[0];
