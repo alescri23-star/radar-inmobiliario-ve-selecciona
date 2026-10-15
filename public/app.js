@@ -1,25 +1,30 @@
 function listingPhoto(p){const url=p.foto||'';if(!/^https:\/\/(cdn\.remax\.com\.ve|cdn\.photos\.sparkplatform\.com)\//.test(url))return '<div class="photo-placeholder">Foto no disponible</div>';return '<img class="listing-photo" src="'+escape(url)+'" alt="Foto del anuncio" loading="lazy" decoding="async" referrerpolicy="no-referrer">';}
 function photoFallback(){document.querySelectorAll('.listing-photo').forEach(img=>img.onerror=()=>{const box=document.createElement('div');box.className='photo-placeholder';box.textContent='Foto no disponible';img.replaceWith(box);});}
 const data = { inmuebles: [], leads: [], reformas: [], profesionales: [] };
-let view = 'mapa', editing = null, map = null;
+let view = 'dashboard', editing = null, map = null;
 const $ = id => document.getElementById(id);
 const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const safeWebsite = value => /^https:\/\/[a-z0-9.-]+(?:[/:?#]|$)/i.test(String(value||'')) ? String(value) : '';
 const states = { inmuebles: ['borrador','activo','reservado','cerrado','archivado'], leads: ['nuevo','contactado','calificado','visita','negociacion','ganado','perdido'], reformas: ['detectada','evaluacion','presupuestada','aprobada','en ejecucion','completada','cancelada'], profesionales: ['candidato','contactado','documentación pendiente','evaluado','aprobado','descartado'] };
-const names = { fuentes:'Fuentes del radar', mapa:'Mapa de inmuebles', dashboard:'Dashboard', inmuebles:'Inmuebles', leads:'Leads', reformas:'Reformas', profesionales:'Profesionales y empresas' };
+const names = { fuentes:'Fuentes y capturas', mapa:'Mapa de oportunidades', dashboard:'Resumen operativo', inmuebles:'Inventario inmobiliario', leads:'Seguimientos', reformas:'Reformas', profesionales:'Red profesional' };
+const addLabels = { mapa:'+ Añadir inmueble', inmuebles:'+ Añadir inmueble', leads:'+ Añadir seguimiento', reformas:'+ Añadir reforma', profesionales:'+ Añadir profesional' };
+function updateHeader(){
+  $('title').textContent=names[view];
+  $('add').hidden=!addLabels[view];
+  $('add').textContent=addLabels[view]||'';
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.view===view));
+}
 const fields = { inmuebles:[['titulo','Título'],['zona','Sector / urbanización'],['municipio','Municipio'],['parroquia','Parroquia'],['calle','Calle'],['tipo','Tipo',['Apartamento','Casa','Terreno rústico','Terreno urbano','Terreno sin clasificar','Otro']],['direccion','Dirección o referencia'],['latitud','Latitud','coordinate'],['longitud','Longitud','coordinate'],['ubicacionPrecision','Precisión de la ubicación',['publicada','aproximada','verificada']],['operacion','Operación',['venta','alquiler']],['precio','Precio','number'],['moneda','Moneda',['USD','VES']],['fuente','Fuente o enlace']], leads:[['nombre','Nombre'],['contacto','Teléfono o email'],['inmuebleId','Inmueble','property'],['proximaAccion','Próxima acción'],['fecha','Fecha de seguimiento','date']], reformas:[['titulo','Necesidad de reforma'],['inmuebleId','Inmueble','property'],['importe','Presupuesto estimado','number'],['moneda','Moneda',['USD','VES']]], profesionales:[['nombre','Empresa o profesional'],['tipoEmpresa','Tipo',['Empresa de reformas','Constructora','Arquitectura y diseño','Profesional independiente','Proveedor especializado','Otro']],['servicios','Servicios','textarea'],['contacto','Número de contacto público'],['whatsapp','WhatsApp confirmado'],['sitioWeb','Sitio web'],['direccion','Dirección pública'],['cobertura','Zona de cobertura'],['rif','RIF (pendiente de verificar)'],['responsableTecnico','Responsable técnico'],['fuente','Fuente pública'],['fechaRevision','Fecha de revisión','date'],['observaciones','Observaciones internas','textarea']] };
 async function api(url, options) { const res = await fetch(url, options); const value = await res.json(); if (!res.ok) throw Error(value.error); return value; }
 async function load() { try { const values = await Promise.all(Object.keys(data).map(k=>api('/api/'+k))); Object.keys(data).forEach((k,i)=>data[k]=values[i]); $('message').textContent=''; render(); } catch(e) { $('message').textContent=e.message; } }
 async function render() {
   if(view==='fuentes'){
-    if(map){map.remove();map=null;}$('title').textContent=names[view];$('add').hidden=true;
-    document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.view===view));
+    if(map){map.remove();map=null;}updateHeader();
     try{const source=await api('/api/sources');$('content').innerHTML='<div class="panel"><h2>Fuentes · Barquisimeto</h2><p>Rent-A-House y RE/MAX: apartamentos de venta y alquiler. Conserva enlaces, detecta repeticiones por fuente y código y registra cambios de precio. Cada captura indica su alcance.</p><p>'+source.properties+' anuncios rastreados · '+source.changes+' con cambios de precio</p><p class="muted">Las calles, parroquias y coordenadas que el anuncio no proporciona quedan pendientes de verificar. La captura se ejecuta desde el servidor; todavía no tiene programación automática.</p></div><div class="panel"><h2>Últimas capturas</h2>'+source.runs.sort((a,b)=>b.fecha.localeCompare(a.fecha)).map(r=>'<p class="source-run">'+escape(r.source)+' · '+escape(r.fecha)+' · '+r.added+' nuevos / '+r.updated+' revisados / '+r.changes+' cambios</p>').join('')+'</div>';}catch(e){$('message').textContent=e.message;}return;
   }
   if (map) { map.remove(); map = null; }
   if (view === 'mapa') {
-    $('title').textContent=names[view]; $('add').hidden=false;
-    document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.view===view));
+    updateHeader();
     const located=data.inmuebles.filter(p=>p.latitud!==undefined && p.latitud!=='' && p.longitud!==undefined && p.longitud!=='');
     $('content').innerHTML='<p class="muted">Las ubicaciones publicadas por la fuente requieren confirmar exactitud. Barquisimeto · '+located.length+' inmuebles ubicados · '+(data.inmuebles.length-located.length)+' sin ubicación. Pulsa un punto para consultar el inmueble.</p><div id="map" aria-label="Mapa de inmuebles de Barquisimeto"></div><p id="mapHint" class="muted">Pulsa sobre el mapa para registrar un inmueble en esa ubicación.</p>';
     if (!window.L) { $('map').textContent='No se pudo cargar el mapa. Comprueba la conexión a internet y recarga. Puedes registrar coordenadas desde Inmuebles.'; return; }
@@ -39,8 +44,7 @@ async function render() {
     map.on('click',e=>{view='inmuebles';render();openForm({latitud:e.latlng.lat.toFixed(6),longitud:e.latlng.lng.toFixed(6)});});
     return;
   }
-  $('title').textContent=names[view]; $('add').hidden=view==='dashboard';
-  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.view===view));
+  updateHeader();
   if(view==='dashboard') {
     const today = new Date().toLocaleDateString('en-CA');
     const pending=data.leads.filter(l=>l.fecha && l.fecha<today && !['ganado','perdido'].includes(l.estado));
