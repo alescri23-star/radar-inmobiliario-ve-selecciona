@@ -90,7 +90,9 @@ function filters(){
   });draw();
  }
 
- filterSpec.forEach(([k])=>$('f-'+k).onchange=choices);$('max').oninput=draw;$('currency').onchange=draw;choices();
+ filterSpec.forEach(([k])=>$('f-'+k).onchange=choices);$('max').oninput=draw;$('currency').onchange=draw;
+ $('clearFilters').onclick=()=>{filterSpec.forEach(([k])=>$('f-'+k).value='');$('max').value='';$('currency').value='';choices();};
+ choices();
 }
 function selectListing(id){
  activeListingId=id;
