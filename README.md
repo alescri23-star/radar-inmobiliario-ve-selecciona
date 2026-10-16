@@ -43,6 +43,8 @@ Indicadores de anuncios activos y leads, registro y edición internos, mapa, ref
 
 La portada del dashboard funciona como centro de control: separa venta y alquiler, muestra incidencias de ubicación y clasificación, resume la evaluación de profesionales y ofrece accesos directos al mapa, inventario, leads y altas manuales. Su cuadrícula se adapta a escritorio, tableta y móvil.
 
+Los seguimientos pueden registrarse manualmente desde el panel o llegar desde el formulario de consulta de la web. El servidor asigna el origen automáticamente como `manual` o `formulario`; el panel lo muestra mediante una etiqueta y permite filtrar por procedencia. El navegador no puede elegir ni falsificar esta clasificación.
+
 La investigación inicial del 15 de octubre de 2026 está documentada en `docs/candidatos-reformas-2026-10-15.json`. Sus registros son candidatos basados en información comercial pública y no constituyen empresas verificadas, recomendaciones ni proveedores autorizados.
 
 ## Archivos y datos

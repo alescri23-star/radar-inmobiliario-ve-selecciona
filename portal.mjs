@@ -55,7 +55,7 @@ export function portal(db,options={}) {
    if(!req.user){send(res,401,{error:'Regístrate o inicia sesión para pedir información'});return true;}
    try{const input=await body(req);if(input.consent!==true)throw Error('Acepta que te contactemos sobre esta consulta');if(!records('inmuebles').some(p=>p.id===input.inmuebleId&&p.estado==='activo'))throw Error('El anuncio no está disponible');
     const contact=String(input.contacto||'').trim();if(!contact||contact.length>200)throw Error('Indica un teléfono o email de contacto');
-    const r={id:randomBytes(16).toString('hex'),nombre:req.user.name,contacto:contact,inmuebleId:input.inmuebleId,estado:'nuevo',proximaAccion:String(input.mensaje||'Solicitud de información').slice(0,2000),fecha:'',userId:req.user.id,consent:true,creadoEn:new Date().toISOString()};db.prepare('INSERT INTO records VALUES(?,?,?)').run(r.id,'leads',JSON.stringify(r));send(res,201,{ok:true});
+     const r={id:randomBytes(16).toString('hex'),nombre:req.user.name,contacto:contact,inmuebleId:input.inmuebleId,estado:'nuevo',proximaAccion:String(input.mensaje||'Solicitud de información').slice(0,2000),fecha:'',origen:'formulario',userId:req.user.id,consent:true,creadoEn:new Date().toISOString()};db.prepare('INSERT INTO records VALUES(?,?,?)').run(r.id,'leads',JSON.stringify(r));send(res,201,{ok:true});
    }catch(e){send(res,400,{error:e.message});}return true;
   }
   if(req.user?.role!=='admin'){send(res,401,{error:'Acceso reservado al administrador'});return true;}

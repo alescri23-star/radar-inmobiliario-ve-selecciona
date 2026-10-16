@@ -9,9 +9,10 @@ const inventoryColumnFilters={property:'',operation:'',zone:'',price:'',location
 const $ = id => document.getElementById(id);
 const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const safeWebsite = value => /^https:\/\/[a-z0-9.-]+(?:[/:?#]|$)/i.test(String(value||'')) ? String(value) : '';
+const leadOrigin = record => record.origen==='formulario'||(!record.origen&&record.userId)?'formulario':'manual';
 const states = { inmuebles: ['borrador','activo','reservado','cerrado','archivado'], leads: ['nuevo','contactado','calificado','visita','negociacion','ganado','perdido'], reformas: ['detectada','evaluacion','presupuestada','aprobada','en ejecucion','completada','cancelada'], profesionales: ['candidato','contactado','documentación pendiente','evaluado','aprobado','descartado'] };
 const names = { fuentes:'Fuentes y capturas', mapa:'Mapa de oportunidades', dashboard:'Resumen operativo', inmuebles:'Inventario inmobiliario', leads:'Seguimientos', reformas:'Reformas', profesionales:'Red profesional' };
-const addLabels = { mapa:'+ Añadir inmueble', inmuebles:'+ Añadir inmueble', leads:'+ Añadir seguimiento', reformas:'+ Añadir reforma', profesionales:'+ Añadir profesional' };
+const addLabels = { mapa:'+ Añadir inmueble', inmuebles:'+ Añadir inmueble', leads:'+ Añadir lead manual', reformas:'+ Añadir reforma', profesionales:'+ Añadir profesional' };
 function updateHeader(){
   $('title').textContent=names[view];
   document.body.dataset.view=view;
@@ -75,11 +76,13 @@ async function render() {
     filterIds.forEach(id=>$(id)[id==='search'?'oninput':'onchange']=()=>{inventoryPage=1;rows();});
     $('clearInventoryFilters').onclick=()=>{filterIds.forEach(id=>$(id).value=id==='inventorySort'?'recent':'');inventoryPage=1;rows();};rows();return;
   }
-  $('content').innerHTML=professionalNote+'<div class="toolbar"><input id="search" aria-label="Buscar registros" placeholder="Buscar por nombre, zona o contacto…"><select id="status" aria-label="Filtrar por estado"><option value="">Todos los estados</option>'+states[view].map(s=>`<option>${s}</option>`).join('')+'</select></div><div class="panel tablewrap" id="rows"></div>';
-  $('search').oninput=rows; $('status').onchange=rows; rows();
+  const originFilter=view==='leads'?'<select id="leadOrigin" aria-label="Filtrar por origen"><option value="">Todos los orígenes</option><option value="manual">Manual</option><option value="formulario">Formulario</option></select>':'';
+  $('content').innerHTML=professionalNote+'<div class="toolbar"><input id="search" aria-label="Buscar registros" placeholder="Buscar por nombre, zona o contacto…"><select id="status" aria-label="Filtrar por estado"><option value="">Todos los estados</option>'+states[view].map(s=>`<option>${s}</option>`).join('')+'</select>'+originFilter+'</div><div class="panel tablewrap" id="rows"></div>';
+  $('search').oninput=rows; $('status').onchange=rows; if($('leadOrigin'))$('leadOrigin').onchange=rows; rows();
 }
 function rows() {
   const query=$('search').value.toLocaleLowerCase(); const type=$('propertyType')?.value||''; let filtered=data[view].filter(r=>(!type||(type==='Todos los terrenos'?r.tipo?.startsWith('Terreno'):r.tipo===type)) && JSON.stringify(r).toLocaleLowerCase().includes(query) && (!$('status').value || r.estado===$('status').value));
+  if(view==='leads'&&$('leadOrigin')?.value)filtered=filtered.filter(r=>leadOrigin(r)===$('leadOrigin').value);
   if(view==='inmuebles'){
    const operation=$('operation').value,municipality=$('municipalityFilter').value,zone=$('zoneFilter').value,locationState=$('locationState').value,sort=$('inventorySort').value;
    filtered=filtered.filter(r=>(!operation||r.operacion===operation)&&(!municipality||r.municipio===municipality)&&(!zone||r.zona===zone)&&(!locationState||(locationState==='located'?(r.latitud&&r.longitud):(!r.latitud||!r.longitud))));
@@ -97,7 +100,9 @@ function rows() {
    $('inventoryPrev').onclick=()=>{inventoryPage--;rows();$('rows').scrollIntoView({behavior:'smooth',block:'start'});};$('inventoryNext').onclick=()=>{inventoryPage++;rows();$('rows').scrollIntoView({behavior:'smooth',block:'start'});};
   }else if(view==='profesionales'){
    $('rows').innerHTML=filtered.length?`<table><thead><tr><th>Empresa o profesional</th><th>Servicios</th><th>Número de contacto</th><th>WhatsApp</th><th>Sitio web</th><th>Cobertura</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>${filtered.map(r=>{const website=safeWebsite(r.sitioWeb);return `<tr><td><strong>${escape(r.nombre)}</strong><br><small>${escape(r.tipoEmpresa||'Tipo pendiente')}</small>${r.fechaRevision?'<br><small>Revisión: '+escape(r.fechaRevision)+'</small>':''}</td><td>${escape(r.servicios||'Pendiente')}</td><td>${escape(r.contacto||'No publicado')}</td><td>${escape(r.whatsapp||'No confirmado')}</td><td>${website?`<a href="${escape(website)}" target="_blank" rel="noopener noreferrer">Abrir sitio ↗</a>`:'No publicado'}</td><td>${escape(r.cobertura||'Pendiente')}</td><td><span class="badge">${escape(r.estado)}</span></td><td><button data-edit="${r.id}">Abrir ficha</button></td></tr>`;}).join('')}</tbody></table>`:'<div class="empty">Aún no hay candidatos registrados. Usa «Nuevo registro» para crear la primera ficha.</div>';
-  }else{
+   }else if(view==='leads'){
+    $('rows').innerHTML=filtered.length?`<table><thead><tr><th>Lead</th><th>Origen</th><th>Inmueble</th><th>Contacto</th><th>Próxima acción</th><th>Fecha</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>${filtered.map(r=>`<tr><td><strong>${escape(r.nombre)}</strong></td><td><span class="origin-badge ${leadOrigin(r)}">${leadOrigin(r)==='formulario'?'Formulario':'Manual'}</span></td><td>${escape(data.inmuebles.find(p=>p.id===r.inmuebleId)?.titulo||'Sin vincular')}</td><td>${escape(r.contacto||'Sin contacto')}</td><td>${escape(r.proximaAccion||'Sin definir')}</td><td>${escape(r.fecha||'Sin fecha')}</td><td><span class="badge">${escape(r.estado)}</span></td><td><button data-edit="${r.id}">Abrir ficha</button></td></tr>`).join('')}</tbody></table>`:'<div class="empty">No hay seguimientos para mostrar. Añade un lead manual o ajusta los filtros.</div>';
+   }else{
    $('rows').innerHTML=filtered.length?`<table><thead><tr><th>Registro</th><th>${view==='inmuebles'?'Zona':'Inmueble'}</th><th>${view==='leads'?'Contacto':'Importe'}</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>${filtered.map(r=>`<tr><td>${view==='inmuebles'?listingPhoto(r):''}${escape(r.titulo||r.nombre)}${view==='inmuebles'?'<br><small>'+escape(r.tipo||'Sin tipo')+'</small>':''}</td><td>${escape(view==='inmuebles'?r.zona:data.inmuebles.find(p=>p.id===r.inmuebleId)?.titulo||'Sin vincular')}</td><td>${escape(view==='leads'?r.contacto:(r.precio||r.importe)?`${r.precio||r.importe} ${r.moneda}`:'Sin estimación')}</td><td><span class="badge">${escape(r.estado)}</span></td><td>${view==='inmuebles'?`<button data-gallery="${r.id}">Ver fotos</button> `:''}<button data-edit="${r.id}">Editar</button></td></tr>`).join('')}</tbody></table>`:'<div class="empty">No hay registros para mostrar. Añade el primero o ajusta los filtros.</div>';
   }
   photoFallback();
@@ -105,8 +110,9 @@ function rows() {
   document.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>openForm(data[view].find(r=>r.id===b.dataset.edit)));
 }
 function openForm(record=null) {
-  editing=record?.id ? record : null; $('formTitle').textContent=view==='profesionales'?(record?.id?'Ficha del profesional':'Nuevo profesional o empresa'):(record?.id?'Editar registro':'Nuevo registro'); $('formError').textContent='';
-  $('fields').innerHTML=[...fields[view],['estado','Estado',states[view]]].map(([key,label,type])=>{
+  editing=record?.id ? record : null; $('formTitle').textContent=view==='profesionales'?(record?.id?'Ficha del profesional':'Nuevo profesional o empresa'):view==='leads'?(record?.id?'Ficha del seguimiento':'Nuevo lead manual'):(record?.id?'Editar registro':'Nuevo registro'); $('formError').textContent='';
+  const originNote=view==='leads'?`<div class="lead-origin-note"><span>Origen</span><strong class="origin-badge ${record?leadOrigin(record):'manual'}">${record&&leadOrigin(record)==='formulario'?'Formulario':'Manual'}</strong><small>${record&&leadOrigin(record)==='formulario'?'Creado desde el formulario de la web.':'Creado desde el panel de administración.'}</small></div>`:'';
+  $('fields').innerHTML=originNote+[...fields[view],['estado','Estado',states[view]]].map(([key,label,type])=>{
     let control;
     if(type==='property') control=`<select name="${key}"><option value="">Sin vincular</option>${data.inmuebles.map(p=>`<option value="${p.id}" ${record?.[key]===p.id?'selected':''}>${escape(p.titulo)}</option>`).join('')}</select>`;
     else if(Array.isArray(type)) control=`<select name="${key}">${type.map(v=>`<option ${record?.[key]===v?'selected':''}>${escape(v)}</option>`).join('')}</select>`;

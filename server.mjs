@@ -48,7 +48,8 @@ export function createApp(directory = path.join(root, 'data'), options = {}) {
           if (record.inmuebleId && !list('inmuebles').some(p => p.id === record.inmuebleId)) return send(res, 400, { error: 'Inmueble no encontrado' });
           const previous = id ? list(kind).find(r => r.id === id) : null;
           if (id && !previous) return send(res, 404, { error: 'Registro no encontrado' });
-          Object.assign(record, previous ? Object.fromEntries(Object.entries(previous).filter(([k])=>!fields.includes(k))) : {});
+           Object.assign(record, previous ? Object.fromEntries(Object.entries(previous).filter(([k])=>!fields.includes(k))) : {});
+           if (kind === 'leads') record.origen = previous?.origen || (previous?.userId ? 'formulario' : 'manual');
           record.id = id || randomUUID(); record.creadoEn = previous?.creadoEn || new Date().toISOString(); record.actualizadoEn = new Date().toISOString();
           db.prepare('INSERT OR REPLACE INTO records VALUES (?, ?, ?)').run(record.id, kind, JSON.stringify(record));
           return send(res, id ? 200 : 201, record);

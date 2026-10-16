@@ -28,7 +28,7 @@ test('persistencia, edición, referencias y validación', async () => {
   assert.equal((await request('inmuebles',{...payload,longitud:''})).status,400);
   assert.equal((await request('inmuebles',payload,'POST',{Origin:'https://otro.example'})).status,403);
   assert.equal((await request('leads',{nombre:'Ana',estado:'nuevo',inmuebleId:'no-existe'})).status,400);
-  assert.equal((await request('leads',{nombre:'Ana',estado:'nuevo',inmuebleId:property.id})).status,201);
+  const manualLead=await request('leads',{nombre:'Ana',estado:'nuevo',inmuebleId:property.id});assert.equal(manualLead.status,201);assert.equal((await manualLead.json()).origen,'manual');
   assert.equal((await request('reformas',{titulo:'Cocina',estado:'detectada',inmuebleId:property.id,importe:'2000',moneda:'USD'})).status,201);
   const professional=await request('profesionales',{nombre:'Empresa candidata',tipoEmpresa:'Empresa de reformas',servicios:'Reforma integral',contacto:'contacto público',whatsapp:'WhatsApp público',sitioWeb:'https://example.test',cobertura:'Barquisimeto',fuente:'https://example.test',fechaRevision:'2026-10-15',estado:'candidato'});assert.equal(professional.status,201);
   assert.equal((await request('profesionales',{nombre:'Estado inválido',estado:'verificado'})).status,400);
@@ -43,7 +43,7 @@ test('persistencia, edición, referencias y validación', async () => {
   assert.equal((await fetch(base+'/api/profesionales',{headers:{Cookie:clientCookie}})).status,401);
   await request('inmuebles/'+property.id,payload,'PUT');
   const publicItems=await(await fetch(base+'/api/public/inmuebles',{headers:{Cookie:clientCookie}})).json();assert.equal(publicItems.length,1);assert.equal(publicItems[0].historial,undefined);
-  const inquiry=await fetch(base+'/api/inquiries',{method:'POST',headers:{Origin:base,'Content-Type':'application/json',Cookie:clientCookie},body:JSON.stringify({inmuebleId:property.id,contacto:'cliente@example.test',consent:true})});assert.equal(inquiry.status,201);
+  const inquiry=await fetch(base+'/api/inquiries',{method:'POST',headers:{Origin:base,'Content-Type':'application/json',Cookie:clientCookie},body:JSON.stringify({inmuebleId:property.id,contacto:'cliente@example.test',consent:true})});assert.equal(inquiry.status,201);const leads=await(await fetch(base+'/api/leads',{headers:{Cookie:cookie}})).json();assert.equal(leads.find(lead=>lead.userId)?.origen,'formulario');
   assert.equal((await fetch(base+'/api/setup',{method:'POST',headers:{Origin:base,'Content-Type':'application/json'},body:JSON.stringify({name:'Otro',email:'otro@example.test',password:'Otro-test-12345'})})).status,403);
   assert.equal((await fetch(base+'/api/leads',{headers:{Cookie:clientCookie}})).status,401);
   await request('inmuebles/'+property.id,payload,'PUT');
