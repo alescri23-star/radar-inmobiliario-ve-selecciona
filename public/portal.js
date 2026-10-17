@@ -3,6 +3,8 @@ function photoFallback(){document.querySelectorAll('.listing-photo').forEach(img
 const $=id=>document.getElementById(id);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let items=[],user=null,map=null,layer=null,mode='login',selected=null,markers=new Map(),activeListingId=null;
+let currentMatches=[],currentPage=1;
+const pageSize=25;
 async function api(url,input){const r=await fetch(url,input?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(input)}:{});const v=await r.json();if(!r.ok){if(r.status===401)lockRadar();throw Error(v.error);}return v;}
 let landLabels=new Map(),favoriteItems=new Map(),favoriteOnly=false,interestFilter='',operationView='venta';
 const interestLabels={unclassified:'Sin clasificar',green:'Verde · Muy interesante',orange:'Naranja · Interesante',yellow:'Amarillo · Más o menos interesante',red:'Rojo · Nada interesante'};
@@ -77,7 +79,7 @@ const territory={
 const propertyTypes=['Todos los terrenos','Apartamento','Casa','Terreno rústico','Terreno urbano','Terreno sin clasificar','Otro'];
 function updateAccount(){ $('account').textContent=user?'Cerrar sesión · '+user.name:'Registrarse / Entrar';$('adminLink').hidden=user?.role!=='admin'; }
 function filters(){
- $('filters').innerHTML='<label>Estado<select disabled><option>Lara</option></select></label><label>Ciudad<select disabled><option>Barquisimeto</option></select></label>'+filterSpec.map(([k,label])=>`<label>${label}<select id="f-${k}"><option value="">Todos</option></select></label>`).join('')+'<label>Precio máximo<input id="max" type="number" min="0" placeholder="Sin límite"></label><label>Moneda<select id="currency"><option value="">Todas</option><option>USD</option><option>VES</option></select></label>';
+ $('filters').innerHTML='<label class="lab-search">Buscar<input id="search" type="search" placeholder="Título, zona, referencia o fuente…" autocomplete="off"></label><label>Ordenar<select id="sort"><option value="updated-desc">Actualizados recientemente</option><option value="price-asc">Precio: menor primero</option><option value="price-desc">Precio: mayor primero</option><option value="sqm-asc">Precio/m²: menor primero</option></select></label><label>Estado<select disabled><option>Lara</option></select></label><label>Ciudad<select disabled><option>Barquisimeto</option></select></label>'+filterSpec.map(([k,label])=>`<label>${label}<select id="f-${k}"><option value="">Todos</option></select></label>`).join('')+'<label>Precio mínimo<input id="min" type="number" min="0" placeholder="Sin mínimo"></label><label>Precio máximo<input id="max" type="number" min="0" placeholder="Sin límite"></label><label>Moneda<select id="currency"><option value="">Todas</option><option>USD</option><option>VES</option></select></label>';
  function choices(){
   const municipality=$('f-municipio').value;
   filterSpec.forEach(([k])=>{const el=$('f-'+k),old=el.value;let vals;
@@ -87,31 +89,56 @@ function filters(){
    else vals=items.filter(p=>!municipality||!p.municipio||p.municipio===municipality).map(p=>p[k]).filter(Boolean);
    vals=[...new Set([...vals,...items.filter(p=>!municipality||p.municipio===municipality).map(p=>p[k]).filter(Boolean)])].sort((a,b)=>a.localeCompare(b,'es'));
    el.innerHTML='<option value="">Todos</option>'+vals.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');el.value=vals.includes(old)?old:'';
-  });draw();
+  });draw(true);
  }
 
- filterSpec.forEach(([k])=>$('f-'+k).onchange=choices);$('max').oninput=draw;$('currency').onchange=draw;
- $('clearFilters').onclick=()=>{filterSpec.forEach(([k])=>$('f-'+k).value='');$('max').value='';$('currency').value='';choices();};
+ filterSpec.forEach(([k])=>$('f-'+k).onchange=choices);
+ $('search').oninput=()=>draw(true);$('sort').onchange=()=>draw(true);$('min').oninput=()=>draw(true);$('max').oninput=()=>draw(true);$('currency').onchange=()=>draw(true);
+ $('clearFilters').onclick=()=>{filterSpec.forEach(([k])=>$('f-'+k).value='');$('search').value='';$('sort').value='updated-desc';$('min').value='';$('max').value='';$('currency').value='';choices();};
  choices();
 }
 function selectListing(id){
  activeListingId=id;
+ if(!document.querySelector(`[data-listing-id="${CSS.escape(id)}"]`)){
+  const index=currentMatches.findIndex(item=>item.id===id);
+  if(index>=0){currentPage=Math.floor(index/pageSize)+1;renderList();}
+ }
  document.querySelectorAll('[data-listing-id]').forEach(card=>{
   const active=card.dataset.listingId===id;card.classList.toggle('listing-selected',active);
-  if(active){card.setAttribute('aria-current','true');const list=$('listings');list.scrollTo({top:card.offsetTop,behavior:'smooth'});}
+  if(active){card.setAttribute('aria-current','true');card.scrollIntoView({behavior:'smooth',block:'nearest'});}
   else card.removeAttribute('aria-current');
  });
 }
-function draw(){
+const normalized=value=>String(value??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+function pricePerSquare(p){const price=Number(p.precio),area=Number(p.superficie);return price>0&&area>0?price/area:null;}
+function listingCard(p){
+ const unit=pricePerSquare(p);
+ return `<article class="listing" data-listing-id="${esc(p.id)}"><div class="listing-media">${listingPhoto(p)}</div><div class="listing-copy"><span class="badge">${esc(p.operacion)} · ${esc(p.tipo||'Inmueble')}</span><h2>${esc(p.titulo)}</h2><div class="listing-value"><strong class="listing-price">${p.precio!==''?esc(p.precio)+' '+esc(p.moneda):'Consultar precio'}</strong>${unit?`<small>${esc(Math.round(unit))} ${esc(p.moneda)}/m²</small>`:''}</div><p class="muted">${esc([p.zona,p.municipio].filter(Boolean).join(' · '))}</p><p>${esc([p.superficie?p.superficie+' m²':'',p.habitaciones?p.habitaciones+' habitaciones':'',p.banos?p.banos+' baños':''].filter(Boolean).join(' · '))}</p><p class="listing-description">${esc((p.descripcion||'').slice(0,170))}</p><div class="listing-actions"><button class="map-link" data-gallery="${p.id}">Ver fotos</button><div data-favorite-slot="${esc(p.id)}"></div>${p.latitud&&p.longitud?`<button class="map-link" data-map="${p.id}">Ver en mapa</button>`:''}</div><p class="muted location-note">${p.latitud&&p.longitud?(p.ubicacionPrecision==='verificada'?'Ubicación verificada':'Ubicación publicada · exactitud por confirmar'):'Ubicación pendiente'}</p>${/^https:\/\//.test(p.fuente)?`<a href="${esc(p.fuente)}" target="_blank" rel="noopener noreferrer">Anuncio original ↗</a>`:''}</div></article>`;
+}
+function renderList(){
+ const totalPages=Math.max(1,Math.ceil(currentMatches.length/pageSize));currentPage=Math.min(Math.max(1,currentPage),totalPages);
+ const start=(currentPage-1)*pageSize,pageItems=currentMatches.slice(start,start+pageSize);
+ $('listings').innerHTML=pageItems.length?pageItems.map(listingCard).join(''):'<div class="panel"><h2>No hay anuncios para esta selección</h2><p>Prueba a cambiar los filtros o el texto de búsqueda.</p></div>';
+ const pager=$('listPagination');
+ if(pager){pager.hidden=currentMatches.length<=pageSize;pager.innerHTML=`<button type="button" id="previousPage" ${currentPage===1?'disabled':''}>← Anterior</button><span>Página ${currentPage} de ${totalPages} · ${start+1}–${Math.min(start+pageSize,currentMatches.length)} de ${currentMatches.length}</span><button type="button" id="nextPage" ${currentPage===totalPages?'disabled':''}>Siguiente →</button>`;
+  $('previousPage').onclick=()=>{currentPage--;renderList();$('listings').scrollTo({top:0,behavior:'smooth'});};$('nextPage').onclick=()=>{currentPage++;renderList();$('listings').scrollTo({top:0,behavior:'smooth'});};
+ }
+ photoFallback();
+ document.querySelectorAll('[data-gallery]').forEach(b=>b.onclick=()=>RadarGallery.open(items.find(p=>p.id===b.dataset.gallery)));
+ document.querySelectorAll('[data-favorite-slot]').forEach(slot=>slot.append(favoriteControls(items.find(p=>p.id===slot.dataset.favoriteSlot))));
+ document.querySelectorAll('[data-map]').forEach(button=>button.onclick=()=>{const entry=markers.get(button.dataset.map);if(entry){map.setView(entry.marker.getLatLng(),16);entry.open();}});
+ if(activeListingId)selectListing(activeListingId);
+}
+function draw(resetPage=false){
  activeListingId=null;
+ if(resetPage)currentPage=1;
  updateLaboratoryTabs();
- const matches=items.filter(p=>(!operationView||p.operacion===operationView)&&(!favoriteOnly||(favoriteItems.has(p.id)&&(!interestFilter||favoriteItems.get(p.id)===interestFilter)))&&filterSpec.every(([k])=>!$('f-'+k).value||(k==='tipo'&&$('f-'+k).value==='Todos los terrenos'?p.tipo?.startsWith('Terreno'):p[k]===$('f-'+k).value))&&(!$('currency').value||p.moneda===$('currency').value)&&(!$('max').value||p.precio!==''&&Number(p.precio)<=Number($('max').value)));
+ const query=normalized($('search')?.value),minimum=Number($('min')?.value||0),maximum=Number($('max')?.value||0);
+ const matches=items.filter(p=>(!operationView||p.operacion===operationView)&&(!favoriteOnly||(favoriteItems.has(p.id)&&(!interestFilter||favoriteItems.get(p.id)===interestFilter)))&&filterSpec.every(([k])=>!$('f-'+k).value||(k==='tipo'&&$('f-'+k).value==='Todos los terrenos'?p.tipo?.startsWith('Terreno'):p[k]===$('f-'+k).value))&&(!$('currency').value||p.moneda===$('currency').value)&&(!minimum||p.precio!==''&&Number(p.precio)>=minimum)&&(!maximum||p.precio!==''&&Number(p.precio)<=maximum)&&(!query||normalized([p.titulo,p.zona,p.municipio,p.parroquia,p.calle,p.tipo,p.fuente].join(' ')).includes(query)));
+ const sort=$('sort')?.value||'updated-desc';matches.sort((a,b)=>sort==='price-asc'?(Number(a.precio)||Infinity)-(Number(b.precio)||Infinity):sort==='price-desc'?(Number(b.precio)||-Infinity)-(Number(a.precio)||-Infinity):sort==='sqm-asc'?(pricePerSquare(a)??Infinity)-(pricePerSquare(b)??Infinity):String(b.actualizadoEn||'').localeCompare(String(a.actualizadoEn||'')));
+ currentMatches=matches;renderList();
  const operationText=operationView?' en '+operationView:'';
  $('count').textContent=matches.length+' anuncios'+operationText+' · '+matches.filter(p=>!p.latitud||!p.longitud).length+' sin coordenadas · Ubicaciones publicadas: exactitud por confirmar';
- $('listings').innerHTML=matches.length?matches.map(p=>`<article class="listing" data-listing-id="${esc(p.id)}">${listingPhoto(p)}<span class="badge">${esc(p.operacion)} · ${esc(p.tipo||'Inmueble')}</span><h2>${esc(p.titulo)}</h2><strong class="listing-price">${p.precio!==''?esc(p.precio)+' '+esc(p.moneda):'Consultar precio'}</strong><p class="muted">${esc([p.zona,p.municipio].filter(Boolean).join(' · '))}</p><p>${esc([p.superficie?p.superficie+' m²':'',p.habitaciones?p.habitaciones+' habitaciones':'',p.banos?p.banos+' baños':''].filter(Boolean).join(' · '))}</p><p>${esc((p.descripcion||'').slice(0,230))}</p><button class="map-link" data-gallery="${p.id}">Ver fotos</button> <div data-favorite-slot="${esc(p.id)}"></div> ${p.latitud&&p.longitud?`<button class="map-link" data-map="${p.id}">Ver en mapa</button>`:''}<p class="muted location-note">${p.latitud&&p.longitud?(p.ubicacionPrecision==='verificada'?'Ubicación verificada':'Ubicación publicada · exactitud por confirmar'):'Ubicación pendiente'}</p> ${/^https:\/\//.test(p.fuente)?`<a href="${esc(p.fuente)}" target="_blank" rel="noopener noreferrer">Anuncio original ↗</a>`:''}</article>`).join(''):'<div class="panel"><h2>No hay anuncios para esta selección</h2><p>Todavía no tenemos anuncios clasificados para esta combinación. Prueba otro municipio, parroquia, sector o tipo.</p></div>';
- photoFallback();
- document.querySelectorAll("[data-gallery]").forEach(b=>b.onclick=()=>RadarGallery.open(items.find(p=>p.id===b.dataset.gallery)));
- document.querySelectorAll('[data-favorite-slot]').forEach(slot=>slot.append(favoriteControls(items.find(p=>p.id===slot.dataset.favoriteSlot))));
  if(map){
   layer.clearLayers();markers.clear();const groups=new Map(),points=[];
   matches.filter(p=>p.latitud!==''&&p.latitud!==undefined&&p.longitud!==''&&p.longitud!==undefined).forEach(p=>{const key=Number(p.latitud).toFixed(6)+','+Number(p.longitud).toFixed(6);if(!groups.has(key))groups.set(key,[]);groups.get(key).push(p);});
