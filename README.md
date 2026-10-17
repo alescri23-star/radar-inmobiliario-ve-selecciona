@@ -75,6 +75,10 @@ Verificación de ubicaciones publicadas, geocodificación de pendientes y catál
 Repositorio principal: alescri23-star/radar-inmobiliario-ve-selecciona.
 Repositorio estratégico: alescri23-star/radar-venezuela-20268-2030, sin modificaciones.
 
+## Web pública en WordPress
+
+`wordpress/` contiene un tema propio y un complemento instalable para la futura web pública en Hostinger. Incluye portada responsive, catálogo de inmuebles publicados, filtros, fichas y captación privada de solicitudes. No conecta ni publica automáticamente los datos internos del laboratorio. Consulta `wordpress/README.md` para la instalación y las comprobaciones pendientes antes de abrir la web al público.
+
 Catálogo territorial inicial: https://es.wikipedia.org/wiki/Anexo:Parroquias_del_estado_Lara (nombres administrativos, cotejo del piloto Iribarren con https://mail.contraloriadebarquisimeto.gob.ve/index.php/la-institucion/resena-historica). Pendiente validar límites y clasificación de cada anuncio; este catálogo no amplía el alcance de los capturadores.
 
 Acceso al radar: sin sesión se muestra únicamente la pantalla de entrada; la API de consulta de anuncios exige autenticación. Al salir, se invalida la sesión en el servidor, se borran anuncios y marcadores de la pantalla y se notifica el cierre a otras pestañas del mismo origen. La sesión se vuelve a comprobar al regresar a la pestaña y cada 30 segundos. El registro de clientes sigue disponible; el panel de administración continúa reservado al administrador.
