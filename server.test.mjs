@@ -28,7 +28,7 @@ test('persistencia, edición, referencias y validación', async () => {
   assert.equal((await request('inmuebles',{...payload,longitud:''})).status,400);
   assert.equal((await request('inmuebles',payload,'POST',{Origin:'https://otro.example'})).status,403);
   assert.equal((await request('leads',{nombre:'Ana',estado:'nuevo',inmuebleId:'no-existe'})).status,400);
-  const manualLead=await request('leads',{nombre:'Ana',estado:'nuevo',inmuebleId:property.id});assert.equal(manualLead.status,201);assert.equal((await manualLead.json()).origen,'manual');
+  const manualLead=await request('leads',{nombre:'Ana',contacto:'ana@example.test',telefono:'+58 412 000 0000',whatsapp:'584120000000',estado:'nuevo',interes:'alto',inmuebleId:property.id,proximaAccion:'Llamar',fecha:'2026-10-20',ultimaActividad:'2026-10-18',responsable:'Equipo Radar',notas:'Prefiere contacto por WhatsApp'});assert.equal(manualLead.status,201);const savedLead=await manualLead.json();assert.equal(savedLead.origen,'manual');assert.equal(savedLead.interes,'alto');assert.equal(savedLead.whatsapp,'584120000000');assert.equal(savedLead.responsable,'Equipo Radar');
   assert.equal((await request('reformas',{titulo:'Cocina',estado:'detectada',inmuebleId:property.id,importe:'2000',moneda:'USD'})).status,201);
   const professional=await request('profesionales',{nombre:'Empresa candidata',tipoEmpresa:'Empresa de reformas',servicios:'Reforma integral',contacto:'contacto público',whatsapp:'WhatsApp público',sitioWeb:'https://example.test',cobertura:'Barquisimeto',fuente:'https://example.test',fechaRevision:'2026-10-15',estado:'candidato'});assert.equal(professional.status,201);
   assert.equal((await request('profesionales',{nombre:'Estado inválido',estado:'verificado'})).status,400);

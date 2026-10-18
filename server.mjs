@@ -29,7 +29,7 @@ export function createApp(directory = path.join(root, 'data'), options = {}) {
         if (req.method === 'POST' && !id || req.method === 'PUT' && id) {
           let body = ''; for await (const chunk of req) { body += chunk; if (body.length > 32768) return send(res, 413, { error: 'Registro demasiado grande' }); }
           let input; try { input = JSON.parse(body); } catch { return send(res, 400, { error: 'JSON inválido' }); }
-          const fields = kind === 'inmuebles' ? ['titulo', 'zona', 'operacion', 'precio', 'moneda', 'fuente', 'estado', 'latitud', 'longitud', 'direccion', 'municipio', 'parroquia', 'calle', 'tipo', 'habitaciones', 'banos', 'superficie', 'ubicacionPrecision'] : kind === 'leads' ? ['nombre', 'contacto', 'inmuebleId', 'estado', 'proximaAccion', 'fecha'] : kind === 'reformas' ? ['titulo', 'inmuebleId', 'importe', 'moneda', 'estado'] : ['nombre', 'tipoEmpresa', 'servicios', 'contacto', 'whatsapp', 'sitioWeb', 'direccion', 'cobertura', 'rif', 'responsableTecnico', 'fuente', 'observaciones', 'fechaRevision', 'estado'];
+          const fields = kind === 'inmuebles' ? ['titulo', 'zona', 'operacion', 'precio', 'moneda', 'fuente', 'estado', 'latitud', 'longitud', 'direccion', 'municipio', 'parroquia', 'calle', 'tipo', 'habitaciones', 'banos', 'superficie', 'ubicacionPrecision'] : kind === 'leads' ? ['nombre', 'contacto', 'telefono', 'whatsapp', 'inmuebleId', 'interes', 'estado', 'proximaAccion', 'fecha', 'ultimaActividad', 'responsable', 'notas'] : kind === 'reformas' ? ['titulo', 'inmuebleId', 'importe', 'moneda', 'estado'] : ['nombre', 'tipoEmpresa', 'servicios', 'contacto', 'whatsapp', 'sitioWeb', 'direccion', 'cobertura', 'rif', 'responsableTecnico', 'fuente', 'observaciones', 'fechaRevision', 'estado'];
           const record = Object.fromEntries(fields.map(f => [f, String(input?.[f] ?? '').trim()]));
           if (!(record.titulo || record.nombre)) return send(res, 400, { error: 'Falta el título o nombre' });
           if (Object.values(record).some(v => v.length > 2000)) return send(res, 400, { error: 'Campo demasiado largo' });
@@ -37,6 +37,7 @@ export function createApp(directory = path.join(root, 'data'), options = {}) {
           if (!states[kind].includes(record.estado)) return send(res, 400, { error: 'Estado inválido' });
           if (kind === 'inmuebles' && !['venta','alquiler'].includes(record.operacion)) return send(res, 400, { error: 'Operación inválida' });
           if (record.moneda && !['USD','VES'].includes(record.moneda)) return send(res, 400, { error: 'Moneda inválida' });
+          if (kind === 'leads' && record.interes && !['alto','medio','bajo'].includes(record.interes)) return send(res, 400, { error: 'Nivel de interés inválido' });
           if (kind === 'inmuebles') {
             if (record.ubicacionPrecision && !['publicada','aproximada','verificada'].includes(record.ubicacionPrecision)) return send(res, 400, { error: 'Precisión de ubicación inválida' });
             const hasLat = record.latitud !== '', hasLng = record.longitud !== '';
@@ -44,7 +45,7 @@ export function createApp(directory = path.join(root, 'data'), options = {}) {
           }
           const amount = kind === 'inmuebles' ? 'precio' : 'importe';
           if (record[amount] !== undefined && record[amount] !== '' && (!Number.isFinite(Number(record[amount])) || Number(record[amount]) < 0)) return send(res, 400, { error: 'Importe inválido' });
-          if ((record.fecha || record.fechaRevision) && !/^\d{4}-\d{2}-\d{2}$/.test(record.fecha || record.fechaRevision)) return send(res, 400, { error: 'Fecha inválida' });
+          if ([record.fecha, record.fechaRevision, record.ultimaActividad].filter(Boolean).some(value=>!/^\d{4}-\d{2}-\d{2}$/.test(value))) return send(res, 400, { error: 'Fecha inválida' });
           if (record.inmuebleId && !list('inmuebles').some(p => p.id === record.inmuebleId)) return send(res, 400, { error: 'Inmueble no encontrado' });
           const previous = id ? list(kind).find(r => r.id === id) : null;
           if (id && !previous) return send(res, 404, { error: 'Registro no encontrado' });
