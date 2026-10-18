@@ -12,6 +12,9 @@ test('persistencia, edición, referencias y validación', async () => {
  let server=createApp(dir);
  const start=async()=>{await new Promise(r=>server.listen(0,'127.0.0.1',r));return `http://127.0.0.1:${server.address().port}`;};
  let base=await start();
+ const professionalApplication={nombre:'Reformas Lara',personaContacto:'María Pérez',email:'maria@example.test',contacto:'+58 412 123 4567',whatsapp:'+58 412 123 4567',tipoEmpresa:'Empresa de reformas',servicios:'Reformas residenciales',cobertura:'Barquisimeto',experiencia:'8 años',sitioWeb:'https://example.test',consent:true};
+ assert.equal((await fetch(base+'/api/professional-applications',{method:'POST',headers:{Origin:base,'Content-Type':'application/json'},body:JSON.stringify({...professionalApplication,consent:false})})).status,400);
+ assert.equal((await fetch(base+'/api/professional-applications',{method:'POST',headers:{Origin:base,'Content-Type':'application/json'},body:JSON.stringify(professionalApplication)})).status,201);
  assert.equal((await fetch(base+'/api/leads')).status,401);
  const setup=await fetch(base+'/api/login',{method:'POST',headers:{Origin:base,'Content-Type':'application/json'},body:JSON.stringify({name:'Administrador',email:'admin@example.test',password:'Radar-test-12345'})});assert.equal(setup.status,200);const cookie=setup.headers.get('set-cookie').split(';')[0];
  assert.equal((await fetch(base+'/api/leads')).status,401);
@@ -35,7 +38,7 @@ test('persistencia, edición, referencias y validación', async () => {
   assert.equal((await request('inmuebles/'+property.id,{...payload,estado:'reservado'},'PUT')).status,200);
   await new Promise(r=>server.close(r));server=createApp(dir);base=await start();
   const restored=await(await fetch(base+'/api/inmuebles',{headers:{Cookie:cookie}})).json();assert.equal(restored.length,1);assert.equal(restored[0].estado,'reservado');assert.equal(restored[0].latitud,'10.067');assert.equal(restored[0].longitud,'-69.347');assert.equal(restored[0].latitud,'10.067');assert.equal(restored[0].longitud,'-69.347');
-  const professionals=await(await fetch(base+'/api/profesionales',{headers:{Cookie:cookie}})).json();assert.equal(professionals.length,1);assert.equal(professionals[0].nombre,'Empresa candidata');assert.equal(professionals[0].whatsapp,'WhatsApp público');
+  const professionals=await(await fetch(base+'/api/profesionales',{headers:{Cookie:cookie}})).json();assert.equal(professionals.length,2);assert.equal(professionals.find(item=>item.nombre==='Empresa candidata').whatsapp,'WhatsApp público');const application=professionals.find(item=>item.nombre==='Reformas Lara');assert.equal(application.origen,'formulario');assert.equal(application.estado,'candidato');assert.equal(application.email,'maria@example.test');
   assert.equal((await fetch(base+'/')).status,200);
   assert.equal((await fetch(base+'/server.mjs')).status,404);
   const customer=await fetch(base+'/api/register',{method:'POST',headers:{Origin:base,'Content-Type':'application/json'},body:JSON.stringify({name:'Cliente',email:'cliente@example.test',password:'Cliente-test-12345'})});assert.equal(customer.status,200);const clientCookie=customer.headers.get('set-cookie').split(';')[0];

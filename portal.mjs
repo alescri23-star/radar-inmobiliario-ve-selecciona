@@ -17,6 +17,7 @@ export function portal(db,options={}) {
  const body=async req=>{let text='';for await(const chunk of req){text+=chunk;if(text.length>32768)throw Error('Solicitud demasiado grande');}return JSON.parse(text||'{}');};
  const records=kind=>db.prepare('SELECT body FROM records WHERE kind=?').all(kind).map(r=>classifyLand(JSON.parse(r.body)));
  const attempts=new Map();
+ const professionalAttempts=new Map();
  const session=req=>{const token=req.headers.cookie?.match(/(?:^|;\s*)radar_session=([a-f0-9]+)/)?.[1];return token?db.prepare('SELECT users.id, email, name, role FROM sessions JOIN users ON users.id=sessions.user_id WHERE token=? AND expires>?').get(hash(token),Date.now()):null;};
  return async(req,res,url)=>{
   req.user=session(req);
@@ -56,6 +57,26 @@ export function portal(db,options={}) {
    try{const input=await body(req);if(input.consent!==true)throw Error('Acepta que te contactemos sobre esta consulta');if(!records('inmuebles').some(p=>p.id===input.inmuebleId&&p.estado==='activo'))throw Error('El anuncio no está disponible');
     const contact=String(input.contacto||'').trim();if(!contact||contact.length>200)throw Error('Indica un teléfono o email de contacto');
      const r={id:randomBytes(16).toString('hex'),nombre:req.user.name,contacto:contact,inmuebleId:input.inmuebleId,estado:'nuevo',proximaAccion:String(input.mensaje||'Solicitud de información').slice(0,2000),fecha:'',origen:'formulario',userId:req.user.id,consent:true,creadoEn:new Date().toISOString()};db.prepare('INSERT INTO records VALUES(?,?,?)').run(r.id,'leads',JSON.stringify(r));send(res,201,{ok:true});
+   }catch(e){send(res,400,{error:e.message});}return true;
+  }
+  if(url.pathname==='/api/professional-applications' && req.method==='POST'){
+   try{
+    const address=req.socket.remoteAddress||'unknown',now=Date.now(),entry=professionalAttempts.get(address)||{count:0,until:now+900000};
+    if(entry.until<now){entry.count=0;entry.until=now+900000;}
+    if(++entry.count>5){send(res,429,{error:'Demasiados envíos. Espera unos minutos antes de intentarlo de nuevo.'});return true;}professionalAttempts.set(address,entry);
+    const input=await body(req);
+    if(String(input.websiteConfirm||'').trim()){send(res,201,{ok:true});return true;}
+    if(input.consent!==true)throw Error('Debes aceptar el tratamiento de tus datos para enviar la solicitud');
+    const clean=(key,max=200)=>String(input[key]||'').trim().slice(0,max);
+    const nombre=clean('nombre',120),personaContacto=clean('personaContacto',120),email=clean('email',200).toLowerCase(),contacto=clean('contacto',80),whatsapp=clean('whatsapp',80),tipoEmpresa=clean('tipoEmpresa',80),servicios=clean('servicios',2000),cobertura=clean('cobertura',300),experiencia=clean('experiencia',300),sitioWeb=clean('sitioWeb',500),observaciones=clean('observaciones',2000);
+    if(!nombre||!personaContacto||!email||!contacto||!servicios||!cobertura)throw Error('Completa todos los campos obligatorios');
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))throw Error('Indica un correo electrónico válido');
+    const phoneDigits=contacto.replace(/\D/g,'');if(phoneDigits.length<10||phoneDigits.length>15)throw Error('Indica un teléfono válido con prefijo');
+    const allowedTypes=['Empresa de reformas','Constructora','Arquitectura y diseño','Profesional independiente','Proveedor especializado','Otro'];if(!allowedTypes.includes(tipoEmpresa))throw Error('Selecciona un tipo de profesional válido');
+    if(sitioWeb&&!/^https:\/\/[a-z0-9.-]+(?:[\/:?#]|$)/i.test(sitioWeb))throw Error('El sitio web debe comenzar por https://');
+    const duplicate=records('profesionales').some(item=>item.email===email&&now-Date.parse(item.creadoEn||0)<86400000);if(duplicate)throw Error('Ya recibimos una solicitud reciente con este correo');
+    const record={id:randomBytes(16).toString('hex'),nombre,personaContacto,email,tipoEmpresa,servicios,contacto,whatsapp,sitioWeb,direccion:'',cobertura,experiencia,rif:'',responsableTecnico:'',fuente:'Formulario público',observaciones,fechaRevision:new Date().toLocaleDateString('en-CA'),estado:'candidato',origen:'formulario',consent:true,creadoEn:new Date().toISOString(),actualizadoEn:new Date().toISOString()};
+    db.prepare('INSERT INTO records VALUES(?,?,?)').run(record.id,'profesionales',JSON.stringify(record));send(res,201,{ok:true,message:'Solicitud recibida. Revisaremos la información antes de contactar contigo.'});
    }catch(e){send(res,400,{error:e.message});}return true;
   }
   if(req.user?.role!=='admin'){send(res,401,{error:'Acceso reservado al administrador'});return true;}

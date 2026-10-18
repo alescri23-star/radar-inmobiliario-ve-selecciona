@@ -29,7 +29,7 @@ export function createApp(directory = path.join(root, 'data'), options = {}) {
         if (req.method === 'POST' && !id || req.method === 'PUT' && id) {
           let body = ''; for await (const chunk of req) { body += chunk; if (body.length > 32768) return send(res, 413, { error: 'Registro demasiado grande' }); }
           let input; try { input = JSON.parse(body); } catch { return send(res, 400, { error: 'JSON inválido' }); }
-          const fields = kind === 'inmuebles' ? ['titulo', 'zona', 'operacion', 'precio', 'moneda', 'fuente', 'estado', 'latitud', 'longitud', 'direccion', 'municipio', 'parroquia', 'calle', 'tipo', 'habitaciones', 'banos', 'superficie', 'ubicacionPrecision'] : kind === 'leads' ? ['nombre', 'contacto', 'telefono', 'whatsapp', 'inmuebleId', 'interes', 'estado', 'proximaAccion', 'fecha', 'ultimaActividad', 'responsable', 'notas'] : kind === 'reformas' ? ['titulo', 'inmuebleId', 'importe', 'moneda', 'estado'] : ['nombre', 'tipoEmpresa', 'servicios', 'contacto', 'whatsapp', 'sitioWeb', 'direccion', 'cobertura', 'rif', 'responsableTecnico', 'fuente', 'observaciones', 'fechaRevision', 'estado'];
+          const fields = kind === 'inmuebles' ? ['titulo', 'zona', 'operacion', 'precio', 'moneda', 'fuente', 'estado', 'latitud', 'longitud', 'direccion', 'municipio', 'parroquia', 'calle', 'tipo', 'habitaciones', 'banos', 'superficie', 'ubicacionPrecision'] : kind === 'leads' ? ['nombre', 'contacto', 'telefono', 'whatsapp', 'inmuebleId', 'interes', 'estado', 'proximaAccion', 'fecha', 'ultimaActividad', 'responsable', 'notas'] : kind === 'reformas' ? ['titulo', 'inmuebleId', 'importe', 'moneda', 'estado'] : ['nombre', 'personaContacto', 'email', 'tipoEmpresa', 'servicios', 'contacto', 'whatsapp', 'sitioWeb', 'direccion', 'cobertura', 'experiencia', 'rif', 'responsableTecnico', 'fuente', 'observaciones', 'fechaRevision', 'estado'];
           const record = Object.fromEntries(fields.map(f => [f, String(input?.[f] ?? '').trim()]));
           if (!(record.titulo || record.nombre)) return send(res, 400, { error: 'Falta el título o nombre' });
           if (Object.values(record).some(v => v.length > 2000)) return send(res, 400, { error: 'Campo demasiado largo' });
@@ -51,13 +51,14 @@ export function createApp(directory = path.join(root, 'data'), options = {}) {
           if (id && !previous) return send(res, 404, { error: 'Registro no encontrado' });
            Object.assign(record, previous ? Object.fromEntries(Object.entries(previous).filter(([k])=>!fields.includes(k))) : {});
            if (kind === 'leads') record.origen = previous?.origen || (previous?.userId ? 'formulario' : 'manual');
+           if (kind === 'profesionales') record.origen = previous?.origen || 'manual';
           record.id = id || randomUUID(); record.creadoEn = previous?.creadoEn || new Date().toISOString(); record.actualizadoEn = new Date().toISOString();
           db.prepare('INSERT OR REPLACE INTO records VALUES (?, ?, ?)').run(record.id, kind, JSON.stringify(record));
           return send(res, id ? 200 : 201, record);
         }
         return send(res, 405, { error: 'Método no permitido' });
       }
-      const files = { '/gallery.js':['gallery.js','text/javascript'], '/favicon.svg': ['favicon.svg','image/svg+xml'], '/logo-radar.svg': ['logo-radar.svg','image/svg+xml'], '/': ['portal.html','text/html'], '/admin': ['index.html','text/html'], '/portal.js': ['portal.js','text/javascript'], '/app.js': ['app.js','text/javascript'], '/style.css': ['style.css','text/css'] };
+      const files = { '/gallery.js':['gallery.js','text/javascript'], '/favicon.svg': ['favicon.svg','image/svg+xml'], '/logo-radar.svg': ['logo-radar.svg','image/svg+xml'], '/': ['portal.html','text/html'], '/red-profesional': ['professional-form.html','text/html'], '/professional-form.js': ['professional-form.js','text/javascript'], '/admin': ['index.html','text/html'], '/portal.js': ['portal.js','text/javascript'], '/app.js': ['app.js','text/javascript'], '/style.css': ['style.css','text/css'] };
       if (!files[url.pathname] || req.method !== 'GET') return send(res, 404, { error: 'Página no encontrada' });
       const [file, type] = files[url.pathname];
       res.writeHead(200, { 'Content-Type': `${type}; charset=utf-8`, 'Content-Security-Policy': "default-src 'self'; style-src 'self' 'unsafe-inline' https://unpkg.com; script-src 'self' https://unpkg.com; img-src 'self' https://cdn.remax.com.ve https://cdn.photos.sparkplatform.com data: https://tile.openstreetmap.org https://unpkg.com; frame-ancestors 'none'", 'X-Content-Type-Options': 'nosniff' });
