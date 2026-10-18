@@ -1,0 +1,65 @@
+<!-- Radar Venezuela · Pegar completo en un bloque «HTML personalizado» de WordPress -->
+<section class="rv-professional-form" aria-labelledby="rv-form-title">
+  <div class="rv-form-intro">
+    <p class="rv-eyebrow">RED PROFESIONAL · BARQUISIMETO</p>
+    <h2 id="rv-form-title">Trabaja con Radar Venezuela</h2>
+    <p>Buscamos empresas de reformas, constructoras, arquitectos y profesionales especializados para evaluar futuras colaboraciones en Lara.</p>
+    <ol>
+      <li><b>1</b><span>Envía tu perfil</span></li>
+      <li><b>2</b><span>Revisamos la información</span></li>
+      <li><b>3</b><span>Contactamos a los candidatos</span></li>
+    </ol>
+    <aside><strong>Solicitud de evaluación</strong><span>El envío no implica aprobación, contratación ni publicación automática.</span></aside>
+  </div>
+
+  <div class="rv-form-card">
+    <header><p class="rv-eyebrow">SOLICITUD PROFESIONAL</p><h3>Cuéntanos sobre tu trabajo</h3><small>Los campos con * son obligatorios.</small></header>
+    <form id="rv-professional-application">
+      <div class="rv-fields">
+        <label>Empresa o nombre profesional *<input name="nombre" maxlength="120" required autocomplete="organization"></label>
+        <label>Persona de contacto *<input name="personaContacto" maxlength="120" required autocomplete="name"></label>
+        <label>Correo electrónico *<input name="email" type="email" maxlength="200" required autocomplete="email"></label>
+        <label>Teléfono con prefijo *<input name="contacto" type="tel" maxlength="80" required autocomplete="tel" placeholder="Ej. +58 412 123 4567"></label>
+        <label>WhatsApp<input name="whatsapp" type="tel" maxlength="80" autocomplete="tel" placeholder="Si es distinto del teléfono"></label>
+        <label>Tipo de profesional *<select name="tipoEmpresa" required><option value="">Selecciona una opción</option><option>Empresa de reformas</option><option>Constructora</option><option>Arquitectura y diseño</option><option>Profesional independiente</option><option>Proveedor especializado</option><option>Otro</option></select></label>
+        <label class="rv-wide">Servicios ofrecidos *<textarea name="servicios" maxlength="2000" rows="4" required placeholder="Describe los trabajos que realizas"></textarea></label>
+        <label>Zona de cobertura *<input name="cobertura" maxlength="300" required placeholder="Ej. Barquisimeto y Cabudare"></label>
+        <label>Experiencia declarada<input name="experiencia" maxlength="300" placeholder="Ej. 8 años en reformas residenciales"></label>
+        <label class="rv-wide">Sitio web o portafolio<input name="sitioWeb" type="url" maxlength="500" placeholder="https://..."></label>
+        <label class="rv-wide">Información adicional<textarea name="observaciones" maxlength="2000" rows="3" placeholder="Especialidades, referencias o disponibilidad"></textarea></label>
+        <label class="rv-trap" aria-hidden="true">No completar<input name="websiteConfirm" tabindex="-1" autocomplete="off"></label>
+      </div>
+      <label class="rv-consent"><input name="consent" type="checkbox" required><span>Acepto que Radar Venezuela guarde estos datos para evaluar mi solicitud y contactarme.</span></label>
+      <p class="rv-privacy">No envíes documentos de identidad, datos bancarios ni información sensible.</p>
+      <p id="rv-form-message" class="rv-message" role="status"></p>
+      <button id="rv-form-submit" type="submit">Enviar solicitud</button>
+    </form>
+    <div id="rv-form-success" class="rv-success" hidden><b>✓</b><h3>Solicitud recibida</h3><p>Tu perfil se ha añadido como candidato para revisión.</p></div>
+  </div>
+</section>
+
+<style>
+.rv-professional-form{--rv-blue:#153f72;--rv-yellow:#eac23c;box-sizing:border-box;display:grid;grid-template-columns:minmax(280px,.8fr) minmax(520px,1.2fr);gap:42px;max-width:1280px;margin:0 auto;padding:55px 28px 75px;color:#122b4a;font-family:Inter,system-ui,sans-serif}.rv-professional-form *{box-sizing:border-box}.rv-form-intro{padding:30px 8px}.rv-eyebrow{margin:0;color:#667c94;font-size:11px;font-weight:800;letter-spacing:2px}.rv-form-intro h2{margin:12px 0 20px;color:#0e3157;font-size:clamp(38px,5vw,62px);line-height:1;letter-spacing:-2px}.rv-form-intro>p:not(.rv-eyebrow){color:#526b85;font-size:18px;line-height:1.6}.rv-form-intro ol{display:grid;gap:12px;margin:32px 0;padding:0;list-style:none}.rv-form-intro li{display:flex;align-items:center;gap:13px;font-weight:750}.rv-form-intro li b{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--rv-blue);color:#fff}.rv-form-intro aside{display:grid;gap:5px;padding:19px;border-left:4px solid var(--rv-yellow);border-radius:0 12px 12px 0;background:#fff}.rv-form-intro aside span{color:#65788d;font-size:13px}.rv-form-card{padding:30px;border:1px solid #dce4ed;border-radius:22px;background:#fff;box-shadow:0 22px 55px rgba(18,47,82,.1)}.rv-form-card>header{padding-bottom:18px;border-bottom:1px solid #e7ecf2}.rv-form-card h3{margin:5px 0;color:#14395f;font-size:27px}.rv-form-card header small{color:#748399}.rv-fields{display:grid;grid-template-columns:1fr 1fr;gap:16px 14px;padding:23px 0 17px}.rv-fields label{margin:0;color:#4f647c;font-size:12px;font-weight:800}.rv-fields input,.rv-fields select,.rv-fields textarea{width:100%;margin-top:7px;padding:11px;border:1px solid #ccd8e5;border-radius:10px;background:#fbfcfe;color:#172d4b;font:inherit}.rv-fields input,.rv-fields select{min-height:45px}.rv-fields textarea{resize:vertical}.rv-fields input:focus,.rv-fields select:focus,.rv-fields textarea:focus{outline:3px solid rgba(234,194,60,.28);border-color:#bd9410}.rv-wide{grid-column:1/-1}.rv-trap{position:absolute;left:-9999px}.rv-consent{display:flex;align-items:flex-start;gap:10px;padding:15px;border-radius:12px;background:#f4f7fa;color:#52677f;font-size:12px;line-height:1.45}.rv-consent input{flex:none;margin-top:3px}.rv-privacy{color:#75869a;font-size:11px}.rv-message{min-height:20px;color:#a23b31;font-size:12px;font-weight:750}.rv-form-card button{width:100%;min-height:48px;border:0;border-radius:11px;background:var(--rv-blue);color:#fff;font:inherit;font-weight:800;cursor:pointer}.rv-form-card button:disabled{cursor:wait;opacity:.55}.rv-success{padding:65px 20px;text-align:center}.rv-success>b{display:grid;place-items:center;width:58px;height:58px;margin:0 auto 18px;border-radius:50%;background:#ddf4e7;color:#167247;font-size:28px}.rv-success p{color:#65788d}.rv-success[hidden]{display:none!important}@media(max-width:850px){.rv-professional-form{grid-template-columns:1fr;padding-top:25px}.rv-form-intro{padding:20px 4px}}@media(max-width:600px){.rv-professional-form{padding:20px 12px 50px}.rv-form-intro h2{font-size:38px}.rv-form-card{padding:21px 16px}.rv-fields{grid-template-columns:1fr}.rv-wide{grid-column:auto}}
+</style>
+
+<script>
+(() => {
+  /* Cambia únicamente esta dirección cuando la API pública del Radar esté disponible. */
+  const RADAR_API_URL = 'https://TU-DOMINIO-API.com/api/professional-applications';
+  const form = document.getElementById('rv-professional-application');
+  const message = document.getElementById('rv-form-message');
+  const submit = document.getElementById('rv-form-submit');
+  const success = document.getElementById('rv-form-success');
+  form.addEventListener('submit', async event => {
+    event.preventDefault(); message.textContent=''; submit.disabled=true; submit.textContent='Enviando…';
+    try {
+      if (RADAR_API_URL.includes('TU-DOMINIO-API')) throw Error('El formulario está preparado, pero falta configurar la dirección pública de la API del Radar.');
+      const input=Object.fromEntries(new FormData(form)); input.consent=input.consent==='on';
+      const response=await fetch(RADAR_API_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(input)});
+      const result=await response.json(); if(!response.ok)throw Error(result.error||'No se pudo enviar la solicitud');
+      form.hidden=true; success.hidden=false;
+    } catch(error) { message.textContent=error.message; }
+    finally { submit.disabled=false; submit.textContent='Enviar solicitud'; }
+  });
+})();
+</script>
