@@ -14,6 +14,15 @@ export function security(options = {}) {
   if (process.env.NODE_ENV === 'production' && !origin?.startsWith('https://')) {
     throw Error('Producción requiere RADAR_PUBLIC_URL con HTTPS.');
   }
+  const formConfigured = options.formOrigin ?? process.env.RADAR_FORM_ORIGIN;
+  let formOrigin;
+  if (formConfigured) {
+    const url = new URL(formConfigured);
+    if (url.username || url.password || url.pathname !== '/' || url.search || url.hash || url.protocol !== 'https:') {
+      throw Error('RADAR_FORM_ORIGIN debe ser un origen HTTPS sin ruta.');
+    }
+    formOrigin = url.origin;
+  }
   return {
     allows(req) {
       let expected = origin;
@@ -26,6 +35,17 @@ export function security(options = {}) {
       if (req.headers.origin && req.headers.origin !== expected) return false;
       // Cookie-authenticated browser writes require an explicit matching Origin.
       return ['GET', 'HEAD', 'OPTIONS'].includes(req.method) || req.headers.origin === expected;
+    },
+    allowsFormOrigin(req) {
+      return Boolean(formOrigin && req.headers.origin === formOrigin);
+    },
+    applyFormCors(req, res) {
+      if (!this.allowsFormOrigin(req)) return false;
+      res.setHeader('Access-Control-Allow-Origin', formOrigin);
+      res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+      res.setHeader('Vary', 'Origin');
+      return true;
     },
     cookie(token = '') {
       return `radar_session=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${token ? 86400 : 0}${origin?.startsWith('https://') ? '; Secure' : ''}`;

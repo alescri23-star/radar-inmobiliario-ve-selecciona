@@ -1,4 +1,5 @@
 import {robotsAllowed} from './collector.mjs';
+import {adaptDatabase} from './database.mjs';
 export const safePhoto = value => typeof value==='string' && /^https:\/\/(cdn\.remax\.com\.ve|cdn\.photos\.sparkplatform\.com)\/[\w/.-]+$/.test(value);
 export function parseGallery(html,p){
  const scope=p.sourceId==='rentahouse'?(html.split('id="Fotos"')[1]||'').split('id="Mapa"')[0]:html;
@@ -11,7 +12,8 @@ export function parseGallery(html,p){
  }
  return [...new Set(photos)].slice(0,80);
 }
-export function gallery(db,options={}){
+export function gallery(database,options={}){
+ const db=adaptDatabase(database);
  const fetcher=options.galleryFetch||fetch, pending=new Map(),next=new Map();
  async function download(url){const r=await fetcher(url,{redirect:'error',signal:AbortSignal.timeout(15000)});if(!r.ok)throw Error('Fuente no disponible');let html='';for await(const chunk of r.body){html+=Buffer.from(chunk).toString();if(html.length>3000000)throw Error('Respuesta demasiado grande');}return html;}
  async function collect(p){
@@ -23,8 +25,8 @@ export function gallery(db,options={}){
   const robots=await download(u.origin+'/robots.txt');if(!robotsAllowed(robots,u.href))throw Error('Galería no disponible para captura');
   await new Promise(r=>setTimeout(r,delay));
   const fotos=parseGallery(await download(u.href),p);if(!fotos.length)throw Error('No se encontraron fotos adicionales');
-  const current=db.prepare("SELECT body FROM records WHERE id=? AND kind='inmuebles'").get(p.id);
-  if(current){const record=JSON.parse(current.body);record.fotos=fotos;record.fotosConsultadasEn=new Date().toISOString();db.prepare('UPDATE records SET body=? WHERE id=?').run(JSON.stringify(record),p.id);}
+  const current=await db.get("SELECT body FROM records WHERE id=? AND kind='inmuebles'",[p.id]);
+  if(current){const record=JSON.parse(current.body);record.fotos=fotos;record.fotosConsultadasEn=new Date().toISOString();await db.run('UPDATE records SET body=? WHERE id=?',[JSON.stringify(record),p.id]);}
   return {fotos};
  }
  return async(req,res,url)=>{
@@ -32,7 +34,7 @@ export function gallery(db,options={}){
   const send=(status,data)=>{res.writeHead(status,{'Content-Type':'application/json','Cache-Control':'no-store'});res.end(JSON.stringify(data));return true;};
   if(!req.user)return send(401,{error:'Inicia sesión para ver las fotos'});
   if(req.method!=='GET')return send(405,{error:'Método no permitido'});
-  const row=db.prepare("SELECT body FROM records WHERE id=? AND kind='inmuebles'").get(decodeURIComponent(match[1]));
+  const row=await db.get("SELECT body FROM records WHERE id=? AND kind='inmuebles'",[decodeURIComponent(match[1])]);
   if(!row)return send(404,{error:'Anuncio no encontrado'});const p=JSON.parse(row.body);
   if(req.user.role!=='admin'&&p.estado!=='activo')return send(404,{error:'Anuncio no disponible'});
   if(p.fotos?.length&&Date.now()-Date.parse(p.fotosConsultadasEn)<86400000)return send(200,{fotos:p.fotos.filter(safePhoto)});

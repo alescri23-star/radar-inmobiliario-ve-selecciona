@@ -1,14 +1,14 @@
 # Radar Venezuela — piloto Barquisimeto
 
-Versión 0.2. Radar de anuncios inmobiliarios con web de búsqueda y dashboard privado. Entrega local, todavía sin despliegue público.
+Versión 0.2. Radar de anuncios inmobiliarios con web de búsqueda y dashboard privado. Preparado para despliegue privado en Hostinger Business; el despliegue público sigue pendiente de autorización.
 
 ## Ejecutar
-Requiere Node.js 24. No hay paquetes que instalar.
+Requiere Node.js 24. Instala las dependencias con `pnpm install` o `npm install`.
 En Windows, abre `Abrir Radar.cmd`. El iniciador comprueba GitHub con `git pull --ff-only`, protege cualquier cambio local sin guardar, inicia el servidor y abre el navegador.
 
 Desde una terminal:
 ```
-npm start
+npm run start:local
 ```
 Web de usuarios (requiere sesión): http://127.0.0.1:3014/
 Dashboard: http://127.0.0.1:3014/admin
@@ -71,8 +71,15 @@ public/index.html y app.js: dashboard.
 favorites.mjs: favoritos privados y nivel de interés por cuenta.
 land.mjs y land-labels.mjs: clasificación textual y correcciones privadas de terrenos.
 data/radar.sqlite: anuncios, contactos, cuentas y sesiones locales, excluidos de Git.
+database.mjs: SQLite para desarrollo y MySQL persistente para producción.
 
-Para respaldar, detener la aplicación y copiar data/radar.sqlite a un lugar privado.
+Para respaldar el laboratorio local, detener la aplicación y copiar data/radar.sqlite a un lugar privado. En producción, usa las copias de seguridad de la base MySQL de Hostinger.
+
+## Publicación en Hostinger Business
+
+Hostinger ejecuta `npm start`, que inicia `server.mjs` en el puerto proporcionado por la plataforma y escucha en todas las interfaces únicamente en producción. La publicación requiere MySQL: si `NODE_ENV=production` y faltan las variables `DB_*`, el servidor se detiene para evitar usar una base SQLite dentro de una carpeta reemplazable durante los despliegues.
+
+Configura `RADAR_PUBLIC_URL` con el origen HTTPS asignado al Radar y `RADAR_FORM_ORIGIN=https://orangered-cod-348216.hostingersite.com` para admitir el formulario de WordPress solo desde esa web. `RADAR_ADMIN_*` se usa una sola vez para crear el primer administrador; después se elimina de Hostinger y se reinicia la aplicación. Consulta `docs/despliegue-hostinger.md`.
 
 ## Validación
 ```

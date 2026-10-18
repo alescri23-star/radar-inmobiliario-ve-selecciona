@@ -29,8 +29,8 @@ test('administrador local, permisos de galería y ciclo de sesiones HTTPS',async
   try{
     assert.equal((await post('setup',credentials)).status,403);
     assert.equal((await(await fetch(base+'/api/session')).json()).setupRequired,true);
-    provisionAdmin(dir,credentials);
-    assert.throws(()=>provisionAdmin(dir,{...credentials,email:'otro@example.test'}),/Ya existe/);
+    await provisionAdmin(dir,credentials);
+    await assert.rejects(()=>provisionAdmin(dir,{...credentials,email:'otro@example.test'}),/Ya existe/);
     const login=await post('login',credentials,'',{'X-Forwarded-Proto':'http'});
     assert.equal(login.status,200);assert.match(login.headers.get('set-cookie'),/; Secure/);
     const adminCookie=login.headers.get('set-cookie').split(';')[0];
@@ -62,5 +62,22 @@ test('administrador local, permisos de galería y ciclo de sesiones HTTPS',async
     const reset=await post('reset-password',{token:new URL(mail.link).hash.slice(7),password:'Nueva-prueba-12345'});
     assert.equal(reset.status,200);assert.match(reset.headers.get('set-cookie'),/Max-Age=0; Secure/);
     assert.equal((await gallery('activo',adminCookie)).status,401);
+  }finally{await new Promise(resolve=>server.close(resolve));rmSync(dir,{recursive:true,force:true});}
+});
+
+test('formulario WordPress acepta solo el origen configurado',async()=>{
+  const dir=mkdtempSync(path.join(tmpdir(),'radar-form-origin-'));
+  const formOrigin='https://orangered-cod-348216.hostingersite.com';
+  const server=createApp(dir,{publicUrl:'https://radar.example.test',formOrigin});
+  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+  const base='http://127.0.0.1:'+server.address().port;
+  const payload={nombre:'Reformas Prueba',personaContacto:'Persona Prueba',email:'prueba@example.test',contacto:'+58 412 000 0000',tipoEmpresa:'Empresa de reformas',servicios:'Reformas integrales',cobertura:'Barquisimeto',consent:true};
+  try{
+    const allowed=await fetch(base+'/api/professional-applications',{method:'POST',headers:{Origin:formOrigin,'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    assert.equal(allowed.status,201);assert.equal(allowed.headers.get('access-control-allow-origin'),formOrigin);
+    const denied=await fetch(base+'/api/professional-applications',{method:'POST',headers:{Origin:'https://attacker.example','Content-Type':'application/json'},body:JSON.stringify({...payload,email:'otro@example.test'})});
+    assert.equal(denied.status,403);
+    const preflight=await fetch(base+'/api/professional-applications',{method:'OPTIONS',headers:{Origin:formOrigin,'Access-Control-Request-Method':'POST'}});
+    assert.equal(preflight.status,204);assert.equal(preflight.headers.get('access-control-allow-origin'),formOrigin);
   }finally{await new Promise(resolve=>server.close(resolve));rmSync(dir,{recursive:true,force:true});}
 });

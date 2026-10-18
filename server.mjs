@@ -2,8 +2,9 @@ import {security} from './security.mjs';
 import {classifyLand} from './land.mjs';
 import http from 'node:http';
 import { portal } from './portal.mjs';
-import { DatabaseSync } from 'node:sqlite';
-import { mkdirSync, readFileSync } from 'node:fs';
+import {connectDatabase,initializeDatabase} from './database.mjs';
+import {bootstrapAdminFromEnvironment} from './admin.mjs';
+import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
@@ -11,21 +12,21 @@ import { randomUUID } from 'node:crypto';
 const root = path.dirname(fileURLToPath(import.meta.url));
 export function createApp(directory = path.join(root, 'data'), options = {}) {
   options={...options,security:security(options)};
-  mkdirSync(directory, { recursive: true });
-  const db = new DatabaseSync(path.join(directory, 'radar.sqlite'));
-  db.exec('PRAGMA foreign_keys=ON; CREATE TABLE IF NOT EXISTS records (id TEXT PRIMARY KEY, kind TEXT NOT NULL, body TEXT NOT NULL)');
+  const db = options.database || connectDatabase(directory);
+  const ready = initializeDatabase(db).then(()=>bootstrapAdminFromEnvironment(db));
   const handlePortal=portal(db,options);
   const kinds = ['inmuebles', 'leads', 'reformas', 'profesionales'];
-  const list = kind => db.prepare('SELECT body FROM records WHERE kind=?').all(kind).map(r => classifyLand(JSON.parse(r.body)));
+  const list = async kind => (await db.all('SELECT body FROM records WHERE kind=?',[kind])).map(r => classifyLand(JSON.parse(r.body)));
   const send = (res, status, value) => { res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(value)); };
   const server = http.createServer(async (req, res) => {
     try {
+      await ready;
       const url = new URL(req.url, 'http://localhost');
       if(await handlePortal(req,res,url))return;
       if (url.pathname.startsWith('/api/')) {
         const [, , kind, id] = url.pathname.split('/');
         if (!kinds.includes(kind)) return send(res, 404, { error: 'Recurso no encontrado' });
-        if (req.method === 'GET' && !id) return send(res, 200, list(kind));
+        if (req.method === 'GET' && !id) return send(res, 200, await list(kind));
         if (req.method === 'POST' && !id || req.method === 'PUT' && id) {
           let body = ''; for await (const chunk of req) { body += chunk; if (body.length > 32768) return send(res, 413, { error: 'Registro demasiado grande' }); }
           let input; try { input = JSON.parse(body); } catch { return send(res, 400, { error: 'JSON inválido' }); }
@@ -46,14 +47,14 @@ export function createApp(directory = path.join(root, 'data'), options = {}) {
           const amount = kind === 'inmuebles' ? 'precio' : 'importe';
           if (record[amount] !== undefined && record[amount] !== '' && (!Number.isFinite(Number(record[amount])) || Number(record[amount]) < 0)) return send(res, 400, { error: 'Importe inválido' });
           if ([record.fecha, record.fechaRevision, record.ultimaActividad].filter(Boolean).some(value=>!/^\d{4}-\d{2}-\d{2}$/.test(value))) return send(res, 400, { error: 'Fecha inválida' });
-          if (record.inmuebleId && !list('inmuebles').some(p => p.id === record.inmuebleId)) return send(res, 400, { error: 'Inmueble no encontrado' });
-          const previous = id ? list(kind).find(r => r.id === id) : null;
+          if (record.inmuebleId && !(await list('inmuebles')).some(p => p.id === record.inmuebleId)) return send(res, 400, { error: 'Inmueble no encontrado' });
+          const previous = id ? (await list(kind)).find(r => r.id === id) : null;
           if (id && !previous) return send(res, 404, { error: 'Registro no encontrado' });
            Object.assign(record, previous ? Object.fromEntries(Object.entries(previous).filter(([k])=>!fields.includes(k))) : {});
            if (kind === 'leads') record.origen = previous?.origen || (previous?.userId ? 'formulario' : 'manual');
            if (kind === 'profesionales') record.origen = previous?.origen || 'manual';
           record.id = id || randomUUID(); record.creadoEn = previous?.creadoEn || new Date().toISOString(); record.actualizadoEn = new Date().toISOString();
-          db.prepare('INSERT OR REPLACE INTO records VALUES (?, ?, ?)').run(record.id, kind, JSON.stringify(record));
+          await db.upsertRecord(record.id, kind, JSON.stringify(record));
           return send(res, id ? 200 : 201, record);
         }
         return send(res, 405, { error: 'Método no permitido' });
@@ -65,10 +66,11 @@ export function createApp(directory = path.join(root, 'data'), options = {}) {
       res.end(readFileSync(path.join(root, 'public', file)));
     } catch (err) { console.error(err); send(res, 500, { error: 'No se pudo completar la operación' }); }
   });
-  server.on('close', () => db.close());
+  server.on('close', () => { db.close().catch(error=>console.error('No se pudo cerrar la base de datos',error)); });
   return server;
 }
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const port=Number(process.env.PORT || 3000);
-  createApp().listen(port, '127.0.0.1', () => console.log(`Radar Venezuela: http://127.0.0.1:${port}`));
+  const host=process.env.HOST || (process.env.NODE_ENV==='production'?'0.0.0.0':'127.0.0.1');
+  createApp().listen(port, host, () => console.log(`Radar Venezuela iniciado en ${host}:${port}`));
 }
