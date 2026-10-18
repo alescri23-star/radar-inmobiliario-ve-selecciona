@@ -4,11 +4,16 @@ Versión 0.2. Radar de anuncios inmobiliarios con web de búsqueda y dashboard p
 
 ## Ejecutar
 Requiere Node.js 24. No hay paquetes que instalar.
+En Windows, abre `Abrir Radar.cmd`. El iniciador comprueba GitHub con `git pull --ff-only`, protege cualquier cambio local sin guardar, inicia el servidor y abre el navegador.
+
+Desde una terminal:
 ```
-node server.mjs
+npm start
 ```
-Web de usuarios (requiere sesión): http://127.0.0.1:3000/
-Dashboard: http://127.0.0.1:3000/admin
+Web de usuarios (requiere sesión): http://127.0.0.1:3014/
+Dashboard: http://127.0.0.1:3014/admin
+
+Para trabajar sin comprobar GitHub, ejecuta `npm run start:offline`; esta alternativa conserva el puerto 3000 salvo que se defina `PORT`.
 
 El administrador inicial se crea exclusivamente desde el servidor con `node admin.mjs`, usando variables temporales RADAR_ADMIN_NAME, RADAR_ADMIN_EMAIL y RADAR_ADMIN_PASSWORD suministradas por un canal seguro. No pases contraseñas como argumentos ni las guardes en el repositorio. Retira esas variables después. El comando conserva las cuentas existentes y rechaza crear otro administrador o reutilizar un email. Las cuentas creadas desde la web son clientes y no pueden leer leads internos ni modificar anuncios. Contraseñas con scrypt y salt aleatorio; sesión de 24 horas en cookie HttpOnly y SameSite=Strict, con Secure cuando RADAR_PUBLIC_URL usa HTTPS. La recuperación de contraseña requiere configurar Resend. No hay verificación de email ni endurecimiento para exposición pública todavía.
 

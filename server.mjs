@@ -68,5 +68,6 @@ export function createApp(directory = path.join(root, 'data'), options = {}) {
   return server;
 }
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  createApp().listen(Number(process.env.PORT || 3000), '127.0.0.1', () => console.log('Radar Venezuela: http://127.0.0.1:3000'));
+  const port=Number(process.env.PORT || 3000);
+  createApp().listen(port, '127.0.0.1', () => console.log(`Radar Venezuela: http://127.0.0.1:${port}`));
 }
