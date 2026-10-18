@@ -1,6 +1,6 @@
 # Despliegue de Radar en Hostinger Business
 
-Estado: preparado en código; creación de la web, base de datos y despliegue pendientes de autorización final.
+Estado: aplicación y base MySQL desplegadas en `https://white-shrew-789999.hostingersite.com`; cuenta administrativa inicial pendiente de provisión segura.
 
 ## Recursos separados
 
