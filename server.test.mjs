@@ -35,9 +35,13 @@ test('persistencia, edición, referencias y validación', async () => {
   assert.equal((await request('reformas',{titulo:'Cocina',estado:'detectada',inmuebleId:property.id,importe:'2000',moneda:'USD'})).status,201);
   const professional=await request('profesionales',{nombre:'Empresa candidata',tipoEmpresa:'Empresa de reformas',servicios:'Reforma integral',contacto:'contacto público',whatsapp:'WhatsApp público',sitioWeb:'https://example.test',cobertura:'Barquisimeto',fuente:'https://example.test',fechaRevision:'2026-10-15',estado:'candidato'});assert.equal(professional.status,201);
   assert.equal((await request('profesionales',{nombre:'Estado inválido',estado:'verificado'})).status,400);
+  const imported={id:'imported-property',titulo:'Ficha importada completa',estado:'activo',operacion:'venta',foto:'https://example.test/foto.jpg',descripcion:'Descripción conservada',historial:[{precio:'50000'}]};
+  assert.equal((await fetch(base+'/api/admin/import',{method:'POST',headers:{Origin:base,'Content-Type':'application/json'},body:JSON.stringify({records:[{kind:'inmuebles',record:imported}]})})).status,401);
+  const importResponse=await request('admin/import',{records:[{kind:'inmuebles',record:imported}]});assert.equal(importResponse.status,200);assert.equal((await importResponse.json()).total,1);
+  const importedSaved=(await(await fetch(base+'/api/inmuebles',{headers:{Cookie:cookie}})).json()).find(item=>item.id===imported.id);assert.equal(importedSaved.foto,imported.foto);assert.deepEqual(importedSaved.historial,imported.historial);
   assert.equal((await request('inmuebles/'+property.id,{...payload,estado:'reservado'},'PUT')).status,200);
   await new Promise(r=>server.close(r));server=createApp(dir);base=await start();
-  const restored=await(await fetch(base+'/api/inmuebles',{headers:{Cookie:cookie}})).json();assert.equal(restored.length,1);assert.equal(restored[0].estado,'reservado');assert.equal(restored[0].latitud,'10.067');assert.equal(restored[0].longitud,'-69.347');assert.equal(restored[0].latitud,'10.067');assert.equal(restored[0].longitud,'-69.347');
+  const restored=await(await fetch(base+'/api/inmuebles',{headers:{Cookie:cookie}})).json();assert.equal(restored.length,2);const restoredProperty=restored.find(item=>item.id===property.id);assert.equal(restoredProperty.estado,'reservado');assert.equal(restoredProperty.latitud,'10.067');assert.equal(restoredProperty.longitud,'-69.347');
   const professionals=await(await fetch(base+'/api/profesionales',{headers:{Cookie:cookie}})).json();assert.equal(professionals.length,2);assert.equal(professionals.find(item=>item.nombre==='Empresa candidata').whatsapp,'WhatsApp público');const application=professionals.find(item=>item.nombre==='Reformas Lara');assert.equal(application.origen,'formulario');assert.equal(application.estado,'candidato');assert.equal(application.email,'maria@example.test');
   assert.equal((await fetch(base+'/')).status,200);
   assert.equal((await fetch(base+'/server.mjs')).status,404);
@@ -45,7 +49,7 @@ test('persistencia, edición, referencias y validación', async () => {
   assert.equal((await fetch(base+'/api/leads',{headers:{Cookie:clientCookie}})).status,401);
   assert.equal((await fetch(base+'/api/profesionales',{headers:{Cookie:clientCookie}})).status,401);
   await request('inmuebles/'+property.id,payload,'PUT');
-  const publicItems=await(await fetch(base+'/api/public/inmuebles',{headers:{Cookie:clientCookie}})).json();assert.equal(publicItems.length,1);assert.equal(publicItems[0].historial,undefined);
+  const publicItems=await(await fetch(base+'/api/public/inmuebles',{headers:{Cookie:clientCookie}})).json();assert.equal(publicItems.length,2);assert.ok(publicItems.every(item=>item.historial===undefined));
   const inquiry=await fetch(base+'/api/inquiries',{method:'POST',headers:{Origin:base,'Content-Type':'application/json',Cookie:clientCookie},body:JSON.stringify({inmuebleId:property.id,contacto:'cliente@example.test',consent:true})});assert.equal(inquiry.status,201);const leads=await(await fetch(base+'/api/leads',{headers:{Cookie:cookie}})).json();assert.equal(leads.find(lead=>lead.userId)?.origen,'formulario');
   assert.equal((await fetch(base+'/api/setup',{method:'POST',headers:{Origin:base,'Content-Type':'application/json'},body:JSON.stringify({name:'Otro',email:'otro@example.test',password:'Otro-test-12345'})})).status,403);
   assert.equal((await fetch(base+'/api/leads',{headers:{Cookie:clientCookie}})).status,401);

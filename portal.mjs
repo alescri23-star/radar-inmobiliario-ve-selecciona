@@ -14,7 +14,7 @@ export function portal(database,options={}) {
  const handleFavorites=favorites(db);
  const handleRecovery=recovery(db,options);const handleGallery=gallery(db,options);
  const send=(res,status,value)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(value));};
- const body=async req=>{let text='';for await(const chunk of req){text+=chunk;if(text.length>32768)throw Error('Solicitud demasiado grande');}return JSON.parse(text||'{}');};
+ const body=async(req,limit=32768)=>{let text='';for await(const chunk of req){text+=chunk;if(text.length>limit)throw Error('Solicitud demasiado grande');}return JSON.parse(text||'{}');};
  const records=async kind=>(await db.all('SELECT body FROM records WHERE kind=?',[kind])).map(r=>classifyLand(JSON.parse(r.body)));
  const attempts=new Map();
  const professionalAttempts=new Map();
@@ -86,6 +86,23 @@ export function portal(database,options={}) {
    }catch(e){send(res,400,{error:e.message});}return true;
   }
   if(req.user?.role!=='admin'){send(res,401,{error:'Acceso reservado al administrador'});return true;}
+  if(url.pathname==='/api/admin/import'&&req.method==='POST'){
+   try{
+    const input=await body(req,5_000_000),items=input.records;
+    if(!Array.isArray(items)||items.length<1||items.length>5000)throw Error('El archivo de importación no es válido');
+    const allowedKinds=new Set(['inmuebles','leads','reformas','profesionales','runs']);
+    const clean=items.map(item=>{
+     const kind=String(item?.kind||''),record=item?.record;
+     if(!allowedKinds.has(kind)||!record||typeof record!=='object'||Array.isArray(record))throw Error('Hay un registro no válido en la importación');
+     const id=String(record.id||'').trim();if(!id||id.length>191)throw Error('Hay un registro sin identificador válido');
+     const serialized=JSON.stringify(record);if(serialized.length>100_000)throw Error('Hay un registro demasiado grande');
+     return {id,kind,serialized};
+    });
+    await db.transaction(async tx=>{for(const item of clean)await tx.upsertRecord(item.id,item.kind,item.serialized);});
+    const imported=clean.reduce((total,item)=>({...total,[item.kind]:(total[item.kind]||0)+1}),{});
+    send(res,200,{ok:true,total:clean.length,imported});
+   }catch(e){send(res,400,{error:e.message});}return true;
+  }
   if(url.pathname==='/api/sources'&&req.method==='GET'){const [runs,properties]=await Promise.all([records('runs'),records('inmuebles')]);send(res,200,{runs,properties:properties.filter(p=>p.sourceId).length,changes:properties.filter(p=>(p.historial||[]).length>1).length});return true;}
   return false;
  };
