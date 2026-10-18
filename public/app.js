@@ -156,11 +156,14 @@ function openForm(record=null) {
   $('fields').innerHTML=professionalActions+originNote+[...fields[view],['estado','Estado',states[view]]].map(([key,label,type])=>{
     let control;
     if(type==='property') control=`<select name="${key}"><option value="">Sin vincular</option>${data.inmuebles.map(p=>`<option value="${p.id}" ${record?.[key]===p.id?'selected':''}>${escape(p.titulo)}</option>`).join('')}</select>`;
-    else if(Array.isArray(type)) control=`<select name="${key}">${type.map(v=>`<option ${record?.[key]===v?'selected':''}>${escape(v)}</option>`).join('')}</select>`;
+    else if(Array.isArray(type)){const professionalState=key==='estado'&&view==='profesionales',selectedValue=record?.[key]||type[0];control=`<select name="${key}" ${professionalState?`class="professional-state-select status-${statusClass(selectedValue)}" data-professional-state`:''}>${type.map(v=>`<option ${record?.[key]===v?'selected':''}>${escape(v)}</option>`).join('')}</select>`;}
     else if(type==='textarea') control=`<textarea name="${key}" maxlength="2000" rows="4">${escape(record?.[key]||'')}</textarea>`;
     else control=`<input name="${key}" type="${type==='coordinate'?'number':type||'text'}" value="${escape(record?.[key]||'')}" maxlength="2000" ${['titulo','nombre'].includes(key)?'required':''} ${type==='number'?'min="0" step="0.01"':type==='coordinate'?'step="any"':''}>`;
     return `<label>${label}${control}</label>`;
-  }).join(''); $('dialog').showModal();
+  }).join('');
+  const professionalStateSelect=document.querySelector('[data-professional-state]');
+  if(professionalStateSelect)professionalStateSelect.onchange=()=>{professionalStateSelect.className=`professional-state-select status-${statusClass(professionalStateSelect.value)}`;};
+  $('dialog').showModal();
 }
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{view=b.dataset.view;render();});
 $('add').onclick=()=>{if(view==='mapa'){view='inmuebles';render();}openForm();}; $('close').onclick=()=>$('dialog').close();
