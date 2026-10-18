@@ -69,7 +69,10 @@ export function createApp(directory = path.join(root, 'data'), options = {}) {
   server.on('close', () => { db.close().catch(error=>console.error('No se pudo cerrar la base de datos',error)); });
   return server;
 }
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+const isDirectStart = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+// Hostinger loads the configured entry file through its process supervisor, so
+// process.argv[1] is not always server.mjs even though this is the production entry.
+if (process.env.RADAR_HOSTINGER === 'true' || isDirectStart) {
   const port=Number(process.env.PORT || 3000);
   const host=process.env.HOST || (process.env.NODE_ENV==='production'?'0.0.0.0':'127.0.0.1');
   createApp().listen(port, host, () => console.log(`Radar Venezuela iniciado en ${host}:${port}`));
