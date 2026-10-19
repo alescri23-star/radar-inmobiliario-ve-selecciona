@@ -2,12 +2,24 @@ import {security} from './security.mjs';
 import {adaptDatabase} from './database.mjs';
 import {randomBytes,createHash,scryptSync} from 'node:crypto';
 const hash=s=>createHash('sha256').update(s).digest('hex');
+export async function sendResetEmail({email,link},options={}){
+ if(options.sendReset)return options.sendReset({email,link});
+ const webhookUrl=options.resetWebhookUrl||process.env.RADAR_RESET_WEBHOOK_URL;
+ if(webhookUrl){
+  const endpoint=new URL(webhookUrl);if(endpoint.protocol!=='https:')throw Error('Webhook de recuperación no válido');
+  const headers={'Content-Type':'application/json'};const secret=options.resetWebhookSecret||process.env.RADAR_RESET_WEBHOOK_SECRET;if(secret)headers.Authorization='Bearer '+secret;
+  const response=await (options.fetch||fetch)(endpoint,{method:'POST',headers,signal:AbortSignal.timeout(15000),body:JSON.stringify({email,link,subject:'Restablece tu contraseña de Radar Venezuela'})});
+  if(!response.ok)throw Error('Entrega no disponible');return;
+ }
+ const response=await (options.fetch||fetch)('https://api.resend.com/emails',{method:'POST',headers:{Authorization:'Bearer '+process.env.RESEND_API_KEY,'Content-Type':'application/json'},signal:AbortSignal.timeout(15000),body:JSON.stringify({from:process.env.RADAR_MAIL_FROM,to:[email],subject:'Restablece tu contraseña de Radar Venezuela',text:'Abre este enlace para elegir una nueva contraseña. Caduca en 30 minutos y solo funciona una vez:\n'+link+'\nSi no solicitaste el cambio, ignora este correo.'})});
+ if(!response.ok)throw Error('Entrega no disponible');
+}
 export function recovery(database,options={}){
  const db=adaptDatabase(database);
  const ready=db.exec(db.dialect==='mysql'?'CREATE TABLE IF NOT EXISTS password_resets(token VARCHAR(64) PRIMARY KEY,user_id VARCHAR(64) NOT NULL,expires BIGINT NOT NULL,INDEX resets_user(user_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4':'CREATE TABLE IF NOT EXISTS password_resets(token TEXT PRIMARY KEY,user_id TEXT NOT NULL,expires INTEGER NOT NULL)');
  const policy=options.security||security(options);
  const now=options.now||Date.now,limits=new Map();
- const configured=()=>options.sendReset||process.env.RESEND_API_KEY&&process.env.RADAR_MAIL_FROM&&process.env.RADAR_PUBLIC_URL;
+ const configured=()=>options.sendReset||(options.resetWebhookUrl||process.env.RADAR_RESET_WEBHOOK_URL)&&(options.publicUrl||process.env.RADAR_PUBLIC_URL)||process.env.RESEND_API_KEY&&process.env.RADAR_MAIL_FROM&&process.env.RADAR_PUBLIC_URL;
  const send=(res,status,value)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(value));};
  const message='Si existe una cuenta con ese correo, recibirás un enlace para restablecer tu contraseña.';
  return async(req,res,url)=>{
@@ -25,8 +37,7 @@ export function recovery(database,options={}){
      const link=new URL('/',base);link.hash='reset='+token;
      await db.run('DELETE FROM password_resets WHERE user_id=? OR expires<=?',[user.id,now()]);await db.run('INSERT INTO password_resets VALUES(?,?,?)',[hash(token),user.id,now()+1800000]);
      try{
-      if(options.sendReset)await options.sendReset({email,link:link.href});
-      else{const response=await fetch('https://api.resend.com/emails',{method:'POST',headers:{Authorization:'Bearer '+process.env.RESEND_API_KEY,'Content-Type':'application/json'},signal:AbortSignal.timeout(15000),body:JSON.stringify({from:process.env.RADAR_MAIL_FROM,to:[email],subject:'Restablece tu contraseña de Radar Venezuela',text:'Abre este enlace para elegir una nueva contraseña. Caduca en 30 minutos y solo funciona una vez:\n'+link.href+'\nSi no solicitaste el cambio, ignora este correo.'})});if(!response.ok)throw Error('Entrega no disponible');}
+      await sendResetEmail({email,link:link.href},options);
      }catch{await db.run('DELETE FROM password_resets WHERE token=?',[hash(token)]);/* No revelar si el correo pertenece a una cuenta. */}
     }
     send(res,200,{message});return true;
