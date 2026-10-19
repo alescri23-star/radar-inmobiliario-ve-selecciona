@@ -54,7 +54,7 @@ La portada del dashboard funciona como centro de control: separa venta y alquile
 
 ### Solicitudes de profesionales
 
-La ruta pública `/red-profesional` contiene el formulario de incorporación para empresas de reformas, constructoras, arquitectura, profesionales independientes y proveedores especializados. Envía la información a `POST /api/professional-applications` y crea una ficha privada con estado `candidato` y origen `formulario`. El formulario exige consentimiento, valida email, teléfono, tipo profesional y enlaces HTTPS, incluye un campo antispam invisible y limita los envíos por dirección durante quince minutos. No admite documentos ni datos bancarios.
+La ruta pública `/red-profesional` contiene el formulario de incorporación para empresas de reformas, constructoras, arquitectura, profesionales independientes y proveedores especializados. Su acceso corresponde a la navegación de la web pública de WordPress y no se muestra dentro del laboratorio privado. Envía la información a `POST /api/professional-applications` y crea una ficha privada con estado `candidato` y origen `formulario`. El formulario exige consentimiento, valida email, teléfono, tipo profesional y enlaces HTTPS, incluye un campo antispam invisible y limita los envíos por dirección durante quince minutos. No admite documentos ni datos bancarios.
 
 La base del Radar es la fuente principal de estas solicitudes. Una integración futura con Make puede utilizarse para notificaciones, pero no es necesaria para registrar candidatos ni para gestionarlos desde el dashboard.
 
