@@ -50,7 +50,7 @@ Indicadores de anuncios activos y leads, registro y edición internos, mapa, ref
 
 Incluye una sección privada de profesionales y empresas para registrar candidatos, servicios, número de contacto, WhatsApp confirmado, sitio web, cobertura, RIF pendiente de comprobar, responsable técnico, fuente, observaciones y fecha de revisión. La tabla separa teléfono y WhatsApp, y solo convierte sitios HTTPS válidos en enlaces clicables. Los estados son candidato, contactado, documentación pendiente, evaluado, aprobado y descartado. El registro no implica verificación ni recomendación; antes de aprobar deben comprobarse identidad, documentación, experiencia, referencias y condiciones del presupuesto. La captura manual mediante enlace está disponible para el administrador.
 
-La portada del dashboard funciona como centro de control: separa venta y alquiler, muestra incidencias de ubicación y clasificación, resume la evaluación de profesionales y ofrece accesos directos al mapa, inventario, leads y altas manuales. Su cuadrícula se adapta a escritorio, tableta y móvil.
+La portada del dashboard funciona como centro de control: separa venta y alquiler, muestra incidencias de ubicación y clasificación, resume la evaluación de profesionales y ofrece accesos directos al laboratorio, inventario, leads y altas manuales. El mapa sincronizado vive en el laboratorio; el administrador no repite una segunda pestaña de mapa. La gestión de coordenadas continúa en cada ficha del inventario. Su cuadrícula se adapta a escritorio, tableta y móvil.
 
 ### Solicitudes de profesionales
 
