@@ -9,7 +9,7 @@ import { createApp } from './server.mjs';
 test('persistencia, edición, referencias y validación', async () => {
  const dir=mkdtempSync(path.join(tmpdir(),'radar-test-'));
  provisionAdmin(dir,{name:'Administrador',email:'admin@example.test',password:'Radar-test-12345'});
- let server=createApp(dir);
+ let sourceRuns=0;const appOptions={refreshSources:async()=>{sourceRuns++;}};let server=createApp(dir,appOptions);
  const start=async()=>{await new Promise(r=>server.listen(0,'127.0.0.1',r));return `http://127.0.0.1:${server.address().port}`;};
  let base=await start();
  const professionalApplication={nombre:'Reformas Lara',personaContacto:'María Pérez',email:'maria@example.test',contacto:'+58 412 123 4567',whatsapp:'+58 412 123 4567',tipoEmpresa:'Empresa de reformas',servicios:'Reformas residenciales',cobertura:'Barquisimeto',experiencia:'8 años',sitioWeb:'https://example.test',consent:true};
@@ -22,6 +22,8 @@ test('persistencia, edición, referencias y validación', async () => {
  const request=(resource,body,method='POST',headers={})=>fetch(base+'/api/'+resource,{method,headers:{Origin:base,'Content-Type':'application/json',Cookie:cookie,...headers},body:JSON.stringify(body)});
  try {
   assert.deepEqual(await (await fetch(base+'/api/inmuebles',{headers:{Cookie:cookie}})).json(),[]);
+  assert.equal((await fetch(base+'/api/captures/run',{method:'POST',headers:{Origin:base,'Content-Type':'application/json'},body:'{}'})).status,401);
+  assert.equal((await request('captures/run',{source:'remax'})).status,202);await new Promise(resolve=>setTimeout(resolve,0));assert.equal(sourceRuns,1);assert.equal((await(await fetch(base+'/api/sources',{headers:{Cookie:cookie}})).json()).capture.running,false);
   const payload={titulo:'Casa piloto',zona:'Barquisimeto',operacion:'venta',precio:'50000',moneda:'USD',estado:'activo',fuente:'Prueba',latitud:'10.067',longitud:'-69.347'};
   const response=await request('inmuebles',payload);assert.equal(response.status,201);const property=await response.json();
   assert.equal((await request('inmuebles',{...payload,precio:'-1'})).status,400);
@@ -40,7 +42,7 @@ test('persistencia, edición, referencias y validación', async () => {
   const importResponse=await request('admin/import',{records:[{kind:'inmuebles',record:imported}]});assert.equal(importResponse.status,200);assert.equal((await importResponse.json()).total,1);
   const importedSaved=(await(await fetch(base+'/api/inmuebles',{headers:{Cookie:cookie}})).json()).find(item=>item.id===imported.id);assert.equal(importedSaved.foto,imported.foto);assert.deepEqual(importedSaved.historial,imported.historial);
   assert.equal((await request('inmuebles/'+property.id,{...payload,estado:'reservado'},'PUT')).status,200);
-  await new Promise(r=>server.close(r));server=createApp(dir);base=await start();
+  await new Promise(r=>server.close(r));server=createApp(dir,appOptions);base=await start();
   const restored=await(await fetch(base+'/api/inmuebles',{headers:{Cookie:cookie}})).json();assert.equal(restored.length,2);const restoredProperty=restored.find(item=>item.id===property.id);assert.equal(restoredProperty.estado,'reservado');assert.equal(restoredProperty.latitud,'10.067');assert.equal(restoredProperty.longitud,'-69.347');
   const professionals=await(await fetch(base+'/api/profesionales',{headers:{Cookie:cookie}})).json();assert.equal(professionals.length,2);assert.equal(professionals.find(item=>item.nombre==='Empresa candidata').whatsapp,'WhatsApp público');const application=professionals.find(item=>item.nombre==='Reformas Lara');assert.equal(application.origen,'formulario');assert.equal(application.estado,'candidato');assert.equal(application.email,'maria@example.test');
   assert.equal((await fetch(base+'/')).status,200);

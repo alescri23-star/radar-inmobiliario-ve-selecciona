@@ -23,7 +23,7 @@ node collector.mjs
 ```
 Captura la primera página de apartamentos en venta y alquiler de Barquisimeto en Rent-A-House. Lee robots.txt, comprueba las rutas y espera 10 segundos entre consultas. Requiere acceso a internet. No recorre todo el inventario ni otros portales.
 
-El capturador identifica cada anuncio por fuente, código y operación. Una nueva observación actualiza el registro y conserva el historial de precio y las coordenadas corregidas manualmente. No elimina anuncios por no aparecer en esta muestra. Si cambia la estructura o no reconoce anuncios, se detiene sin interpretar la respuesta como inventario vacío. La deduplicación entre distintos portales queda pendiente.
+El capturador identifica cada anuncio por fuente, código y operación. Una nueva observación actualiza el registro y conserva el historial de precio y las coordenadas corregidas manualmente. La muestra parcial de Rent-A-House nunca interpreta una ausencia como retirada. Si cambia la estructura o no reconoce anuncios, se detiene sin interpretar la respuesta como inventario vacío. La deduplicación entre distintos portales queda pendiente.
 
 Para validar un HTML guardado sin acceso externo:
 ```
@@ -46,7 +46,9 @@ El mapa usa Leaflet y OpenStreetMap, con conexión a internet. Ejecuta `node geo
 La primera consulta de fichas recuperó 21 ubicaciones de 24 anuncios; 3 quedaron pendientes (incluido un timeout). Cada tarjeta localizada ofrece «Ver en mapa». Al pulsar un punto se abre la ficha resumida y se selecciona automáticamente el anuncio correspondiente en la columna izquierda. Los anuncios que comparten coordenadas se agrupan en un punto consultable.
 
 ## Dashboard privado
-Indicadores de anuncios activos y leads, registro y edición internos, mapa, reformas y sección de fuentes con capturas e indicadores de cambios de precio. Incluye una sección privada de profesionales y empresas para registrar candidatos, servicios, número de contacto, WhatsApp confirmado, sitio web, cobertura, RIF pendiente de comprobar, responsable técnico, fuente, observaciones y fecha de revisión. La tabla separa teléfono y WhatsApp, y solo convierte sitios HTTPS válidos en enlaces clicables. Los estados son candidato, contactado, documentación pendiente, evaluado, aprobado y descartado. El registro no implica verificación ni recomendación; antes de aprobar deben comprobarse identidad, documentación, experiencia, referencias y condiciones del presupuesto. La ejecución del capturador se realiza desde el servidor; la captura manual mediante enlace está disponible para el administrador y la programación automática continúa pendiente.
+Indicadores de anuncios activos y leads, registro y edición internos, mapa, reformas y un centro de control en «Fuentes y capturas». Desde allí el administrador puede actualizar todas las fuentes o una sola, consultar el alcance y resultado de cada pasada, ver cambios recientes de precio y revisar posibles anuncios retirados. RE/MAX solo envía un anuncio a revisión después de dos capturas completas consecutivas sin encontrarlo; nunca lo archiva ni lo elimina automáticamente. Rent-A-House conserva una cobertura parcial y por ello no genera alertas de retirada. Las tareas se ejecutan en segundo plano, admiten una sola actualización simultánea y registran también los fallos para su diagnóstico. La programación automática continúa pendiente.
+
+Incluye una sección privada de profesionales y empresas para registrar candidatos, servicios, número de contacto, WhatsApp confirmado, sitio web, cobertura, RIF pendiente de comprobar, responsable técnico, fuente, observaciones y fecha de revisión. La tabla separa teléfono y WhatsApp, y solo convierte sitios HTTPS válidos en enlaces clicables. Los estados son candidato, contactado, documentación pendiente, evaluado, aprobado y descartado. El registro no implica verificación ni recomendación; antes de aprobar deben comprobarse identidad, documentación, experiencia, referencias y condiciones del presupuesto. La captura manual mediante enlace está disponible para el administrador.
 
 La portada del dashboard funciona como centro de control: separa venta y alquiler, muestra incidencias de ubicación y clasificación, resume la evaluación de profesionales y ofrece accesos directos al mapa, inventario, leads y altas manuales. Su cuadrícula se adapta a escritorio, tableta y móvil.
 
@@ -85,7 +87,7 @@ Configura `RADAR_PUBLIC_URL` con el origen HTTPS asignado al Radar y `RADAR_FORM
 ```
 node --test
 ```
-Pruebas: persistencia, edición, coordenadas, importación repetida, historial de precio, reglas de rutas, acceso privado, separación de roles y creación de leads por consultas. Revisión en navegador: listado real, filtro de alquiler (12 resultados), mapa y acceso previo a pedir información.
+Pruebas: persistencia, edición, coordenadas, importación repetida, historial de precio, control seguro de ausencias, ejecución manual protegida, reglas de rutas, acceso privado, separación de roles y creación de leads por consultas. Revisión en navegador: listado real, filtro de alquiler (12 resultados), mapa y acceso previo a pedir información.
 
 ## Pendiente
 Verificación de ubicaciones publicadas, geocodificación de pendientes y catálogo territorial verificado; fotos y uso de contenido de terceros para publicación; fuentes adicionales; deduplicación entre portales; capturas programadas y diagnóstico de fallos; email verificado y activación del correo de recuperación; despliegue con HTTPS y protección de autenticación para acceso remoto.

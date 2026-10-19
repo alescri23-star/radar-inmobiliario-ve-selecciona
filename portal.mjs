@@ -8,6 +8,7 @@ import { randomBytes, scryptSync, timingSafeEqual, createHash } from 'node:crypt
 const hash = v => createHash('sha256').update(v).digest('hex');
 import { recovery } from './recovery.mjs';
 import {captureListing} from './capture-link.mjs';
+import {refreshSources} from './source-refresh.mjs';
 export function portal(database,options={}) {
  const db=adaptDatabase(database);
  const policy=options.security||security(options);
@@ -19,6 +20,7 @@ export function portal(database,options={}) {
  const records=async kind=>(await db.all('SELECT body FROM records WHERE kind=?',[kind])).map(r=>classifyLand(JSON.parse(r.body)));
  const attempts=new Map();
  const professionalAttempts=new Map();
+ let captureJob={running:false,startedAt:'',finishedAt:'',source:'',error:''};
  const session=async req=>{const token=req.headers.cookie?.match(/(?:^|;\s*)radar_session=([a-f0-9]+)/)?.[1];return token?db.get('SELECT users.id, email, name, role FROM sessions JOIN users ON users.id=sessions.user_id WHERE token=? AND expires>?',[hash(token),Date.now()]):null;};
  return async(req,res,url)=>{
   req.user=await session(req);
@@ -107,7 +109,22 @@ export function portal(database,options={}) {
   if(url.pathname==='/api/captures/link'&&req.method==='POST'){
    try{const input=await body(req);const result=await captureListing(db,input.url,options.captureFetch||fetch);send(res,result.created?201:200,result);}catch(e){send(res,400,{error:e.message});}return true;
   }
-  if(url.pathname==='/api/sources'&&req.method==='GET'){const [runs,properties]=await Promise.all([records('runs'),records('inmuebles')]);send(res,200,{runs,properties:properties.filter(p=>p.sourceId).length,changes:properties.filter(p=>(p.historial||[]).length>1).length});return true;}
+  if(url.pathname==='/api/captures/run'&&req.method==='POST'){
+   if(captureJob.running){send(res,409,{error:'Ya hay una actualización en curso',capture:captureJob});return true;}
+   try{
+    const input=await body(req),source=String(input.source||'all');if(!['all','rentahouse','remax'].includes(source))throw Error('Fuente no válida');
+    captureJob={running:true,startedAt:new Date().toISOString(),finishedAt:'',source,error:''};
+    const runner=options.refreshSources||refreshSources;
+    Promise.resolve().then(()=>runner(db,source)).then(()=>{captureJob={...captureJob,running:false,finishedAt:new Date().toISOString()};}).catch(error=>{captureJob={...captureJob,running:false,finishedAt:new Date().toISOString(),error:String(error?.message||error).slice(0,300)};});
+    send(res,202,{ok:true,capture:captureJob});
+   }catch(e){send(res,400,{error:e.message});}return true;
+  }
+  if(url.pathname==='/api/sources'&&req.method==='GET'){
+   const [runs,properties]=await Promise.all([records('runs'),records('inmuebles')]),tracked=properties.filter(p=>p.sourceId),sourceNames={rentahouse:'Rent-A-House',remax:'RE/MAX'};
+   const summaries=Object.entries(sourceNames).map(([id,name])=>{const items=tracked.filter(p=>p.sourceId===id),latest=runs.filter(run=>run.source===name).sort((a,b)=>String(b.fecha).localeCompare(String(a.fecha)))[0];return {id,name,total:items.length,visible:items.filter(p=>!p.availabilityReview||p.availabilityReview==='visible').length,review:items.filter(p=>p.availabilityReview==='posiblemente_retirado').length,lastRun:latest||null};});
+   const recentChanges=tracked.filter(p=>(p.historial||[]).length>1).map(p=>{const history=p.historial,last=history[history.length-1],previous=history[history.length-2],before=Number(previous.precio),after=Number(last.precio);return {id:p.id,titulo:p.titulo,source:sourceNames[p.sourceId]||p.sourceId,previous:previous.precio,current:last.precio,moneda:last.moneda||p.moneda,changedAt:last.observadoEn,delta:Number.isFinite(before)&&Number.isFinite(after)?after-before:null};}).sort((a,b)=>String(b.changedAt).localeCompare(String(a.changedAt))).slice(0,20);
+   send(res,200,{runs:runs.sort((a,b)=>String(b.fecha).localeCompare(String(a.fecha))).slice(0,30),properties:tracked.length,changes:tracked.filter(p=>(p.historial||[]).length>1).length,possibleRemoved:tracked.filter(p=>p.availabilityReview==='posiblemente_retirado').map(p=>({id:p.id,titulo:p.titulo,source:sourceNames[p.sourceId]||p.sourceId,missingSince:p.missingSince,missingRuns:p.missingRuns})),notSeenOnce:tracked.filter(p=>p.availabilityReview==='no_visto_una_vez').length,summaries,recentChanges,capture:captureJob});return true;
+  }
   return false;
  };
 }
