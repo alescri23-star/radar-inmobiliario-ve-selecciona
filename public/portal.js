@@ -198,6 +198,7 @@ async function openRadar(){
  if(window.L&&!map){map=L.map('map').setView([10.067,-69.347],13);L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'}).addTo(map);layer=L.layerGroup().addTo(map);}else if(!window.L)$('map').textContent='El mapa no pudo cargarse. Comprueba internet.';filters();updateAccount();
 }
 $('enterRadar').onclick=account;
+$('recoverRadar').onclick=showRecovery;
 $('dialog').addEventListener('close',()=>{$('form').reset();$('fields').replaceChildren();});
 async function checkSession(){try{const state=await api('/api/session');if(!state.user){if(user||!radarContent.hidden||accessGate.hidden)lockRadar();return;}user=state.user;updateAccount();if($('radarContent').hidden)await openRadar();}catch{lockRadar();}}
 window.addEventListener('pageshow',checkSession);
