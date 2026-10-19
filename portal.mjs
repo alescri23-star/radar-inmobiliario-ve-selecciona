@@ -7,6 +7,7 @@ import {gallery} from './gallery.mjs';
 import { randomBytes, scryptSync, timingSafeEqual, createHash } from 'node:crypto';
 const hash = v => createHash('sha256').update(v).digest('hex');
 import { recovery } from './recovery.mjs';
+import {captureListing} from './capture-link.mjs';
 export function portal(database,options={}) {
  const db=adaptDatabase(database);
  const policy=options.security||security(options);
@@ -102,6 +103,9 @@ export function portal(database,options={}) {
     const imported=clean.reduce((total,item)=>({...total,[item.kind]:(total[item.kind]||0)+1}),{});
     send(res,200,{ok:true,total:clean.length,imported});
    }catch(e){send(res,400,{error:e.message});}return true;
+  }
+  if(url.pathname==='/api/captures/link'&&req.method==='POST'){
+   try{const input=await body(req);const result=await captureListing(db,input.url,options.captureFetch||fetch);send(res,result.created?201:200,result);}catch(e){send(res,400,{error:e.message});}return true;
   }
   if(url.pathname==='/api/sources'&&req.method==='GET'){const [runs,properties]=await Promise.all([records('runs'),records('inmuebles')]);send(res,200,{runs,properties:properties.filter(p=>p.sourceId).length,changes:properties.filter(p=>(p.historial||[]).length>1).length});return true;}
   return false;

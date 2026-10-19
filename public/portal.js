@@ -49,6 +49,16 @@ function updateLaboratoryTabs(){
  $('all-operations-tab').setAttribute('aria-pressed',String(operationView===''));$('sale-tab').setAttribute('aria-pressed',String(operationView==='venta'));$('rent-tab').setAttribute('aria-pressed',String(operationView==='alquiler'));
  $('favorites-tab').setAttribute('aria-pressed',String(favoriteOnly));
  $('favorites-tab').textContent='Favoritos ('+favoriteCount+')';$('interest-filter').hidden=!favoriteOnly;
+ if($('capture-tab'))$('capture-tab').hidden=user?.role!=='admin';
+}
+function captureWorkspace(){
+ let dialog=$('capture-dialog');if(dialog)return dialog;
+ dialog=document.createElement('dialog');dialog.id='capture-dialog';dialog.className='capture-dialog';
+ dialog.innerHTML='<div class="capture-shell"><header><div><p class="eyebrow">CAPTURA CONTROLADA</p><h2>Buscar y añadir anuncios</h2></div><button type="button" class="capture-close" aria-label="Cerrar">×</button></header><div class="capture-grid"><form id="web-search-form" class="capture-card"><span class="capture-step">01</span><h3>Nueva búsqueda</h3><p>Abre una búsqueda web limitada a las fuentes compatibles.</p><label>Palabras clave<input name="keywords" placeholder="Ej.: apartamento zona este" maxlength="120"></label><div class="capture-fields"><label>Fuente<select name="source"><option value="">Todas</option><option value="site:remax.com.ve">RE/MAX</option><option value="site:rentahouse.com.ve">Rent-A-House</option></select></label><label>Operación<select name="operation"><option value="">Venta y alquiler</option><option value="venta">Venta</option><option value="alquiler">Alquiler</option></select></label><label>Tipo<select name="type"><option value="">Todos</option><option>Apartamento</option><option>Casa</option><option>Terreno</option></select></label><label>Zona<input name="zone" placeholder="Barquisimeto o sector" maxlength="100"></label></div><button type="submit">Buscar anuncios públicos ↗</button></form><form id="link-capture-form" class="capture-card capture-card-accent"><span class="capture-step">02</span><h3>Añadir mediante enlace</h3><p>Pega el enlace del anuncio. Se guardará como borrador para que puedas revisar sus datos.</p><label>Enlace del anuncio<input name="url" type="url" inputmode="url" placeholder="https://www.remax.com.ve/…" required></label><small>Fuentes compatibles: RE/MAX Venezuela y Rent-A-House Venezuela.</small><p id="capture-status" class="capture-status" role="status"></p><button type="submit">Analizar y guardar borrador</button><a id="capture-inventory" class="capture-inventory" href="/admin" hidden>Abrir el inventario →</a></form></div></div>';
+ document.body.append(dialog);dialog.querySelector('.capture-close').onclick=()=>dialog.close();
+ dialog.querySelector('#web-search-form').onsubmit=event=>{event.preventDefault();const data=new FormData(event.currentTarget),parts=[data.get('source'),data.get('operation'),data.get('type'),data.get('zone'),data.get('keywords'),'inmueble'].filter(Boolean);window.open('https://www.google.com/search?q='+encodeURIComponent(parts.join(' ')),'_blank','noopener,noreferrer');};
+ dialog.querySelector('#link-capture-form').onsubmit=async event=>{event.preventDefault();const form=event.currentTarget,button=form.querySelector('button'),status=$('capture-status'),inventory=$('capture-inventory');button.disabled=true;inventory.hidden=true;status.className='capture-status';status.textContent='Analizando el anuncio…';try{const result=await api('/api/captures/link',{url:new FormData(form).get('url')});status.className='capture-status success';status.textContent=(result.created?'Anuncio añadido':'Anuncio actualizado')+' como borrador: '+result.property.titulo;inventory.hidden=false;form.reset();}catch(error){status.className='capture-status error';status.textContent=error.message;}finally{button.disabled=false;}};
+ return dialog;
 }
 function laboratoryTabs(){
  if($('laboratory-tabs'))return;
@@ -57,12 +67,13 @@ function laboratoryTabs(){
  const sale=document.createElement('button');sale.id='sale-tab';sale.className='operation-tab';
  const rent=document.createElement('button');rent.id='rent-tab';rent.className='operation-tab';
  const fav=document.createElement('button');fav.id='favorites-tab';
+ const capture=document.createElement('button');capture.id='capture-tab';capture.className='capture-tab';capture.textContent='＋ Buscar / Añadir';capture.onclick=()=>captureWorkspace().showModal();
  const filter=document.createElement('select');filter.id='interest-filter';filter.setAttribute('aria-label','Filtrar favoritos por interés');
  filter.innerHTML='<option value="">Todos los niveles de interés</option>'+Object.entries(interestLabels).map(([value,label])=>'<option value="'+value+'">'+label+'</option>').join('');
  const chooseOperation=value=>{operationView=value;favoriteOnly=false;interestFilter='';filter.value='';draw();};
  allOperations.onclick=()=>chooseOperation('');sale.onclick=()=>chooseOperation('venta');rent.onclick=()=>chooseOperation('alquiler');
  fav.onclick=()=>{favoriteOnly=true;draw();};filter.onchange=()=>{interestFilter=filter.value;draw();};
- tabs.append(allOperations,sale,rent,fav,filter);$('filters').before(tabs);updateLaboratoryTabs();
+ tabs.append(allOperations,sale,rent,fav,filter,capture);$('filters').before(tabs);updateLaboratoryTabs();
 }
 const filterSpec=[['municipio','Municipio'],['parroquia','Parroquia'],['zona','Sector / urbanización'],['calle','Calle'],['tipo','Tipo']];
 const territory={
