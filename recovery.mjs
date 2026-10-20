@@ -25,9 +25,9 @@ export function recovery(database,options={}){
  return async(req,res,url)=>{
   await ready;
   if(!['/api/forgot-password','/api/reset-password'].includes(url.pathname)||req.method!=='POST')return false;
-  const key=req.socket.remoteAddress+url.pathname,entry=limits.get(key)||{count:0,until:now()+600000};if(entry.until<now()){entry.count=0;entry.until=now()+600000;}limits.set(key,entry);if(++entry.count>5){send(res,429,{error:'Demasiadas solicitudes. Espera diez minutos.'});return true;}
   try{
    let text='';for await(const chunk of req){text+=chunk;if(text.length>4096)throw Error('Solicitud demasiado grande');}const input=JSON.parse(text||'{}');
+   const identity=url.pathname==='/api/forgot-password'?String(input.email||'').trim().toLowerCase():String(input.token||'');const key=url.pathname+':'+hash(identity),entry=limits.get(key)||{count:0,until:now()+600000};if(entry.until<now()){entry.count=0;entry.until=now()+600000;}limits.set(key,entry);if(++entry.count>5){send(res,429,{error:'Demasiadas solicitudes. Espera diez minutos.'});return true;}
    if(url.pathname==='/api/forgot-password'){
     const email=String(input.email||'').trim().toLowerCase();if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||email.length>254)throw Error('Indica un correo válido');
     if(!configured()){send(res,503,{error:'La recuperación por correo aún no está habilitada. Contacta al administrador.'});return true;}

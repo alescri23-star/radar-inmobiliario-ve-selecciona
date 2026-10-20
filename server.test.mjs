@@ -8,8 +8,8 @@ import { createApp } from './server.mjs';
 
 test('persistencia, edición, referencias y validación', async () => {
  const dir=mkdtempSync(path.join(tmpdir(),'radar-test-'));
- provisionAdmin(dir,{name:'Administrador',email:'admin@example.test',password:'Radar-test-12345'});
- let sourceRuns=0;const appOptions={refreshSources:async()=>{sourceRuns++;}};let server=createApp(dir,appOptions);
+ await provisionAdmin(dir,{name:'Administrador',email:'admin@example.test',password:'Radar-test-12345'});
+ let sourceRuns=0,refreshResult=[];const appOptions={refreshSources:async()=>{sourceRuns++;return refreshResult;}};let server=createApp(dir,appOptions);
  const start=async()=>{await new Promise(r=>server.listen(0,'127.0.0.1',r));return `http://127.0.0.1:${server.address().port}`;};
  let base=await start();
  const professionalApplication={nombre:'Reformas Lara',personaContacto:'María Pérez',email:'maria@example.test',contacto:'+58 412 123 4567',whatsapp:'+58 412 123 4567',tipoEmpresa:'Empresa de reformas',servicios:'Reformas residenciales',cobertura:'Barquisimeto',experiencia:'8 años',sitioWeb:'https://example.test',consent:true};
@@ -40,25 +40,22 @@ test('persistencia, edición, referencias y validación', async () => {
   const imported={id:'imported-property',titulo:'Ficha importada completa',estado:'activo',operacion:'venta',foto:'https://example.test/foto.jpg',descripcion:'Descripción conservada',historial:[{precio:'50000'}]};
   assert.equal((await fetch(base+'/api/admin/import',{method:'POST',headers:{Origin:base,'Content-Type':'application/json'},body:JSON.stringify({records:[{kind:'inmuebles',record:imported}]})})).status,401);
   const importResponse=await request('admin/import',{records:[{kind:'inmuebles',record:imported}]});assert.equal(importResponse.status,200);assert.equal((await importResponse.json()).total,1);
+  assert.equal((await request('admin/import',{records:[{kind:'inmuebles',record:imported}]})).status,400);
+  assert.equal((await request('admin/import',{overwrite:true,records:[{kind:'inmuebles',record:{...imported,precio:'51000'}}]})).status,200);
+  assert.equal((await request('admin/import',{records:[{kind:'profesionales',record:{id:'invalid-professional',nombre:'Sin estado'}}]})).status,400);
   const importedSaved=(await(await fetch(base+'/api/inmuebles',{headers:{Cookie:cookie}})).json()).find(item=>item.id===imported.id);assert.equal(importedSaved.foto,imported.foto);assert.deepEqual(importedSaved.historial,imported.historial);
-  assert.equal((await request('inmuebles/'+property.id,{...payload,estado:'reservado'},'PUT')).status,200);
+  assert.equal((await request('inmuebles/'+property.id,{estado:'reservado'},'PUT')).status,200);
   await new Promise(r=>server.close(r));server=createApp(dir,appOptions);base=await start();
   const restored=await(await fetch(base+'/api/inmuebles',{headers:{Cookie:cookie}})).json();assert.equal(restored.length,2);const restoredProperty=restored.find(item=>item.id===property.id);assert.equal(restoredProperty.estado,'reservado');assert.equal(restoredProperty.latitud,'10.067');assert.equal(restoredProperty.longitud,'-69.347');
   const professionals=await(await fetch(base+'/api/profesionales',{headers:{Cookie:cookie}})).json();assert.equal(professionals.length,2);assert.equal(professionals.find(item=>item.nombre==='Empresa candidata').whatsapp,'WhatsApp público');const application=professionals.find(item=>item.nombre==='Reformas Lara');assert.equal(application.origen,'formulario');assert.equal(application.estado,'candidato');assert.equal(application.email,'maria@example.test');
   assert.equal((await fetch(base+'/')).status,200);
   assert.equal((await fetch(base+'/server.mjs')).status,404);
-  const customer=await fetch(base+'/api/register',{method:'POST',headers:{Origin:base,'Content-Type':'application/json'},body:JSON.stringify({name:'Cliente',email:'cliente@example.test',password:'Cliente-test-12345'})});assert.equal(customer.status,200);const clientCookie=customer.headers.get('set-cookie').split(';')[0];
-  assert.equal((await fetch(base+'/api/leads',{headers:{Cookie:clientCookie}})).status,401);
-  assert.equal((await fetch(base+'/api/profesionales',{headers:{Cookie:clientCookie}})).status,401);
-  await request('inmuebles/'+property.id,payload,'PUT');
-  const publicItems=await(await fetch(base+'/api/public/inmuebles',{headers:{Cookie:clientCookie}})).json();assert.equal(publicItems.length,2);assert.ok(publicItems.every(item=>item.historial===undefined));
-  const inquiry=await fetch(base+'/api/inquiries',{method:'POST',headers:{Origin:base,'Content-Type':'application/json',Cookie:clientCookie},body:JSON.stringify({inmuebleId:property.id,contacto:'cliente@example.test',consent:true})});assert.equal(inquiry.status,201);const leads=await(await fetch(base+'/api/leads',{headers:{Cookie:cookie}})).json();assert.equal(leads.find(lead=>lead.userId)?.origen,'formulario');
-  assert.equal((await fetch(base+'/api/setup',{method:'POST',headers:{Origin:base,'Content-Type':'application/json'},body:JSON.stringify({name:'Otro',email:'otro@example.test',password:'Otro-test-12345'})})).status,403);
-  assert.equal((await fetch(base+'/api/leads',{headers:{Cookie:clientCookie}})).status,401);
-  await request('inmuebles/'+property.id,payload,'PUT');
-  assert.equal((await fetch(base+'/api/logout',{method:'POST',headers:{Origin:base,Cookie:clientCookie}})).status,200);
-  assert.equal((await fetch(base+'/api/public/inmuebles',{headers:{Cookie:clientCookie}})).status,401);
-  assert.equal((await fetch(base+'/api/inquiries',{method:'POST',headers:{Origin:base,'Content-Type':'application/json',Cookie:clientCookie},body:JSON.stringify({inmuebleId:property.id,contacto:'x',consent:true})})).status,401);
+  assert.equal((await fetch(base+'/api/register',{method:'POST',headers:{Origin:base,'Content-Type':'application/json'},body:'{}'})).status,404);
+  assert.equal((await fetch(base+'/api/inquiries',{method:'POST',headers:{Origin:base,'Content-Type':'application/json',Cookie:cookie},body:'{}'})).status,404);
+  const publicItems=await(await fetch(base+'/api/public/inmuebles',{headers:{Cookie:cookie}})).json();assert.equal(publicItems.length,1);assert.ok(publicItems.every(item=>item.estado===undefined&&item.historial===undefined));
+  refreshResult=[{source:'RE/MAX',status:'fallida',error:'Fuente no disponible'}];
+  assert.equal((await request('captures/run',{source:'remax'})).status,202);await new Promise(resolve=>setTimeout(resolve,0));
+  const failedCapture=(await(await fetch(base+'/api/sources',{headers:{Cookie:cookie}})).json()).capture;assert.equal(failedCapture.status,'fallida');assert.match(failedCapture.error,/RE\/MAX/);
   assert.equal((await fetch(base+'/api/setup',{method:'POST',headers:{Origin:base,'Content-Type':'application/json'},body:JSON.stringify({name:'Otro',email:'otro@example.test',password:'Otro-test-12345'})})).status,403);
  } finally {await new Promise(r=>server.close(r));rmSync(dir,{recursive:true,force:true});}
 });

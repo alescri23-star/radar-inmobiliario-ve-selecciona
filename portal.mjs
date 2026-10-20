@@ -38,43 +38,32 @@ export function portal(database,options={}) {
   if(await handleRecovery(req,res,url))return true;
   if(await handleGallery(req,res,url))return true;
   if(url.pathname==='/api/session' && req.method==='GET'){send(res,200,{user:req.user||null,setupRequired:!await db.get("SELECT id FROM users WHERE role='admin'")});return true;}
-  if(['/api/register','/api/login'].includes(url.pathname) && req.method==='POST'){
+  if(['/api/register','/api/inquiries'].includes(url.pathname)){
+   send(res,404,{error:'Recurso no disponible'});return true;
+  }
+  if(url.pathname==='/api/login' && req.method==='POST'){
    try{
-    const address=req.socket.remoteAddress;const entry=attempts.get(address)||{count:0,until:Date.now()+600000};if(entry.until<Date.now()){entry.count=0;entry.until=Date.now()+600000;}if(++entry.count>20){send(res,429,{error:'Demasiados intentos. Espera unos minutos.'});return true;}attempts.set(address,entry);
     const input=await body(req), email=String(input.email||'').trim().toLowerCase(), password=String(input.password||'');
+    const limitKey='login:'+hash(email),entry=attempts.get(limitKey)||{count:0,until:Date.now()+600000};if(entry.until<Date.now()){entry.count=0;entry.until=Date.now()+600000;}if(++entry.count>20){send(res,429,{error:'Demasiados intentos. Espera unos minutos.'});return true;}attempts.set(limitKey,entry);
     if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||password.length<10||password.length>200)throw Error('Usa un email válido y una contraseña de 10 a 200 caracteres');
-    let user;
-    if(url.pathname==='/api/login'){
-     user=await db.get('SELECT * FROM users WHERE email=?',[email]);
-     if(!user||!timingSafeEqual(scryptSync(password,user.salt,64),Buffer.from(user.password,'hex')))throw Error('Email o contraseña incorrectos');
-    }else{
-     const name=String(input.name||'').trim().slice(0,100);if(!name)throw Error('Indica tu nombre');
-     const salt=randomBytes(16).toString('hex');user={id:randomBytes(16).toString('hex'),email,name,role:'cliente'};
-     await db.run('INSERT INTO users VALUES(?,?,?,?,?,?)',[user.id,email,name,user.role,salt,scryptSync(password,salt,64).toString('hex')]);
-    }
+    const user=await db.get('SELECT * FROM users WHERE email=?',[email]);
+    if(!user||user.role!=='admin'||!timingSafeEqual(scryptSync(password,user.salt,64),Buffer.from(user.password,'hex')))throw Error('Email o contraseña incorrectos');
     const token=randomBytes(32).toString('hex');await db.run('INSERT INTO sessions VALUES(?,?,?)',[hash(token),user.id,Date.now()+86400000]);
     res.setHeader('Set-Cookie',policy.cookie(token));send(res,200,{user:{id:user.id,email:user.email,name:user.name,role:user.role}});
    }catch(e){send(res,400,{error:e.code==='ER_DUP_ENTRY'||e.message.includes('UNIQUE')?'Ese email ya está registrado':e.message});}return true;
   }
   if(url.pathname==='/api/logout' && req.method==='POST'){const token=req.headers.cookie?.match(/radar_session=([a-f0-9]+)/)?.[1];if(token)await db.run('DELETE FROM sessions WHERE token=?',[hash(token)]);res.setHeader('Set-Cookie',policy.cookie());send(res,200,{ok:true});return true;}
   if(url.pathname==='/api/public/inmuebles' && req.method==='GET'){
-   if(!req.user){send(res,401,{error:'Inicia sesión para acceder al radar'});return true;}
+   if(req.user?.role!=='admin'){send(res,401,{error:'Acceso reservado al administrador'});return true;}
    send(res,200,(await records('inmuebles')).filter(r=>r.estado==='activo').map(r=>Object.fromEntries(['id','titulo','foto','zona','operacion','precio','moneda','latitud','longitud','municipio','parroquia','calle','tipo','habitaciones','banos','superficie','descripcion','fuente','actualizadoEn','ubicacionPrecision','ubicacionFuente','ubicacionConsultadaEn'].map(k=>[k,r[k]??'']))));return true;
-  }
-  if(url.pathname==='/api/inquiries' && req.method==='POST'){
-   if(!req.user){send(res,401,{error:'Regístrate o inicia sesión para pedir información'});return true;}
-   try{const input=await body(req);if(input.consent!==true)throw Error('Acepta que te contactemos sobre esta consulta');if(!(await records('inmuebles')).some(p=>p.id===input.inmuebleId&&p.estado==='activo'))throw Error('El anuncio no está disponible');
-    const contact=String(input.contacto||'').trim();if(!contact||contact.length>200)throw Error('Indica un teléfono o email de contacto');
-     const r={id:randomBytes(16).toString('hex'),nombre:req.user.name,contacto:contact,inmuebleId:input.inmuebleId,estado:'nuevo',proximaAccion:String(input.mensaje||'Solicitud de información').slice(0,2000),fecha:'',origen:'formulario',userId:req.user.id,consent:true,creadoEn:new Date().toISOString()};await db.run('INSERT INTO records VALUES(?,?,?)',[r.id,'leads',JSON.stringify(r)]);send(res,201,{ok:true});
-   }catch(e){send(res,400,{error:e.message});}return true;
   }
   if(url.pathname==='/api/professional-applications' && req.method==='POST'){
    try{
-    const address=req.socket.remoteAddress||'unknown',now=Date.now(),entry=professionalAttempts.get(address)||{count:0,until:now+900000};
-    if(entry.until<now){entry.count=0;entry.until=now+900000;}
-    if(++entry.count>5){send(res,429,{error:'Demasiados envíos. Espera unos minutos antes de intentarlo de nuevo.'});return true;}professionalAttempts.set(address,entry);
     const input=await body(req);
     if(String(input.websiteConfirm||'').trim()){send(res,201,{ok:true});return true;}
+    const now=Date.now(),applicantKey='professional:'+hash(String(input.email||'').trim().toLowerCase()+':'+String(input.contacto||'').replace(/\D/g,'')),entry=professionalAttempts.get(applicantKey)||{count:0,until:now+900000};
+    if(entry.until<now){entry.count=0;entry.until=now+900000;}
+    if(++entry.count>5){send(res,429,{error:'Demasiados envíos. Espera unos minutos antes de intentarlo de nuevo.'});return true;}professionalAttempts.set(applicantKey,entry);
     if(input.consent!==true)throw Error('Debes aceptar el tratamiento de tus datos para enviar la solicitud');
     const clean=(key,max=200)=>String(input[key]||'').trim().slice(0,max);
     const nombre=clean('nombre',120),personaContacto=clean('personaContacto',120),email=clean('email',200).toLowerCase(),contacto=clean('contacto',80),whatsapp=clean('whatsapp',80),tipoEmpresa=clean('tipoEmpresa',80),servicios=clean('servicios',2000),cobertura=clean('cobertura',300),experiencia=clean('experiencia',300),sitioWeb=clean('sitioWeb',500),observaciones=clean('observaciones',2000);
@@ -94,13 +83,22 @@ export function portal(database,options={}) {
     const input=await body(req,5_000_000),items=input.records;
     if(!Array.isArray(items)||items.length<1||items.length>5000)throw Error('El archivo de importación no es válido');
     const allowedKinds=new Set(['inmuebles','leads','reformas','profesionales','runs']);
-    const clean=items.map(item=>{
+    const allowedStates={inmuebles:['borrador','activo','reservado','cerrado','archivado'],leads:['nuevo','contactado','calificado','visita','negociacion','ganado','perdido'],reformas:['detectada','evaluacion','presupuestada','aprobada','en ejecucion','completada','cancelada'],profesionales:['candidato','contactado','documentación pendiente','evaluado','aprobado','descartado'],runs:['completada','fallida']};
+    const clean=[];
+    for(const item of items){
      const kind=String(item?.kind||''),record=item?.record;
      if(!allowedKinds.has(kind)||!record||typeof record!=='object'||Array.isArray(record))throw Error('Hay un registro no válido en la importación');
      const id=String(record.id||'').trim();if(!id||id.length>191)throw Error('Hay un registro sin identificador válido');
+     const title=String(record.titulo||record.nombre||'').trim();if(kind!=='runs'&&!title)throw Error('Hay un registro sin título o nombre');
+     if(!allowedStates[kind].includes(String(record.estado||record.status||'')))throw Error('Hay un registro con estado no válido');
+     if(kind==='inmuebles'&&!['venta','alquiler'].includes(record.operacion))throw Error('Hay un inmueble con operación no válida');
+     if(record.email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(record.email)))throw Error('Hay un registro con correo no válido');
+     for(const field of ['precio','importe'])if(record[field]!==undefined&&record[field]!==''&&(!Number.isFinite(Number(record[field]))||Number(record[field])<0))throw Error('Hay un registro con importe no válido');
+     const hasLat=record.latitud!==undefined&&record.latitud!=='',hasLng=record.longitud!==undefined&&record.longitud!=='';if(hasLat!==hasLng||hasLat&&(!Number.isFinite(Number(record.latitud))||!Number.isFinite(Number(record.longitud))||Math.abs(Number(record.latitud))>90||Math.abs(Number(record.longitud))>180))throw Error('Hay un registro con coordenadas no válidas');
+     const existing=await db.get('SELECT kind FROM records WHERE id=?',[id]);if(existing&&!input.overwrite)throw Error('Ya existe un registro con el identificador '+id+'; confirma overwrite para reemplazarlo');if(existing&&existing.kind!==kind)throw Error('El identificador '+id+' pertenece a otro tipo de registro');
      const serialized=JSON.stringify(record);if(serialized.length>100_000)throw Error('Hay un registro demasiado grande');
-     return {id,kind,serialized};
-    });
+     clean.push({id,kind,serialized});
+    }
     await db.transaction(async tx=>{for(const item of clean)await tx.upsertRecord(item.id,item.kind,item.serialized);});
     const imported=clean.reduce((total,item)=>({...total,[item.kind]:(total[item.kind]||0)+1}),{});
     send(res,200,{ok:true,total:clean.length,imported});
@@ -115,7 +113,12 @@ export function portal(database,options={}) {
     const input=await body(req),source=String(input.source||'all');if(!['all','rentahouse','remax'].includes(source))throw Error('Fuente no válida');
     captureJob={running:true,startedAt:new Date().toISOString(),finishedAt:'',source,error:''};
     const runner=options.refreshSources||refreshSources;
-    Promise.resolve().then(()=>runner(db,source)).then(()=>{captureJob={...captureJob,running:false,finishedAt:new Date().toISOString()};}).catch(error=>{captureJob={...captureJob,running:false,finishedAt:new Date().toISOString(),error:String(error?.message||error).slice(0,300)};});
+    Promise.resolve().then(()=>runner(db,source)).then(results=>{
+     const failures=Array.isArray(results)?results.filter(result=>result?.status==='fallida'):[];
+     const completed=Array.isArray(results)?results.filter(result=>result?.status!=='fallida'):[];
+     const error=failures.length?(completed.length?'Actualización parcial: ':'No se pudo actualizar ninguna fuente: ')+failures.map(result=>result.source+': '+result.error).join(' · '):'';
+     captureJob={...captureJob,running:false,finishedAt:new Date().toISOString(),error:error.slice(0,300),status:failures.length?(completed.length?'parcial':'fallida'):'completada',results:Array.isArray(results)?results:[]};
+    }).catch(error=>{captureJob={...captureJob,running:false,finishedAt:new Date().toISOString(),status:'fallida',error:String(error?.message||error).slice(0,300)};});
     send(res,202,{ok:true,capture:captureJob});
    }catch(e){send(res,400,{error:e.message});}return true;
   }

@@ -31,7 +31,10 @@ export function createApp(directory = path.join(root, 'data'), options = {}) {
           let body = ''; for await (const chunk of req) { body += chunk; if (body.length > 32768) return send(res, 413, { error: 'Registro demasiado grande' }); }
           let input; try { input = JSON.parse(body); } catch { return send(res, 400, { error: 'JSON inválido' }); }
           const fields = kind === 'inmuebles' ? ['titulo', 'zona', 'operacion', 'precio', 'moneda', 'fuente', 'estado', 'latitud', 'longitud', 'direccion', 'municipio', 'parroquia', 'calle', 'tipo', 'habitaciones', 'banos', 'superficie', 'ubicacionPrecision'] : kind === 'leads' ? ['nombre', 'contacto', 'telefono', 'whatsapp', 'inmuebleId', 'interes', 'estado', 'proximaAccion', 'fecha', 'ultimaActividad', 'responsable', 'notas'] : kind === 'reformas' ? ['titulo', 'inmuebleId', 'importe', 'moneda', 'estado'] : ['nombre', 'personaContacto', 'email', 'tipoEmpresa', 'servicios', 'contacto', 'whatsapp', 'sitioWeb', 'direccion', 'cobertura', 'experiencia', 'rif', 'responsableTecnico', 'fuente', 'observaciones', 'fechaRevision', 'estado'];
-          const record = Object.fromEntries(fields.map(f => [f, String(input?.[f] ?? '').trim()]));
+          const previous = id ? (await list(kind)).find(r => r.id === id) : null;
+          if (id && !previous) return send(res, 404, { error: 'Registro no encontrado' });
+          const submitted = Object.fromEntries(fields.filter(f => Object.hasOwn(input, f)).map(f => [f, String(input[f] ?? '').trim()]));
+          const record = id ? { ...previous, ...submitted } : Object.fromEntries(fields.map(f => [f, String(input?.[f] ?? '').trim()]));
           if (!(record.titulo || record.nombre)) return send(res, 400, { error: 'Falta el título o nombre' });
           if (Object.values(record).some(v => v.length > 2000)) return send(res, 400, { error: 'Campo demasiado largo' });
           const states = { inmuebles: ['borrador','activo','reservado','cerrado','archivado'], leads: ['nuevo','contactado','calificado','visita','negociacion','ganado','perdido'], reformas: ['detectada','evaluacion','presupuestada','aprobada','en ejecucion','completada','cancelada'], profesionales: ['candidato','contactado','documentación pendiente','evaluado','aprobado','descartado'] };
@@ -48,9 +51,6 @@ export function createApp(directory = path.join(root, 'data'), options = {}) {
           if (record[amount] !== undefined && record[amount] !== '' && (!Number.isFinite(Number(record[amount])) || Number(record[amount]) < 0)) return send(res, 400, { error: 'Importe inválido' });
           if ([record.fecha, record.fechaRevision, record.ultimaActividad].filter(Boolean).some(value=>!/^\d{4}-\d{2}-\d{2}$/.test(value))) return send(res, 400, { error: 'Fecha inválida' });
           if (record.inmuebleId && !(await list('inmuebles')).some(p => p.id === record.inmuebleId)) return send(res, 400, { error: 'Inmueble no encontrado' });
-          const previous = id ? (await list(kind)).find(r => r.id === id) : null;
-          if (id && !previous) return send(res, 404, { error: 'Registro no encontrado' });
-           Object.assign(record, previous ? Object.fromEntries(Object.entries(previous).filter(([k])=>!fields.includes(k))) : {});
            if (kind === 'leads') record.origen = previous?.origen || (previous?.userId ? 'formulario' : 'manual');
            if (kind === 'profesionales') record.origen = previous?.origen || 'manual';
           record.id = id || randomUUID(); record.creadoEn = previous?.creadoEn || new Date().toISOString(); record.actualizadoEn = new Date().toISOString();
