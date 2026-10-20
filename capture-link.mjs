@@ -2,11 +2,9 @@ import {createHash,randomUUID} from 'node:crypto';
 import {robotsAllowed} from './collector.mjs';
 import {landType} from './land.mjs';
 import {parseRemax} from './remax.mjs';
+import {sourceByHost,manualLinkSourceIds} from './source-registry.mjs';
+import {listingFingerprint} from './listing-fingerprint.mjs';
 
-const sources={
- 'www.remax.com.ve':{id:'remax',name:'RE/MAX',photo:/^https:\/\/cdn\.remax\.com\.ve\//},
- 'rentahouse.com.ve':{id:'rentahouse',name:'Rent-A-House',photo:/^https:\/\/cdn\.photos\.sparkplatform\.com\/ven\//}
-};
 const entities=value=>String(value||'').replace(/&quot;/gi,'"').replace(/&#39;|&apos;/gi,"'").replace(/&amp;/gi,'&').replace(/&lt;/gi,'<').replace(/&gt;/gi,'>').replace(/&#(\d+);/g,(_,n)=>String.fromCodePoint(Number(n))).replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
 const meta=(html,key)=>entities(html.match(new RegExp(`<meta[^>]+(?:property|name)=["']${key}["'][^>]+content=["']([^"']*)["']`,'i'))?.[1]||html.match(new RegExp(`<meta[^>]+content=["']([^"']*)["'][^>]+(?:property|name)=["']${key}["']`,'i'))?.[1]||'');
 const number=value=>{const raw=String(value??'').replace(/[^\d.,-]/g,'');if(!raw)return'';const normalized=raw.includes(',')&&raw.includes('.')?raw.replace(/\./g,'').replace(',','.'):raw.replace(',','.');return Number.isFinite(Number(normalized))?String(Number(normalized)):'';};
@@ -17,8 +15,9 @@ function jsonLd(html){
 }
 export function validateListingUrl(raw){
  let url;try{url=new URL(String(raw||'').trim());}catch{throw Error('Pega un enlace completo y válido');}
- if(url.protocol!=='https:'||url.username||url.password||url.port||!sources[url.hostname])throw Error('Admitimos enlaces HTTPS de RE/MAX Venezuela y Rent-A-House Venezuela');
- url.hash='';return {url,source:sources[url.hostname]};
+ const source=sourceByHost(url.hostname);
+ if(url.protocol!=='https:'||url.username||url.password||url.port||!source||!manualLinkSourceIds.includes(source.id))throw Error('Admitimos enlaces HTTPS de RE/MAX, Rent-A-House, AC Inmobiliarias y eBienesRaices');
+ url.hash='';return {url,source};
 }
 export function parseListingPage(html,rawUrl){
  const {url,source}=validateListingUrl(rawUrl);
@@ -31,10 +30,12 @@ export function parseListingPage(html,rawUrl){
  const operation=pathText.includes('/alquiler')||/\balquiler\b/.test(allText)?'alquiler':'venta';
  const isLand=/terreno|parcela|lote|finca/.test(allText),type=isLand?landType(title,description):/\bcasa\b/.test(allText)?'Casa':/apartamento|apto\.?/.test(allText)?'Apartamento':'Otro';
  const image=typeof ld.image==='string'?ld.image:Array.isArray(ld.image)?ld.image[0]:ld.image?.url||meta(html,'og:image');
- const photo=source.photo.test(String(image||''))?String(image):'';
+ let imageHost='';try{imageHost=new URL(String(image||'')).hostname.toLowerCase();}catch{}
+ const photo=source.photoHosts.includes(imageHost)?String(image):'';
  const geo=ld.geo||{},lat=Number(geo.latitude),lng=Number(geo.longitude),located=Number.isFinite(lat)&&Number.isFinite(lng)&&Math.abs(lat)<=90&&Math.abs(lng)<=180;
  const sourceCode=url.pathname.match(/([0-9]+(?:-[0-9]+)*)(?:\.html)?\/?$/i)?.[1]||createHash('sha256').update(url.href).digest('hex').slice(0,24);
- return {sourceId:source.id,sourceCode,titulo:title,foto:photo,tipo:type,operacion:operation,precio:number(offer.price||meta(html,'product:price:amount')),moneda:String(offer.priceCurrency||meta(html,'product:price:currency')||'USD').toUpperCase()==='VES'?'VES':'USD',fuente:url.href,estado:'borrador',municipio:'',parroquia:'',zona:'',calle:'',direccion:entities(ld.address?.streetAddress||''),habitaciones:'',banos:'',superficie:'',descripcion:description,latitud:located?String(lat):'',longitud:located?String(lng):'',ubicacionPrecision:located?'publicada':'',ubicacionFuente:located?source.name+': datos del anuncio':'',ubicacionConsultadaEn:new Date().toISOString()};
+ const record={sourceId:source.id,sourceCode,titulo:title,foto:photo,tipo:type,operacion:operation,precio:number(offer.price||meta(html,'product:price:amount')),moneda:String(offer.priceCurrency||meta(html,'product:price:currency')||'USD').toUpperCase()==='VES'?'VES':'USD',fuente:url.href,estado:'borrador',municipio:'',parroquia:'',zona:'',calle:'',direccion:entities(ld.address?.streetAddress||''),habitaciones:'',banos:'',superficie:'',descripcion:description,latitud:located?String(lat):'',longitud:located?String(lng):'',ubicacionPrecision:located?'publicada':'',ubicacionFuente:located?source.name+': datos del anuncio':'',ubicacionConsultadaEn:new Date().toISOString()};
+ return {...record,dedupeKey:listingFingerprint(record),dedupeStatus:'pendiente_revision'};
 }
 async function download(fetcher,url){const response=await fetcher(url,{headers:{'User-Agent':'RadarVenezuela/0.3 (captura manual de anuncio publico)'},redirect:'error',signal:AbortSignal.timeout(25000)});if(!response.ok)throw Error('La fuente respondió con HTTP '+response.status);const text=await response.text();if(text.length>5_000_000)throw Error('La página del anuncio es demasiado grande');return text;}
 export async function captureListing(db,rawUrl,fetcher=fetch){

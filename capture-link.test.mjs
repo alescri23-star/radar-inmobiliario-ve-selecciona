@@ -16,6 +16,15 @@ test('analiza enlaces permitidos y bloquea destinos no compatibles',()=>{
  assert.throws(()=>validateListingUrl('https://remax.com.ve.evil.test/test'),/Admitimos enlaces HTTPS/);
 });
 
+test('acepta agencias locales validadas y mantiene sus anuncios en revisión',()=>{
+ const localHtml='<html><head><meta property="og:title" content="VENTA | Terreno urbano en Cabudare"><meta property="og:description" content="Parcela de 500 m² en Lara"><meta property="og:image" content="https://images.wasi.co/inmuebles/prueba.jpg"><meta property="product:price:amount" content="25000"></head></html>';
+ const ac=parseListingPage(localHtml,'https://acinmobiliarias.com/inmueble/terreno-urbano-12345');
+ assert.equal(ac.sourceId,'acinmobiliarias');assert.equal(ac.operacion,'venta');assert.equal(ac.tipo,'Terreno urbano');assert.equal(ac.estado,'borrador');assert.equal(ac.dedupeStatus,'pendiente_revision');assert.match(ac.dedupeKey,/^[a-f0-9]{24}$/);
+ const ebienes=parseListingPage(localHtml,'https://www.ebienesraices.com.ve/shop/terreno-urbano-123');
+ assert.equal(ebienes.sourceId,'ebienesraices');assert.equal(ebienes.foto,'');
+ assert.throws(()=>validateListingUrl('https://listado.mercadolibre.com.ve/inmuebles/test'),/Admitimos enlaces HTTPS/);
+});
+
 test('solo el administrador puede capturar un enlace y se guarda como borrador',async()=>{
  const dir=mkdtempSync(path.join(tmpdir(),'radar-capture-'));provisionAdmin(dir,{name:'Administrador',email:'admin@example.test',password:'Radar-test-12345'});
  const captureFetch=async target=>new Response(String(target).endsWith('/robots.txt')?'User-agent: *\nAllow: /':html,{status:200});

@@ -1,6 +1,8 @@
 import {randomUUID} from 'node:crypto';
 import {parseRah,robotsAllowed} from './collector.mjs';
 import {parseRemax} from './remax.mjs';
+import {listingFingerprint} from './listing-fingerprint.mjs';
+import {automaticSourceIds} from './source-registry.mjs';
 
 const nowIso=()=>new Date().toISOString();
 const decode=value=>String(value||'').replace(/&amp;/g,'&');
@@ -24,6 +26,7 @@ export async function importObservedRecords(db,inputs,metadata={}){
    const history=[...(previous?.historial||[])];
    if(!previous||previous.precio!==input.precio){history.push({precio:input.precio,moneda:input.moneda,observadoEn:now});if(previous)changes++;}
    const record={...previous,...input,id:previous?.id||randomUUID(),creadoEn:previous?.creadoEn||now,actualizadoEn:now,ultimaDeteccion:now,primeraDeteccion:previous?.primeraDeteccion||previous?.creadoEn||now,sourceScope:metadata.scopeKey||previous?.sourceScope||'',missingRuns:0,missingSince:'',availabilityReview:'visible',historial:history};
+   record.dedupeKey=listingFingerprint(record);record.dedupeStatus=previous?.dedupeStatus||'pendiente_revision';
    for(const field of ['latitud','longitud','direccion','municipio','parroquia','calle','ubicacionPrecision','ubicacionFuente','ubicacionConsultadaEn','terrenoClasificacionFuente','terrenoClasificacionEvidencia','terrenoClasificacionConfianza','terrenoClasificacionRevisadaEn'])if(previous?.[field])record[field]=previous[field];
    if(previous?.terrenoClasificacionRevisadaEn)record.tipo=previous.tipo;
    await tx.upsertRecord(record.id,'inmuebles',JSON.stringify(record));
@@ -70,7 +73,7 @@ export async function refreshRemax(db,{fetcher=fetch,sleep=wait}={}){
 }
 
 export async function refreshSources(db,source='all',options={}){
- const selected=source==='all'?['rentahouse','remax']:[source];if(!selected.every(value=>['rentahouse','remax'].includes(value)))throw Error('Fuente no válida');
+ const selected=source==='all'?automaticSourceIds:[source];if(!selected.every(value=>automaticSourceIds.includes(value)))throw Error('Fuente no válida');
  const results=[];for(const value of selected){try{results.push(await (value==='rentahouse'?refreshRentahouse(db,options):refreshRemax(db,options)));}catch(error){results.push({source:value==='rentahouse'?'Rent-A-House':'RE/MAX',status:'fallida',error:error.message});}}
  return results;
 }

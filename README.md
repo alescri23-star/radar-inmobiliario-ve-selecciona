@@ -23,7 +23,7 @@ node collector.mjs
 ```
 Captura la primera página de apartamentos en venta y alquiler de Barquisimeto en Rent-A-House. Lee robots.txt, comprueba las rutas y espera 10 segundos entre consultas. Requiere acceso a internet. No recorre todo el inventario ni otros portales.
 
-El capturador identifica cada anuncio por fuente, código y operación. Una nueva observación actualiza el registro y conserva el historial de precio y las coordenadas corregidas manualmente. La muestra parcial de Rent-A-House nunca interpreta una ausencia como retirada. Si cambia la estructura o no reconoce anuncios, se detiene sin interpretar la respuesta como inventario vacío. La deduplicación entre distintos portales queda pendiente.
+El capturador identifica cada anuncio por fuente, código y operación. Una nueva observación actualiza el registro y conserva el historial de precio y las coordenadas corregidas manualmente. La muestra parcial de Rent-A-House nunca interpreta una ausencia como retirada. Si cambia la estructura o no reconoce anuncios, se detiene sin interpretar la respuesta como inventario vacío. Cada anuncio recibe además una huella de comparación: las coincidencias entre fuentes se muestran para revisión, sin fusionar ni borrar registros automáticamente.
 
 Para validar un HTML guardado sin acceso externo:
 ```
@@ -37,7 +37,7 @@ Ejecuta `node remax.mjs`. Recorre los enlaces de paginación publicados de Expre
 ## Web del usuario
 La vista autenticada funciona como laboratorio privado del único administrador. Separa los anuncios mediante las pestañas Todos, En venta, En alquiler y Favoritos. Los favoritos pueden calificarse como verde (muy interesante), naranja (interesante), amarillo (más o menos interesante) o rojo (nada interesante). `Capturar / Actualizar` reúne tres recorridos: descubrir anuncios mediante una búsqueda web limitada, pegar un enlace compatible y actualizar todas las fuentes o una sola. Muestra el total registrado y los casos pendientes de revisar mientras la actualización se ejecuta en segundo plano. La captura respeta `robots.txt`, rechaza otros dominios, actualiza duplicados y guarda las fichas nuevas como borrador hasta su revisión.
 
-Las fuentes adicionales deben incorporarse como conectores independientes, nunca mediante un capturador genérico para cualquier URL. Cada conector documenta el permiso de acceso, cobertura, identificador estable del anuncio, frecuencia, límites, estructura y política de retirada. Se priorizan API, feed o acuerdo directo con agencias; la extracción HTML solo se habilita cuando es compatible con las condiciones de la fuente. Los registros nuevos pasan por revisión y la ausencia nunca provoca una eliminación automática.
+Las fuentes adicionales se incorporan como conectores independientes, nunca mediante un capturador genérico para cualquier URL. AC Inmobiliarias y eBienesRaices están habilitadas en modo piloto para capturar una ficha pegando su enlace; RE/MAX y Rent-A-House conservan actualización automática controlada. Mercado Libre figura como API oficial pendiente de configurar y no se rastrea su interfaz web. Cada conector documenta el permiso de acceso, cobertura, identificador estable del anuncio, frecuencia, límites, estructura y política de retirada. Se priorizan API, feed o acuerdo directo con agencias; la extracción HTML solo se habilita cuando es compatible con las condiciones de la fuente. Los registros nuevos pasan por revisión y la ausencia nunca provoca una eliminación automática. Véase `docs/fuentes-inmobiliarias.md`.
 
 Los filtros cubren municipio, parroquia, sector/urbanización, calle, tipo, precio y moneda. Municipio y parroquia usan un catálogo inicial de Lara; las parroquias dependen del municipio elegido. Sector y calle se alimentan de los anuncios disponibles, sin asignarles una parroquia por suposición. Opciones sin anuncios clasificados muestran cero resultados. La barra de cuenta muestra Cerrar sesión y el enlace Panel de administración únicamente a cuentas con rol administrador. Lara y Barquisimeto están fijados por el piloto.
 
@@ -94,7 +94,7 @@ node --test
 Pruebas: persistencia, edición parcial sin pérdida de campos, coordenadas, importación controlada, historial de precio, control seguro de ausencias, estado real de capturas, reglas de rutas, acceso exclusivo del administrador, recuperación, galería y formulario profesional.
 
 ## Pendiente
-Verificación de ubicaciones publicadas, geocodificación de pendientes y catálogo territorial verificado; fotos y uso de contenido de terceros para publicación; fuentes adicionales; deduplicación entre portales; capturas programadas y diagnóstico de fallos; email verificado y activación del correo de recuperación; despliegue con HTTPS y protección de autenticación para acceso remoto.
+Verificación de ubicaciones publicadas, geocodificación de pendientes y catálogo territorial verificado; fotos y uso de contenido de terceros para publicación; autorización y automatización de fuentes adicionales; revisión y resolución manual de coincidencias entre portales; capturas programadas y diagnóstico de fallos; conexión OAuth de Mercado Libre; email verificado y activación del correo de recuperación.
 
 Repositorio principal: alescri23-star/radar-inmobiliario-ve-selecciona.
 Repositorio estratégico: alescri23-star/radar-venezuela-20268-2030, sin modificaciones.
