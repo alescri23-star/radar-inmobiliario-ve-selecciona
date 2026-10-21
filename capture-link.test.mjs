@@ -22,6 +22,7 @@ test('acepta agencias locales validadas y mantiene sus anuncios en revisión',()
  assert.equal(ac.sourceId,'acinmobiliarias');assert.equal(ac.operacion,'venta');assert.equal(ac.tipo,'Terreno urbano');assert.equal(ac.estado,'borrador');assert.equal(ac.dedupeStatus,'pendiente_revision');assert.match(ac.dedupeKey,/^[a-f0-9]{24}$/);
  const ebienes=parseListingPage(localHtml,'https://www.ebienesraices.com.ve/shop/terreno-urbano-123');
  assert.equal(ebienes.sourceId,'ebienesraices');assert.equal(ebienes.foto,'');
+ const century=parseListingPage(localHtml,'https://www.century21.com.ve/propiedad/1252687_apartamento-en-venta');assert.equal(century.sourceId,'century21');assert.equal(century.sourceCode,'1252687');assert.equal(century.estado,'borrador');
  assert.throws(()=>validateListingUrl('https://listado.mercadolibre.com.ve/inmuebles/test'),/Admitimos enlaces HTTPS/);
 });
 

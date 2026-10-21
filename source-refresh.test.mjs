@@ -20,3 +20,11 @@ test('una captura parcial nunca interpreta ausencias como retirada',async()=>{
  await importObservedRecords(db,[{...property('1'),sourceId:'rentahouse'}],metadata);await importObservedRecords(db,[],metadata);
  const saved=JSON.parse(raw.prepare("SELECT body FROM records WHERE kind='inmuebles'").get().body);assert.equal(saved.availabilityReview,'visible');assert.equal(saved.missingRuns,0);raw.close();
 });
+
+test('una actualización conserva la decisión de revisión del administrador',async()=>{
+ const raw=new DatabaseSync(':memory:');raw.exec('CREATE TABLE records(id TEXT PRIMARY KEY,kind TEXT,body TEXT)');const db=adaptDatabase(raw),metadata={source:'Century 21 Venezuela',scopeKey:'century21:lara:resultados',complete:true};
+ await importObservedRecords(db,[{...property('1252687'),sourceId:'century21',estado:'borrador'}],metadata);
+ const first=JSON.parse(raw.prepare("SELECT body FROM records WHERE kind='inmuebles'").get().body);await db.upsertRecord(first.id,'inmuebles',JSON.stringify({...first,estado:'activo'}));
+ await importObservedRecords(db,[{...property('1252687','49000'),sourceId:'century21',estado:'borrador'}],metadata);
+ const saved=JSON.parse(raw.prepare("SELECT body FROM records WHERE kind='inmuebles'").get().body);assert.equal(saved.estado,'activo');assert.equal(saved.precio,'49000');raw.close();
+});

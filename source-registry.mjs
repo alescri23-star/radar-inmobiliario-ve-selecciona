@@ -25,8 +25,8 @@ export const sourceRegistry = Object.freeze({
     home: 'https://listado.mercadolibre.com.ve/inmuebles/lara/barquisimeto/barquisimeto/'
   },
   century21: {
-    id: 'century21', name: 'Century 21 Venezuela', mode: 'discovery', status: 'por_validar',
-    hosts: ['www.century21.com.ve'], photoHosts: [],
+    id: 'century21', name: 'Century 21 Venezuela', mode: 'automatic', status: 'piloto',
+    hosts: ['www.century21.com.ve'], photoHosts: ['cdn.21online.lat'],
     home: 'https://www.century21.com.ve/v/resultados/en-pais_venezuela/en-estado_lara'
   }
 });

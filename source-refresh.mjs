@@ -3,6 +3,7 @@ import {parseRah,robotsAllowed} from './collector.mjs';
 import {parseRemax} from './remax.mjs';
 import {listingFingerprint} from './listing-fingerprint.mjs';
 import {automaticSourceIds} from './source-registry.mjs';
+import {century21LaraUrl,parseCentury21} from './century21.mjs';
 
 const nowIso=()=>new Date().toISOString();
 const decode=value=>String(value||'').replace(/&amp;/g,'&');
@@ -25,7 +26,7 @@ export async function importObservedRecords(db,inputs,metadata={}){
    const previous=existing.find(item=>item.sourceId===input.sourceId&&item.sourceCode===input.sourceCode&&item.operacion===input.operacion);
    const history=[...(previous?.historial||[])];
    if(!previous||previous.precio!==input.precio){history.push({precio:input.precio,moneda:input.moneda,observadoEn:now});if(previous)changes++;}
-   const record={...previous,...input,id:previous?.id||randomUUID(),creadoEn:previous?.creadoEn||now,actualizadoEn:now,ultimaDeteccion:now,primeraDeteccion:previous?.primeraDeteccion||previous?.creadoEn||now,sourceScope:metadata.scopeKey||previous?.sourceScope||'',missingRuns:0,missingSince:'',availabilityReview:'visible',historial:history};
+   const record={...previous,...input,id:previous?.id||randomUUID(),estado:previous?.estado||input.estado,creadoEn:previous?.creadoEn||now,actualizadoEn:now,ultimaDeteccion:now,primeraDeteccion:previous?.primeraDeteccion||previous?.creadoEn||now,sourceScope:metadata.scopeKey||previous?.sourceScope||'',missingRuns:0,missingSince:'',availabilityReview:'visible',historial:history};
    record.dedupeKey=listingFingerprint(record);record.dedupeStatus=previous?.dedupeStatus||'pendiente_revision';
    for(const field of ['latitud','longitud','direccion','municipio','parroquia','calle','ubicacionPrecision','ubicacionFuente','ubicacionConsultadaEn','terrenoClasificacionFuente','terrenoClasificacionEvidencia','terrenoClasificacionConfianza','terrenoClasificacionRevisadaEn'])if(previous?.[field])record[field]=previous[field];
    if(previous?.terrenoClasificacionRevisadaEn)record.tipo=previous.tipo;
@@ -72,8 +73,20 @@ export async function refreshRemax(db,{fetcher=fetch,sleep=wait}={}){
  }catch(error){await failedRun(db,source,error);throw error;}
 }
 
+export async function refreshCentury21(db,{fetcher=fetch,sleep=wait}={}){
+ const source='Century 21 Venezuela',origin=new URL(century21LaraUrl).origin;
+ try{
+  const robots=await download(fetcher,origin+'/robots.txt','RadarVenezuela/0.3 (piloto interno; anuncios publicos)');
+  if(!robotsAllowed(robots,century21LaraUrl))throw Error('Century 21 excluye la búsqueda pública de Lara');
+  await sleep(3000);
+  const records=parseCentury21(await download(fetcher,century21LaraUrl,'RadarVenezuela/0.3 (piloto interno; anuncios publicos)'));
+  return await importObservedRecords(db,records,{source,scope:'Inventario público completo del estado Lara',scopeKey:'century21:lara:resultados',complete:true});
+ }catch(error){await failedRun(db,source,error);throw error;}
+}
+
 export async function refreshSources(db,source='all',options={}){
  const selected=source==='all'?automaticSourceIds:[source];if(!selected.every(value=>automaticSourceIds.includes(value)))throw Error('Fuente no válida');
- const results=[];for(const value of selected){try{results.push(await (value==='rentahouse'?refreshRentahouse(db,options):refreshRemax(db,options)));}catch(error){results.push({source:value==='rentahouse'?'Rent-A-House':'RE/MAX',status:'fallida',error:error.message});}}
+ const runners={rentahouse:refreshRentahouse,remax:refreshRemax,century21:refreshCentury21},names={rentahouse:'Rent-A-House',remax:'RE/MAX',century21:'Century 21 Venezuela'};
+ const results=[];for(const value of selected){try{results.push(await runners[value](db,options));}catch(error){results.push({source:names[value],status:'fallida',error:error.message});}}
  return results;
 }

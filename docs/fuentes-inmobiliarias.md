@@ -9,7 +9,11 @@ Cada fuente se integra por separado. Todos los anuncios nuevos se guardan como b
 | AC Inmobiliarias | Captura manual pegando el enlace de una ficha | Piloto |
 | eBienesRaices | Captura manual pegando el enlace de una ficha | Piloto |
 | Mercado Libre Inmuebles | API oficial | Requiere registrar una aplicación y credenciales seguras |
-| Century 21 Venezuela | Enlace de búsqueda para descubrimiento | Pendiente de validar una integración |
+| Century 21 Venezuela | Captura piloto del inventario público de Lara, respetando `robots.txt` | Piloto |
+
+## Century 21 Venezuela
+
+El conector consulta únicamente la búsqueda pública del estado Lara y lee el inventario incluido por la propia página. No visita cada ficha, no guarda datos de contacto de asesores y no descarga fotografías; conserva, cuando existe, la URL de una miniatura servida por la fuente. Una pasada solo se importa si el número de resultados coincide con el total anunciado. Los registros nuevos se crean como borradores y las ausencias se limitan a una alerta de revisión después de dos capturas completas consecutivas.
 
 ## Mercado Libre
 

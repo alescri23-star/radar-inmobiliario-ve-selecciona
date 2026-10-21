@@ -16,7 +16,7 @@ function jsonLd(html){
 export function validateListingUrl(raw){
  let url;try{url=new URL(String(raw||'').trim());}catch{throw Error('Pega un enlace completo y válido');}
  const source=sourceByHost(url.hostname);
- if(url.protocol!=='https:'||url.username||url.password||url.port||!source||!manualLinkSourceIds.includes(source.id))throw Error('Admitimos enlaces HTTPS de RE/MAX, Rent-A-House, AC Inmobiliarias y eBienesRaices');
+ if(url.protocol!=='https:'||url.username||url.password||url.port||!source||!manualLinkSourceIds.includes(source.id))throw Error('Admitimos enlaces HTTPS de RE/MAX, Rent-A-House, Century 21, AC Inmobiliarias y eBienesRaices');
  url.hash='';return {url,source};
 }
 export function parseListingPage(html,rawUrl){
@@ -33,7 +33,7 @@ export function parseListingPage(html,rawUrl){
  let imageHost='';try{imageHost=new URL(String(image||'')).hostname.toLowerCase();}catch{}
  const photo=source.photoHosts.includes(imageHost)?String(image):'';
  const geo=ld.geo||{},lat=Number(geo.latitude),lng=Number(geo.longitude),located=Number.isFinite(lat)&&Number.isFinite(lng)&&Math.abs(lat)<=90&&Math.abs(lng)<=180;
- const sourceCode=url.pathname.match(/([0-9]+(?:-[0-9]+)*)(?:\.html)?\/?$/i)?.[1]||createHash('sha256').update(url.href).digest('hex').slice(0,24);
+ const sourceCode=(source.id==='century21'?url.pathname.match(/^\/propiedad\/(\d+)/i)?.[1]:url.pathname.match(/([0-9]+(?:-[0-9]+)*)(?:\.html)?\/?$/i)?.[1])||createHash('sha256').update(url.href).digest('hex').slice(0,24);
  const record={sourceId:source.id,sourceCode,titulo:title,foto:photo,tipo:type,operacion:operation,precio:number(offer.price||meta(html,'product:price:amount')),moneda:String(offer.priceCurrency||meta(html,'product:price:currency')||'USD').toUpperCase()==='VES'?'VES':'USD',fuente:url.href,estado:'borrador',municipio:'',parroquia:'',zona:'',calle:'',direccion:entities(ld.address?.streetAddress||''),habitaciones:'',banos:'',superficie:'',descripcion:description,latitud:located?String(lat):'',longitud:located?String(lng):'',ubicacionPrecision:located?'publicada':'',ubicacionFuente:located?source.name+': datos del anuncio':'',ubicacionConsultadaEn:new Date().toISOString()};
  return {...record,dedupeKey:listingFingerprint(record),dedupeStatus:'pendiente_revision'};
 }
