@@ -9,7 +9,7 @@ import { createApp } from './server.mjs';
 test('persistencia, edición, referencias y validación', async () => {
  const dir=mkdtempSync(path.join(tmpdir(),'radar-test-'));
  await provisionAdmin(dir,{name:'Administrador',email:'admin@example.test',password:'Radar-test-12345'});
- let sourceRuns=0,refreshResult=[];const appOptions={refreshSources:async()=>{sourceRuns++;return refreshResult;}};let server=createApp(dir,appOptions);
+ let sourceRuns=0,refreshResult=[],refreshHandler=async()=>refreshResult;const appOptions={refreshSources:async(...args)=>{sourceRuns++;return refreshHandler(...args);}};let server=createApp(dir,appOptions);
  const start=async()=>{await new Promise(r=>server.listen(0,'127.0.0.1',r));return `http://127.0.0.1:${server.address().port}`;};
  let base=await start();
  const professionalApplication={nombre:'Reformas Lara',personaContacto:'María Pérez',email:'maria@example.test',contacto:'+58 412 123 4567',whatsapp:'+58 412 123 4567',tipoEmpresa:'Empresa de reformas',servicios:'Reformas residenciales',cobertura:'Barquisimeto',experiencia:'8 años',sitioWeb:'https://example.test',consent:true};
@@ -56,6 +56,17 @@ test('persistencia, edición, referencias y validación', async () => {
   refreshResult=[{source:'RE/MAX',status:'fallida',error:'Fuente no disponible'}];
   assert.equal((await request('captures/run',{source:'remax'})).status,202);await new Promise(resolve=>setTimeout(resolve,0));
   const failedCapture=(await(await fetch(base+'/api/sources',{headers:{Cookie:cookie}})).json()).capture;assert.equal(failedCapture.status,'fallida');assert.match(failedCapture.error,/RE\/MAX/);
+  let continueCapture;
+  refreshHandler=async(_db,_source,control)=>{control.onProgress({source:'rentahouse',sourceProgress:25,progress:8,phase:'Leyendo anuncios'});await new Promise(resolve=>{continueCapture=resolve;});await control.checkpoint();control.onProgress({source:'rentahouse',sourceProgress:100,progress:100,phase:'Terminada'});return [{source:'Rent-A-House',status:'completada'}];};
+  assert.equal((await request('captures/run',{source:'rentahouse'})).status,202);await new Promise(resolve=>setTimeout(resolve,0));
+  let controlledCapture=(await(await fetch(base+'/api/sources',{headers:{Cookie:cookie}})).json()).capture;assert.equal(controlledCapture.progress,8);assert.equal(controlledCapture.perSource.rentahouse.progress,25);
+  assert.equal((await request('captures/control',{action:'pause'})).status,200);continueCapture();await new Promise(resolve=>setTimeout(resolve,0));
+  controlledCapture=(await(await fetch(base+'/api/sources',{headers:{Cookie:cookie}})).json()).capture;assert.equal(controlledCapture.paused,true);assert.equal(controlledCapture.running,true);
+  assert.equal((await request('captures/control',{action:'resume'})).status,200);await new Promise(resolve=>setTimeout(resolve,0));
+  controlledCapture=(await(await fetch(base+'/api/sources',{headers:{Cookie:cookie}})).json()).capture;assert.equal(controlledCapture.status,'completada');assert.equal(controlledCapture.progress,100);
+  refreshHandler=async(_db,_source,control)=>new Promise((resolve,reject)=>control.signal.addEventListener('abort',()=>reject(Object.assign(Error('Detenida'),{code:'CAPTURE_STOPPED'})),{once:true}));
+  assert.equal((await request('captures/run',{source:'remax'})).status,202);await new Promise(resolve=>setTimeout(resolve,0));assert.equal((await request('captures/control',{action:'stop'})).status,200);await new Promise(resolve=>setTimeout(resolve,0));
+  controlledCapture=(await(await fetch(base+'/api/sources',{headers:{Cookie:cookie}})).json()).capture;assert.equal(controlledCapture.status,'detenida');assert.equal(controlledCapture.running,false);
   assert.equal((await fetch(base+'/api/setup',{method:'POST',headers:{Origin:base,'Content-Type':'application/json'},body:JSON.stringify({name:'Otro',email:'otro@example.test',password:'Otro-test-12345'})})).status,403);
  } finally {await new Promise(r=>server.close(r));rmSync(dir,{recursive:true,force:true});}
 });

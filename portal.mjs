@@ -21,7 +21,15 @@ export function portal(database,options={}) {
  const records=async kind=>(await db.all('SELECT body FROM records WHERE kind=?',[kind])).map(r=>classifyLand(JSON.parse(r.body)));
  const attempts=new Map();
  const professionalAttempts=new Map();
- let captureJob={running:false,startedAt:'',finishedAt:'',source:'',error:''};
+ let captureJob={running:false,paused:false,startedAt:'',finishedAt:'',source:'',error:'',status:'inactiva',progress:0,currentSource:'',phase:'',perSource:{}};
+ let captureControl=null;
+ const sourceNames=Object.fromEntries(Object.values(sourceRegistry).map(source=>[source.id,source.name]));
+ const wakeCapture=()=>{for(const resolve of captureControl?.waiters||[])resolve();if(captureControl)captureControl.waiters=[];};
+ const captureCheckpoint=async()=>{
+  if(!captureControl||captureControl.stopped||captureControl.controller.signal.aborted)throw Object.assign(Error('Actualización detenida por el administrador'),{code:'CAPTURE_STOPPED'});
+  while(captureControl.paused&&!captureControl.stopped)await new Promise(resolve=>captureControl.waiters.push(resolve));
+  if(captureControl.stopped||captureControl.controller.signal.aborted)throw Object.assign(Error('Actualización detenida por el administrador'),{code:'CAPTURE_STOPPED'});
+ };
  const session=async req=>{const token=req.headers.cookie?.match(/(?:^|;\s*)radar_session=([a-f0-9]+)/)?.[1];return token?db.get('SELECT users.id, email, name, role FROM sessions JOIN users ON users.id=sessions.user_id WHERE token=? AND expires>?',[hash(token),Date.now()]):null;};
  return async(req,res,url)=>{
   req.user=await session(req);
@@ -112,19 +120,39 @@ export function portal(database,options={}) {
    if(captureJob.running){send(res,409,{error:'Ya hay una actualización en curso',capture:captureJob});return true;}
    try{
     const input=await body(req),source=String(input.source||'all');if(source!=='all'&&!automaticSourceIds.includes(source))throw Error('Fuente no válida');
-    captureJob={running:true,startedAt:new Date().toISOString(),finishedAt:'',source,error:''};
+    const selected=source==='all'?automaticSourceIds:[source],perSource=Object.fromEntries(selected.map(id=>[id,{status:'queued',progress:0,phase:'En espera'}]));
+    captureControl={paused:false,stopped:false,waiters:[],controller:new AbortController()};
+    captureJob={running:true,paused:false,startedAt:new Date().toISOString(),finishedAt:'',source,error:'',status:'en_curso',progress:0,currentSource:'',phase:'Preparando actualización',perSource};
     const runner=options.refreshSources||refreshSources;
-    Promise.resolve().then(()=>runner(db,source)).then(results=>{
+    Promise.resolve().then(()=>runner(db,source,{signal:captureControl.controller.signal,checkpoint:captureCheckpoint,onProgress:event=>{
+     const previous=captureJob.perSource[event.source]||{};
+     captureJob={...captureJob,progress:event.progress,currentSource:event.source,phase:event.phase,perSource:{...captureJob.perSource,[event.source]:{...previous,status:event.failed?'failed':event.sourceProgress>=100?'completed':'running',progress:event.sourceProgress,phase:event.phase}}};
+    }})).then(results=>{
      const failures=Array.isArray(results)?results.filter(result=>result?.status==='fallida'):[];
      const completed=Array.isArray(results)?results.filter(result=>result?.status!=='fallida'):[];
      const error=failures.length?(completed.length?'Actualización parcial: ':'No se pudo actualizar ninguna fuente: ')+failures.map(result=>result.source+': '+result.error).join(' · '):'';
-     captureJob={...captureJob,running:false,finishedAt:new Date().toISOString(),error:error.slice(0,300),status:failures.length?(completed.length?'parcial':'fallida'):'completada',results:Array.isArray(results)?results:[]};
-    }).catch(error=>{captureJob={...captureJob,running:false,finishedAt:new Date().toISOString(),status:'fallida',error:String(error?.message||error).slice(0,300)};});
+     const status=failures.length?(completed.length?'parcial':'fallida'):'completada';
+     captureJob={...captureJob,running:false,paused:false,finishedAt:new Date().toISOString(),progress:100,currentSource:'',phase:status==='completada'?'Inventario actualizado':status==='parcial'?'Actualización parcial':'Actualización fallida',error:error.slice(0,300),status,results:Array.isArray(results)?results:[]};captureControl=null;
+    }).catch(error=>{const stopped=error?.code==='CAPTURE_STOPPED'||captureControl?.stopped;captureJob={...captureJob,running:false,paused:false,finishedAt:new Date().toISOString(),status:stopped?'detenida':'fallida',phase:stopped?'Actualización detenida':'Actualización fallida',error:stopped?'':String(error?.message||error).slice(0,300)};captureControl=null;});
     send(res,202,{ok:true,capture:captureJob});
    }catch(e){send(res,400,{error:e.message});}return true;
   }
+  if(url.pathname==='/api/captures/control'&&req.method==='POST'){
+   try{
+    const input=await body(req),action=String(input.action||'');
+    if(!captureJob.running||!captureControl)throw Error('No hay una actualización en curso');
+    if(action==='pause'){
+     captureControl.paused=true;captureJob={...captureJob,paused:true,status:'pausada',phase:'Pausa solicitada; se detendrá al terminar la consulta actual'};
+    }else if(action==='resume'){
+     captureControl.paused=false;captureJob={...captureJob,paused:false,status:'en_curso',phase:'Actualización reanudada'};wakeCapture();
+    }else if(action==='stop'){
+     captureControl.stopped=true;captureControl.paused=false;captureJob={...captureJob,paused:false,status:'deteniendo',phase:'Deteniendo actualización'};captureControl.controller.abort();wakeCapture();
+    }else throw Error('Acción de control no válida');
+    send(res,200,{ok:true,capture:captureJob});
+   }catch(e){send(res,400,{error:e.message});}return true;
+  }
   if(url.pathname==='/api/sources'&&req.method==='GET'){
-   const [runs,properties]=await Promise.all([records('runs'),records('inmuebles')]),tracked=properties.filter(p=>p.sourceId),sourceNames=Object.fromEntries(Object.values(sourceRegistry).map(source=>[source.id,source.name]));
+   const [runs,properties]=await Promise.all([records('runs'),records('inmuebles')]),tracked=properties.filter(p=>p.sourceId);
    const summaries=Object.values(sourceRegistry).map(source=>{const {id,name}=source,items=tracked.filter(p=>p.sourceId===id),latest=runs.filter(run=>run.source===name).sort((a,b)=>String(b.fecha).localeCompare(String(a.fecha)))[0];return {...publicSource(source),total:items.length,visible:items.filter(p=>!p.availabilityReview||p.availabilityReview==='visible').length,review:items.filter(p=>p.availabilityReview==='posiblemente_retirado').length,lastRun:latest||null};});
    const recentChanges=tracked.filter(p=>(p.historial||[]).length>1).map(p=>{const history=p.historial,last=history[history.length-1],previous=history[history.length-2],before=Number(previous.precio),after=Number(last.precio);return {id:p.id,titulo:p.titulo,source:sourceNames[p.sourceId]||p.sourceId,previous:previous.precio,current:last.precio,moneda:last.moneda||p.moneda,changedAt:last.observadoEn,delta:Number.isFinite(before)&&Number.isFinite(after)?after-before:null};}).sort((a,b)=>String(b.changedAt).localeCompare(String(a.changedAt))).slice(0,20);
    const duplicateGroups=Object.values(Object.groupBy(tracked.filter(p=>p.dedupeKey),p=>p.dedupeKey)).filter(group=>new Set(group.map(p=>p.sourceId)).size>1).map(group=>group.map(p=>({id:p.id,titulo:p.titulo,source:sourceNames[p.sourceId]||p.sourceId}))).slice(0,50);
