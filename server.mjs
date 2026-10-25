@@ -8,6 +8,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
+import {discoverProfessionals,professionalMatchKey} from './professional-discovery.mjs';
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 export function createApp(directory = path.join(root, 'data'), options = {}) {
@@ -24,6 +25,11 @@ export function createApp(directory = path.join(root, 'data'), options = {}) {
       const url = new URL(req.url, 'http://localhost');
       if(await handlePortal(req,res,url))return;
       if (url.pathname.startsWith('/api/')) {
+        if(url.pathname==='/api/professional-discovery'&&req.method==='GET'){
+          if(req.user?.role!=='admin')return send(res,401,{error:'Acceso reservado al administrador'});
+          const results=await discoverProfessionals(Object.fromEntries(url.searchParams),options.professionalSearchFetch||fetch),existing=await list('profesionales'),keys=existing.map(professionalMatchKey);
+          return send(res,200,{results:results.map(result=>{const key=professionalMatchKey(result),duplicate=keys.findIndex(saved=>key.website&&key.website===saved.website||key.phone.length>=10&&key.phone===saved.phone||key.name.length>=5&&key.name===saved.name);return {...result,alreadyExists:duplicate>=0,existingId:duplicate>=0?existing[duplicate].id:''};})});
+        }
         const [, , kind, id] = url.pathname.split('/');
         if (!kinds.includes(kind)) return send(res, 404, { error: 'Recurso no encontrado' });
         if (req.method === 'GET' && !id) return send(res, 200, await list(kind));
@@ -52,7 +58,7 @@ export function createApp(directory = path.join(root, 'data'), options = {}) {
           if ([record.fecha, record.fechaRevision, record.ultimaActividad].filter(Boolean).some(value=>!/^\d{4}-\d{2}-\d{2}$/.test(value))) return send(res, 400, { error: 'Fecha inválida' });
           if (record.inmuebleId && !(await list('inmuebles')).some(p => p.id === record.inmuebleId)) return send(res, 400, { error: 'Inmueble no encontrado' });
            if (kind === 'leads') record.origen = previous?.origen || (previous?.userId ? 'formulario' : 'manual');
-           if (kind === 'profesionales') record.origen = previous?.origen || 'manual';
+           if (kind === 'profesionales') record.origen = previous?.origen || (input.origen==='descubrimiento'?'descubrimiento':'manual');
           record.id = id || randomUUID(); record.creadoEn = previous?.creadoEn || new Date().toISOString(); record.actualizadoEn = new Date().toISOString();
           await db.upsertRecord(record.id, kind, JSON.stringify(record));
           return send(res, id ? 200 : 201, record);
