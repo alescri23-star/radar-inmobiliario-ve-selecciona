@@ -96,7 +96,12 @@ const territory={
  'Urdaneta':['Xaguas','Siquisique','San Miguel','Moroturo']
 };
 const propertyTypes=['Todos los terrenos','Apartamento','Casa','Terreno rústico','Terreno urbano','Terreno sin clasificar','Otro'];
-function updateAccount(){ $('account').textContent=user?'Cerrar sesión · '+user.name:'Entrar';$('adminLink').hidden=user?.role!=='admin'; }
+function applyTheme(theme){
+ const dark=theme==='dark';document.documentElement.dataset.theme=dark?'dark':'light';
+ const toggle=$('themeToggle');toggle.textContent=dark?'Modo claro':'Modo oscuro';toggle.setAttribute('aria-pressed',String(dark));toggle.setAttribute('aria-label',dark?'Activar modo claro':'Activar modo oscuro');
+ try{localStorage.setItem('radar-theme',dark?'dark':'light');}catch{}
+}
+function updateAccount(){ $('account').textContent=user?'Cerrar sesión':'Entrar';$('adminLink').hidden=user?.role!=='admin'; }
 function filters(){
  $('filters').innerHTML='<label class="lab-search">Buscar<input id="search" type="search" placeholder="Título, zona, referencia o fuente…" autocomplete="off"></label><label>Ordenar<select id="sort"><option value="updated-desc">Actualizados recientemente</option><option value="price-asc">Precio: menor primero</option><option value="price-desc">Precio: mayor primero</option><option value="sqm-asc">Precio/m²: menor primero</option></select></label><label>Estado<select disabled><option>Lara</option></select></label><label>Ciudad<select disabled><option>Barquisimeto</option></select></label>'+filterSpec.map(([k,label])=>`<label>${label}<select id="f-${k}"><option value="">Todos</option></select></label>`).join('')+'<label>Precio mínimo<input id="min" type="number" min="0" placeholder="Sin mínimo"></label><label>Precio máximo<input id="max" type="number" min="0" placeholder="Sin límite"></label><label>Moneda<select id="currency"><option value="">Todas</option><option>USD</option><option>VES</option></select></label>';
  function choices(){
@@ -196,6 +201,8 @@ function draw(resetPage=false){
 function account(){mode='login';showAccount();}
 function showAccount(){ $('submit').hidden=false;$('formTitle').textContent='Entrar a Radar';$('fields').innerHTML='<label>Email<input name="email" type="email" autocomplete="email" required></label><label>Contraseña<input name="password" type="password" minlength="10" autocomplete="current-password" required></label>';const forgot=document.createElement('button');forgot.type='button';forgot.className='map-link';forgot.textContent='¿Olvidaste tu contraseña?';forgot.onclick=showRecovery;$('fields').append(forgot);$('submit').textContent='Continuar';$('formError').textContent='';if(!$('dialog').open)$('dialog').showModal();}
 $('form').onsubmit=async e=>{e.preventDefault();$('submit').disabled=true;try{const input=Object.fromEntries(new FormData(e.target));if(mode==='forgot'){const result=await api('/api/forgot-password',input);$('fields').replaceChildren();$('formError').textContent=result.message;$('submit').hidden=true;}else if(mode==='reset'){if(input.password!==input.confirm)throw Error('Las contraseñas no coinciden');const result=await api('/api/reset-password',{token:resetToken,password:input.password});resetToken=null;lockRadar();account();$('formError').textContent=result.message;}else{const v=await api('/api/login',input);user=v.user;$('dialog').close();await openRadar();}}catch(e){$('formError').textContent=e.message;}finally{$('submit').disabled=false;}};
+$('themeToggle').onclick=()=>applyTheme(document.documentElement.dataset.theme==='dark'?'light':'dark');
+applyTheme(document.documentElement.dataset.theme==='dark'?'dark':'light');
 $('account').onclick=async()=>{if(user){await api('/api/logout',{});lockRadar();try{localStorage.setItem('radar-logout',String(Date.now()));}catch{};}else account();};$('close').onclick=()=>$('dialog').close();
 function lockRadar(){window.RadarGallery?.close();
  landLabels.clear();favoriteItems.clear();favoriteOnly=false;interestFilter='';operationView='venta';user=null;items=[];selected=null;activeListingId=null;markers.clear();if(map){map.remove();map=null;layer=null;}$('listings').replaceChildren();$('filters').replaceChildren();$('map').replaceChildren();$('count').textContent='';$('message').textContent='';$('radarContent').hidden=true;$('accessGate').hidden=false;if($('dialog').open)$('dialog').close();updateAccount();
