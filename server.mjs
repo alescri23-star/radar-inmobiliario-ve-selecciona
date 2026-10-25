@@ -53,7 +53,7 @@ export function createApp(directory = path.join(root, 'data'), options = {}) {
           if (kind === 'inmuebles' && !['venta','alquiler'].includes(record.operacion)) return send(res, 400, { error: 'Operación inválida' });
           if (record.moneda && !['USD','VES'].includes(record.moneda)) return send(res, 400, { error: 'Moneda inválida' });
           if (kind === 'leads' && record.interes && !['alto','medio','bajo'].includes(record.interes)) return send(res, 400, { error: 'Nivel de interés inválido' });
-          if (kind === 'profesionales' && record.categoria && !['arquitecto','albañil','empresa de construcción','otra'].includes(record.categoria)) return send(res, 400, { error: 'Categoría profesional inválida' });
+          if (kind === 'profesionales' && record.categoria && (record.categoria.length>40||/[<>\u0000-\u001f]/.test(record.categoria))) return send(res, 400, { error: 'La etiqueta debe tener entre 1 y 40 caracteres' });
           if (kind === 'inmuebles') {
             if (record.ubicacionPrecision && !['publicada','aproximada','verificada'].includes(record.ubicacionPrecision)) return send(res, 400, { error: 'Precisión de ubicación inválida' });
             const hasLat = record.latitud !== '', hasLng = record.longitud !== '';

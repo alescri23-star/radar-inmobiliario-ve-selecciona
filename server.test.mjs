@@ -38,7 +38,10 @@ test('persistencia, edición, referencias y validación', async () => {
   const professional=await request('profesionales',{nombre:'Empresa candidata',tipoEmpresa:'Empresa de reformas',categoria:'empresa de construcción',servicios:'Reforma integral',contacto:'contacto público',whatsapp:'WhatsApp público',sitioWeb:'https://example.test',cobertura:'Barquisimeto',fuente:'https://example.test',fechaRevision:'2026-10-15',estado:'candidato'});assert.equal(professional.status,201);
   const savedProfessional=await professional.json();assert.equal(savedProfessional.categoria,'empresa de construcción');
   assert.equal((await request('profesionales/'+savedProfessional.id,{categoria:'arquitecto'},'PUT')).status,200);
-  assert.equal((await request('profesionales/'+savedProfessional.id,{categoria:'categoría inexistente'},'PUT')).status,400);
+  const customCategory=await request('profesionales/'+savedProfessional.id,{categoria:'electricista'},'PUT');assert.equal(customCategory.status,200);assert.equal((await customCategory.json()).categoria,'electricista');
+  assert.equal((await request('profesionales/'+savedProfessional.id,{categoria:'<etiqueta>'},'PUT')).status,400);
+  assert.equal((await request('profesionales/'+savedProfessional.id,{categoria:'x'.repeat(41)},'PUT')).status,400);
+  assert.equal((await request('profesionales/'+savedProfessional.id,{categoria:'arquitecto'},'PUT')).status,200);
   const disposable=await request('profesionales',{nombre:'Profesional temporal',estado:'candidato'});assert.equal(disposable.status,201);const disposableRecord=await disposable.json();
   assert.equal((await fetch(base+'/api/profesionales/'+disposableRecord.id,{method:'DELETE',headers:{Origin:base}})).status,401);
   assert.equal((await request('profesionales/'+disposableRecord.id,undefined,'DELETE')).status,200);
