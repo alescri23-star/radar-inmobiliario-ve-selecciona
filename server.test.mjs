@@ -39,6 +39,10 @@ test('persistencia, edición, referencias y validación', async () => {
   const savedProfessional=await professional.json();assert.equal(savedProfessional.categoria,'empresa de construcción');
   assert.equal((await request('profesionales/'+savedProfessional.id,{categoria:'arquitecto'},'PUT')).status,200);
   assert.equal((await request('profesionales/'+savedProfessional.id,{categoria:'categoría inexistente'},'PUT')).status,400);
+  const disposable=await request('profesionales',{nombre:'Profesional temporal',estado:'candidato'});assert.equal(disposable.status,201);const disposableRecord=await disposable.json();
+  assert.equal((await fetch(base+'/api/profesionales/'+disposableRecord.id,{method:'DELETE',headers:{Origin:base}})).status,401);
+  assert.equal((await request('profesionales/'+disposableRecord.id,undefined,'DELETE')).status,200);
+  assert.equal((await request('profesionales/'+disposableRecord.id,undefined,'DELETE')).status,404);
   assert.equal((await request('profesionales',{nombre:'Estado inválido',estado:'verificado'})).status,400);
   const imported={id:'imported-property',titulo:'Ficha importada completa',estado:'activo',operacion:'venta',foto:'https://example.test/foto.jpg',descripcion:'Descripción conservada',historial:[{precio:'50000'}]};
   assert.equal((await fetch(base+'/api/admin/import',{method:'POST',headers:{Origin:base,'Content-Type':'application/json'},body:JSON.stringify({records:[{kind:'inmuebles',record:imported}]})})).status,401);

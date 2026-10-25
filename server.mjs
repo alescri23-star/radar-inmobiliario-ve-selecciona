@@ -33,6 +33,11 @@ export function createApp(directory = path.join(root, 'data'), options = {}) {
         const [, , kind, id] = url.pathname.split('/');
         if (!kinds.includes(kind)) return send(res, 404, { error: 'Recurso no encontrado' });
         if (req.method === 'GET' && !id) return send(res, 200, await list(kind));
+        if (req.method === 'DELETE' && id && kind === 'profesionales') {
+          if (!(await list(kind)).some(record=>record.id===id)) return send(res,404,{error:'Profesional no encontrado'});
+          await db.deleteRecord(id,kind);
+          return send(res,200,{deleted:id});
+        }
         if (req.method === 'POST' && !id || req.method === 'PUT' && id) {
           let body = ''; for await (const chunk of req) { body += chunk; if (body.length > 32768) return send(res, 413, { error: 'Registro demasiado grande' }); }
           let input; try { input = JSON.parse(body); } catch { return send(res, 400, { error: 'JSON inválido' }); }
