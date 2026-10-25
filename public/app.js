@@ -7,6 +7,11 @@ let inventoryColumns=[...defaultInventoryColumns];
 try{const saved=JSON.parse(localStorage.getItem('radar-inventory-columns')||'[]');if(saved.length===defaultInventoryColumns.length&&defaultInventoryColumns.every(key=>saved.includes(key)))inventoryColumns=saved;}catch{}
 const inventoryColumnFilters={property:'',operation:'',zone:'',price:'',location:'',status:''};
 const $ = id => document.getElementById(id);
+function applyAdminTheme(theme){
+  const dark=theme==='dark';document.documentElement.dataset.theme=dark?'dark':'light';
+  const toggle=$('adminThemeToggle');toggle.textContent=dark?'Modo claro':'Modo oscuro';toggle.setAttribute('aria-pressed',String(dark));toggle.setAttribute('aria-label',dark?'Activar modo claro':'Activar modo oscuro');
+  try{localStorage.setItem('radar-theme',dark?'dark':'light');}catch{}
+}
 const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const safeWebsite = value => /^https:\/\/[a-z0-9.-]+(?:[/:?#]|$)/i.test(String(value||'')) ? String(value) : '';
 const phoneDigits = value => String(value||'').replace(/[^0-9]/g,'');
@@ -180,6 +185,8 @@ function openForm(record=null) {
   $('dialog').showModal();
 }
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{view=b.dataset.view;render();});
+$('adminThemeToggle').onclick=()=>applyAdminTheme(document.documentElement.dataset.theme==='dark'?'light':'dark');
+applyAdminTheme(document.documentElement.dataset.theme==='dark'?'dark':'light');
 $('add').onclick=()=>{if(view==='mapa'){view='inmuebles';render();}openForm();}; $('close').onclick=()=>$('dialog').close();
 $('form').onsubmit=async e=>{e.preventDefault(); const button=e.submitter;button.disabled=true;try {await api('/api/'+view+(editing?'/'+editing.id:''),{method:editing?'PUT':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.fromEntries(new FormData(e.target)))});$('dialog').close();await load();}catch(err){$('formError').textContent=err.message;}finally{button.disabled=false;}};
 async function boot(){
