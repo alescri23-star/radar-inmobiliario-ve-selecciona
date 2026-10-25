@@ -37,6 +37,11 @@ test('persistencia, edición, referencias y validación', async () => {
   assert.equal((await request('reformas',{titulo:'Cocina',estado:'detectada',inmuebleId:property.id,importe:'2000',moneda:'USD'})).status,201);
   const professional=await request('profesionales',{nombre:'Empresa candidata',tipoEmpresa:'Empresa de reformas',categoria:'empresa de construcción',servicios:'Reforma integral',contacto:'contacto público',whatsapp:'WhatsApp público',sitioWeb:'https://example.test',cobertura:'Barquisimeto',fuente:'https://example.test',fechaRevision:'2026-10-15',estado:'candidato'});assert.equal(professional.status,201);
   const savedProfessional=await professional.json();assert.equal(savedProfessional.categoria,'empresa de construcción');
+  const crmProfessional=await request('profesionales/'+savedProfessional.id,{prioridad:'alta',proximaAccion:'Solicitar presupuesto',fechaSeguimiento:'2026-10-26',inmuebleId:property.id,valoracion:'4'},'PUT');assert.equal(crmProfessional.status,200);const savedCrmProfessional=await crmProfessional.json();assert.equal(savedCrmProfessional.prioridad,'alta');assert.equal(savedCrmProfessional.inmuebleId,property.id);
+  assert.equal((await request('profesionales/'+savedProfessional.id,{prioridad:'urgente'},'PUT')).status,400);
+  assert.equal((await request('profesionales/'+savedProfessional.id,{fechaSeguimiento:'26-10-2026'},'PUT')).status,400);
+  const activityResponse=await request('profesionales/'+savedProfessional.id+'/actividades',{tipo:'WhatsApp',resumen:'Solicité referencias y presupuesto'});assert.equal(activityResponse.status,201);const activityPayload=await activityResponse.json();assert.equal(activityPayload.record.actividades.length,1);assert.equal(activityPayload.record.actividades[0].tipo,'WhatsApp');
+  assert.equal((await request('profesionales/'+savedProfessional.id+'/actividades',{tipo:'otro',resumen:'No válido'})).status,400);
   assert.equal((await request('profesionales/'+savedProfessional.id,{categoria:'arquitecto'},'PUT')).status,200);
   const customCategory=await request('profesionales/'+savedProfessional.id,{categoria:'electricista'},'PUT');assert.equal(customCategory.status,200);assert.equal((await customCategory.json()).categoria,'electricista');
   assert.equal((await request('profesionales/'+savedProfessional.id,{categoria:'<etiqueta>'},'PUT')).status,400);

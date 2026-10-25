@@ -30,6 +30,26 @@ export function createApp(directory = path.join(root, 'data'), options = {}) {
           const results=await discoverProfessionals(Object.fromEntries(url.searchParams),options.professionalSearchFetch||fetch),existing=await list('profesionales'),keys=existing.map(professionalMatchKey);
           return send(res,200,{results:results.map(result=>{const key=professionalMatchKey(result),duplicate=keys.findIndex(saved=>key.website&&key.website===saved.website||key.phone.length>=10&&key.phone===saved.phone||key.name.length>=5&&key.name===saved.name);return {...result,alreadyExists:duplicate>=0,existingId:duplicate>=0?existing[duplicate].id:''};})});
         }
+        const activityMatch=url.pathname.match(/^\/api\/profesionales\/([^/]+)\/actividades$/);
+        if(activityMatch){
+          const professional=(await list('profesionales')).find(record=>record.id===activityMatch[1]);
+          if(!professional)return send(res,404,{error:'Profesional no encontrado'});
+          if(req.method==='GET')return send(res,200,Array.isArray(professional.actividades)?professional.actividades:[]);
+          if(req.method==='POST'){
+            let body='';for await(const chunk of req){body+=chunk;if(body.length>8192)return send(res,413,{error:'Actividad demasiado grande'});}
+            let input;try{input=JSON.parse(body);}catch{return send(res,400,{error:'JSON inválido'});}
+            const allowedTypes=['llamada','WhatsApp','correo','reunión','nota','presupuesto'];
+            const tipo=String(input.tipo||'nota').trim(),resumen=String(input.resumen||'').trim();
+            if(!allowedTypes.includes(tipo))return send(res,400,{error:'Tipo de actividad inválido'});
+            if(!resumen||resumen.length>1000)return send(res,400,{error:'Escribe un resumen de hasta 1000 caracteres'});
+            const activity={id:randomUUID(),tipo,resumen,fecha:new Date().toISOString()};
+            const actividades=[activity,...(Array.isArray(professional.actividades)?professional.actividades:[])].slice(0,200);
+            const updated={...professional,actividades,ultimaActividadCrm:activity.fecha,actualizadoEn:new Date().toISOString()};
+            await db.upsertRecord(updated.id,'profesionales',JSON.stringify(updated));
+            return send(res,201,{activity,record:updated});
+          }
+          return send(res,405,{error:'Método no permitido'});
+        }
         const [, , kind, id] = url.pathname.split('/');
         if (!kinds.includes(kind)) return send(res, 404, { error: 'Recurso no encontrado' });
         if (req.method === 'GET' && !id) return send(res, 200, await list(kind));
@@ -41,7 +61,7 @@ export function createApp(directory = path.join(root, 'data'), options = {}) {
         if (req.method === 'POST' && !id || req.method === 'PUT' && id) {
           let body = ''; for await (const chunk of req) { body += chunk; if (body.length > 32768) return send(res, 413, { error: 'Registro demasiado grande' }); }
           let input; try { input = JSON.parse(body); } catch { return send(res, 400, { error: 'JSON inválido' }); }
-          const fields = kind === 'inmuebles' ? ['titulo', 'zona', 'operacion', 'precio', 'moneda', 'fuente', 'estado', 'latitud', 'longitud', 'direccion', 'municipio', 'parroquia', 'calle', 'tipo', 'habitaciones', 'banos', 'superficie', 'ubicacionPrecision'] : kind === 'leads' ? ['nombre', 'contacto', 'telefono', 'whatsapp', 'inmuebleId', 'interes', 'estado', 'proximaAccion', 'fecha', 'ultimaActividad', 'responsable', 'notas'] : kind === 'reformas' ? ['titulo', 'inmuebleId', 'importe', 'moneda', 'estado'] : ['nombre', 'personaContacto', 'email', 'tipoEmpresa', 'categoria', 'servicios', 'contacto', 'whatsapp', 'sitioWeb', 'direccion', 'cobertura', 'experiencia', 'rif', 'responsableTecnico', 'fuente', 'observaciones', 'fechaRevision', 'estado'];
+          const fields = kind === 'inmuebles' ? ['titulo', 'zona', 'operacion', 'precio', 'moneda', 'fuente', 'estado', 'latitud', 'longitud', 'direccion', 'municipio', 'parroquia', 'calle', 'tipo', 'habitaciones', 'banos', 'superficie', 'ubicacionPrecision'] : kind === 'leads' ? ['nombre', 'contacto', 'telefono', 'whatsapp', 'inmuebleId', 'interes', 'estado', 'proximaAccion', 'fecha', 'ultimaActividad', 'responsable', 'notas'] : kind === 'reformas' ? ['titulo', 'inmuebleId', 'importe', 'moneda', 'estado'] : ['nombre', 'personaContacto', 'email', 'tipoEmpresa', 'categoria', 'servicios', 'contacto', 'whatsapp', 'sitioWeb', 'direccion', 'cobertura', 'experiencia', 'rif', 'responsableTecnico', 'fuente', 'observaciones', 'fechaRevision', 'prioridad', 'proximaAccion', 'fechaSeguimiento', 'inmuebleId', 'reformaId', 'valoracion', 'estado'];
           const previous = id ? (await list(kind)).find(r => r.id === id) : null;
           if (id && !previous) return send(res, 404, { error: 'Registro no encontrado' });
           const submitted = Object.fromEntries(fields.filter(f => Object.hasOwn(input, f)).map(f => [f, String(input[f] ?? '').trim()]));
@@ -54,6 +74,8 @@ export function createApp(directory = path.join(root, 'data'), options = {}) {
           if (record.moneda && !['USD','VES'].includes(record.moneda)) return send(res, 400, { error: 'Moneda inválida' });
           if (kind === 'leads' && record.interes && !['alto','medio','bajo'].includes(record.interes)) return send(res, 400, { error: 'Nivel de interés inválido' });
           if (kind === 'profesionales' && record.categoria && (record.categoria.length>40||/[<>\u0000-\u001f]/.test(record.categoria))) return send(res, 400, { error: 'La etiqueta debe tener entre 1 y 40 caracteres' });
+          if (kind === 'profesionales' && record.prioridad && !['alta','media','baja'].includes(record.prioridad)) return send(res,400,{error:'Prioridad inválida'});
+          if (kind === 'profesionales' && record.valoracion && (!/^\d$/.test(record.valoracion)||Number(record.valoracion)<1||Number(record.valoracion)>5)) return send(res,400,{error:'Valoración inválida'});
           if (kind === 'inmuebles') {
             if (record.ubicacionPrecision && !['publicada','aproximada','verificada'].includes(record.ubicacionPrecision)) return send(res, 400, { error: 'Precisión de ubicación inválida' });
             const hasLat = record.latitud !== '', hasLng = record.longitud !== '';
@@ -61,8 +83,9 @@ export function createApp(directory = path.join(root, 'data'), options = {}) {
           }
           const amount = kind === 'inmuebles' ? 'precio' : 'importe';
           if (record[amount] !== undefined && record[amount] !== '' && (!Number.isFinite(Number(record[amount])) || Number(record[amount]) < 0)) return send(res, 400, { error: 'Importe inválido' });
-          if ([record.fecha, record.fechaRevision, record.ultimaActividad].filter(Boolean).some(value=>!/^\d{4}-\d{2}-\d{2}$/.test(value))) return send(res, 400, { error: 'Fecha inválida' });
+          if ([record.fecha, record.fechaRevision, record.ultimaActividad, record.fechaSeguimiento].filter(Boolean).some(value=>!/^\d{4}-\d{2}-\d{2}$/.test(value))) return send(res, 400, { error: 'Fecha inválida' });
           if (record.inmuebleId && !(await list('inmuebles')).some(p => p.id === record.inmuebleId)) return send(res, 400, { error: 'Inmueble no encontrado' });
+          if (record.reformaId && !(await list('reformas')).some(item=>item.id===record.reformaId)) return send(res,400,{error:'Reforma no encontrada'});
            if (kind === 'leads') record.origen = previous?.origen || (previous?.userId ? 'formulario' : 'manual');
            if (kind === 'profesionales') record.origen = previous?.origen || (input.origen==='descubrimiento'?'descubrimiento':'manual');
           record.id = id || randomUUID(); record.creadoEn = previous?.creadoEn || new Date().toISOString(); record.actualizadoEn = new Date().toISOString();
