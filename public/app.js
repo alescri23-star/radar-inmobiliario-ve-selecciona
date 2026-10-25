@@ -17,7 +17,7 @@ const safeWebsite = value => /^https:\/\/[a-z0-9.-]+(?:[/:?#]|$)/i.test(String(v
 const phoneDigits = value => String(value||'').replace(/[^0-9]/g,'');
 const searchable = value => String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase();
 const whatsappNumber = value => {
-  const digits=phoneDigits(value);
+  const raw=String(value||''),venezuelan=raw.match(/(?:\+?58[\s.-]*)?0?(?:2\d{2}|4\d{2})[\s().-]*\d{3}[\s.-]*\d{4}/),international=raw.match(/\+\d[\d\s().-]{8,18}\d/),digits=phoneDigits(venezuelan?.[0]||international?.[0]||raw.split('·')[0]);
   if(digits.length<10)return '';
   if(digits.startsWith('58'))return digits;
   if(digits.startsWith('0')&&digits.length===11)return '58'+digits.slice(1);
