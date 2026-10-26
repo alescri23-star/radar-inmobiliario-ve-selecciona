@@ -67,6 +67,9 @@ test('persistencia, edición, referencias y validación', async () => {
   assert.equal((await fetch(base+'/server.mjs')).status,404);
   assert.equal((await fetch(base+'/api/register',{method:'POST',headers:{Origin:base,'Content-Type':'application/json'},body:'{}'})).status,404);
   assert.equal((await fetch(base+'/api/inquiries',{method:'POST',headers:{Origin:base,'Content-Type':'application/json',Cookie:cookie},body:'{}'})).status,404);
+  const historical={id:'historical-property',titulo:'Anuncio histórico',estado:'archivado',operacion:'venta',sourceId:'remax'};
+  assert.equal((await request('admin/import',{records:[{kind:'inmuebles',record:historical}]})).status,200);
+  const sourceStatus=await(await fetch(base+'/api/sources',{headers:{Cookie:cookie}})).json();assert.equal(sourceStatus.properties,1);assert.equal(sourceStatus.activeProperties,1);const remaxSummary=sourceStatus.summaries.find(item=>item.id==='remax');assert.equal(remaxSummary.total,1);assert.equal(remaxSummary.active,0);
   const publicItems=await(await fetch(base+'/api/public/inmuebles',{headers:{Cookie:cookie}})).json();assert.equal(publicItems.length,1);assert.ok(publicItems.every(item=>item.estado===undefined&&item.historial===undefined));
   refreshResult=[{source:'RE/MAX',status:'fallida',error:'Fuente no disponible'}];
   assert.equal((await request('captures/run',{source:'remax'})).status,202);await new Promise(resolve=>setTimeout(resolve,0));
