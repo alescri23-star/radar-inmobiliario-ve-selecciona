@@ -42,6 +42,7 @@ test('persistencia, edición, referencias y validación', async () => {
   assert.equal((await request('profesionales/'+savedProfessional.id,{fechaSeguimiento:'26-10-2026'},'PUT')).status,400);
   const activityResponse=await request('profesionales/'+savedProfessional.id+'/actividades',{tipo:'WhatsApp',resumen:'Solicité referencias y presupuesto'});assert.equal(activityResponse.status,201);const activityPayload=await activityResponse.json();assert.equal(activityPayload.record.actividades.length,1);assert.equal(activityPayload.record.actividades[0].tipo,'WhatsApp');
   assert.equal((await request('profesionales/'+savedProfessional.id+'/actividades',{tipo:'otro',resumen:'No válido'})).status,400);
+  const movedProfessional=await request('profesionales/'+savedProfessional.id,{estado:'contactado'},'PUT');assert.equal(movedProfessional.status,200);const movedProfessionalRecord=await movedProfessional.json();assert.equal(movedProfessionalRecord.actividades.length,2);assert.match(movedProfessionalRecord.actividades[0].resumen,/candidato a contactado/);
   assert.equal((await request('profesionales/'+savedProfessional.id,{categoria:'arquitecto'},'PUT')).status,200);
   const customCategory=await request('profesionales/'+savedProfessional.id,{categoria:'electricista'},'PUT');assert.equal(customCategory.status,200);assert.equal((await customCategory.json()).categoria,'electricista');
   assert.equal((await request('profesionales/'+savedProfessional.id,{categoria:'<etiqueta>'},'PUT')).status,400);

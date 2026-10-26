@@ -88,6 +88,10 @@ export function createApp(directory = path.join(root, 'data'), options = {}) {
           if (record.reformaId && !(await list('reformas')).some(item=>item.id===record.reformaId)) return send(res,400,{error:'Reforma no encontrada'});
            if (kind === 'leads') record.origen = previous?.origen || (previous?.userId ? 'formulario' : 'manual');
            if (kind === 'profesionales') record.origen = previous?.origen || (input.origen==='descubrimiento'?'descubrimiento':'manual');
+          if(kind==='profesionales'&&previous&&Object.hasOwn(submitted,'estado')&&submitted.estado!==previous.estado){
+            const activity={id:randomUUID(),tipo:'nota',resumen:`Etapa cambiada de ${previous.estado} a ${submitted.estado}`,fecha:new Date().toISOString()};
+            record.actividades=[activity,...(Array.isArray(previous.actividades)?previous.actividades:[])].slice(0,200);record.ultimaActividadCrm=activity.fecha;
+          }
           record.id = id || randomUUID(); record.creadoEn = previous?.creadoEn || new Date().toISOString(); record.actualizadoEn = new Date().toISOString();
           await db.upsertRecord(record.id, kind, JSON.stringify(record));
           return send(res, id ? 200 : 201, record);
