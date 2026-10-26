@@ -2,7 +2,8 @@ function listingPhoto(p){const url=p.foto||'';if(!/^https:\/\/(cdn\.remax\.com\.
 function photoFallback(){document.querySelectorAll('.listing-photo').forEach(img=>img.onerror=()=>{const box=document.createElement('div');box.className='photo-placeholder';box.textContent='Foto no disponible';img.replaceWith(box);});}
 const $=id=>document.getElementById(id);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let items=[],user=null,map=null,layer=null,mode='login',selected=null,markers=new Map(),activeListingId=null,capturePoll=null;
+let items=[],user=null,map=null,layer=null,mode='login',selected=null,markers=new Map(),activeListingId=null,capturePoll=null,inventoryFingerprint='',inventorySyncing=false;
+const inventorySyncChannel=typeof BroadcastChannel==='function'?new BroadcastChannel('radar-inventory-sync'):null;
 let currentMatches=[],currentPage=1;
 const pageSize=25;
 async function api(url,input){const r=await fetch(url,input?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(input)}:{});const v=await r.json();if(!r.ok){if(r.status===401)lockRadar();throw Error(v.error);}return v;}
@@ -207,19 +208,44 @@ $('account').onclick=async()=>{if(user){await api('/api/logout',{});lockRadar();
 function lockRadar(){window.RadarGallery?.close();
  landLabels.clear();favoriteItems.clear();favoriteOnly=false;interestFilter='';operationView='venta';user=null;items=[];selected=null;activeListingId=null;markers.clear();if(map){map.remove();map=null;layer=null;}$('listings').replaceChildren();$('filters').replaceChildren();$('map').replaceChildren();$('count').textContent='';$('message').textContent='';$('radarContent').hidden=true;$('accessGate').hidden=false;if($('dialog').open)$('dialog').close();updateAccount();
 }
+const inventorySignature=data=>JSON.stringify(data.map(p=>[p.id,p.actualizadoEn,p.estado,p.precio,p.latitud,p.longitud,p.tipo]));
+function laboratoryState(){
+ const values={};['search','sort','f-municipio','f-parroquia','f-zona','f-calle','f-tipo','min','max','currency'].forEach(id=>{if($(id))values[id]=$(id).value;});
+ return {values,activeListingId,currentPage,center:map?.getCenter(),zoom:map?.getZoom()};
+}
+function restoreLaboratoryState(state){
+ Object.entries(state?.values||{}).forEach(([id,value])=>{const control=$(id);if(control&&([...control.options||[]].some(option=>option.value===value)||!control.options))control.value=value;});
+ currentPage=state?.currentPage||1;draw(false);
+ if(state?.activeListingId&&items.some(item=>item.id===state.activeListingId))selectListing(state.activeListingId);
+ if(state?.center&&Number.isFinite(state.zoom))map?.setView(state.center,state.zoom,{animate:false});
+}
+async function refreshLaboratoryInventory({force=false,announce=false}={}){
+ if(inventorySyncing||!user||$('radarContent').hidden)return false;inventorySyncing=true;
+ try{
+  const state=laboratoryState();
+  const [fresh,savedFavorites,savedLand]=await Promise.all([api('/api/public/inmuebles'),api('/api/favorites'),api('/api/land_labels')]);
+  const fingerprint=inventorySignature(fresh);if(!force&&fingerprint===inventoryFingerprint)return false;
+  landLabels=new Map(savedLand.map(r=>[r.id,r.classification]));fresh.forEach(p=>{p.autoLandType=p.tipo;if(landLabels.has(p.id)&&p.tipo?.startsWith('Terreno'))p.tipo=landLabels.get(p.id);});favoriteItems=new Map(savedFavorites.map(f=>[f.id,f.interest]));items=fresh;inventoryFingerprint=fingerprint;
+  filters();restoreLaboratoryState(state);updateLaboratoryTabs();
+  if(announce){$('message').textContent='Laboratorio actualizado: anuncios, resultados y mapa sincronizados.';setTimeout(()=>{if($('message').textContent.startsWith('Laboratorio actualizado'))$('message').textContent='';},5000);}
+  return true;
+ }finally{inventorySyncing=false;}
+}
 async function openRadar(){
- const [data,savedFavorites,savedLand]=await Promise.all([api('/api/public/inmuebles'),api('/api/favorites'),api('/api/land_labels')]);landLabels=new Map(savedLand.map(r=>[r.id,r.classification]));data.forEach(p=>{p.autoLandType=p.tipo;if(landLabels.has(p.id)&&p.tipo?.startsWith('Terreno'))p.tipo=landLabels.get(p.id);});favoriteItems=new Map(savedFavorites.map(f=>[f.id,f.interest]));laboratoryTabs();if(!user)return;items=data;$('accessGate').hidden=true;$('radarContent').hidden=false;
- if(window.L&&!map){map=L.map('map').setView([10.067,-69.347],13);L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'}).addTo(map);layer=L.layerGroup().addTo(map);}else if(!window.L)$('map').textContent='El mapa no pudo cargarse. Comprueba internet.';filters();updateAccount();
+ laboratoryTabs();if(!user)return;$('accessGate').hidden=true;$('radarContent').hidden=false;
+ if(window.L&&!map){map=L.map('map').setView([10.067,-69.347],13);L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'}).addTo(map);layer=L.layerGroup().addTo(map);}else if(!window.L)$('map').textContent='El mapa no pudo cargarse. Comprueba internet.';
+ await refreshLaboratoryInventory({force:true});updateAccount();
 }
 $('enterRadar').onclick=account;
 $('recoverRadar').onclick=showRecovery;
 $('dialog').addEventListener('close',()=>{$('form').reset();$('fields').replaceChildren();});
 async function checkSession(){try{const state=await api('/api/session');if(!state.user){if(user||!radarContent.hidden||accessGate.hidden)lockRadar();return;}user=state.user;updateAccount();if($('radarContent').hidden)await openRadar();}catch{lockRadar();}}
 window.addEventListener('pageshow',checkSession);
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')checkSession();});
-setInterval(checkSession,30000);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')checkSession().then(()=>refreshLaboratoryInventory()).catch(()=>{});});
+setInterval(()=>{checkSession().then(()=>document.visibilityState==='visible'&&refreshLaboratoryInventory()).catch(()=>{});},30000);
 
-window.addEventListener('storage',event=>{if(event.key==='radar-logout')lockRadar();});
+inventorySyncChannel?.addEventListener('message',event=>{if(event.data?.type==='inventory-updated')refreshLaboratoryInventory({announce:true}).catch(()=>{});});
+window.addEventListener('storage',event=>{if(event.key==='radar-logout')lockRadar();if(event.key==='radar-inventory-sync')refreshLaboratoryInventory({announce:true}).catch(()=>{});});
 
 let resetToken=null;
 function showRecovery(){mode='forgot';$('formTitle').textContent='Recuperar contraseña';$('fields').innerHTML='<p>Introduce el correo de tu cuenta. Te enviaremos un enlace para elegir una nueva contraseña.</p><label>Email<input name="email" type="email" autocomplete="email" required maxlength="254"></label>';$('formError').textContent='';$('submit').hidden=false;$('submit').textContent='Enviar enlace';if(!$('dialog').open)$('dialog').showModal();}
