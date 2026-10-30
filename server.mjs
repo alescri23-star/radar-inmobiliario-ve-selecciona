@@ -101,10 +101,10 @@ export function createApp(directory = path.join(root, 'data'), options = {}) {
       const files = { '/gallery.js':['gallery.js','text/javascript'], '/favicon.svg': ['favicon.svg','image/svg+xml'], '/logo-radar.svg': ['logo-radar.svg','image/svg+xml'], '/': ['portal.html','text/html'], '/red-profesional': ['professional-form.html','text/html'], '/professional-form.js': ['professional-form.js','text/javascript'], '/admin': ['index.html','text/html'], '/portal.js': ['portal.js','text/javascript'], '/app.js': ['app.js','text/javascript'], '/style.css': ['style.css','text/css'] };
       if (!files[url.pathname] || req.method !== 'GET') return send(res, 404, { error: 'Página no encontrada' });
       const [file, type] = files[url.pathname];
-      res.writeHead(200, { 'Content-Type': `${type}; charset=utf-8`, 'Cache-Control': 'no-cache', 'Content-Security-Policy': "default-src 'self'; style-src 'self' 'unsafe-inline' https://unpkg.com; script-src 'self' https://unpkg.com; img-src 'self' https://cdn.remax.com.ve https://cdn.photos.sparkplatform.com data: https://tile.openstreetmap.org https://unpkg.com; frame-ancestors 'none'", 'X-Content-Type-Options': 'nosniff' });
+      res.writeHead(200, { 'Content-Type': `${type}; charset=utf-8`, 'Cache-Control': 'no-cache', 'Content-Security-Policy': "default-src 'self'; style-src 'self' 'unsafe-inline' https://unpkg.com; script-src 'self' https://unpkg.com; img-src 'self' https://cdn.remax.com.ve https://cdn.photos.sparkplatform.com https://cdn.21online.lat https://images.wasi.co data: https://tile.openstreetmap.org https://unpkg.com; frame-ancestors 'none'", 'X-Content-Type-Options': 'nosniff' });
       let content=readFileSync(path.join(root, 'public', file));
-      if(file==='portal.html')content=content.toString().replace('style.css?v=radar-workbench10','style.css?v=radar-market2').replace('portal.js?v=lab-capture10','portal.js?v=lab-market2');
-      if(file==='index.html')content=content.toString().replace('style.css?v=professional-crm3','style.css?v=inventory-preview1').replace('app.js?v=professional-crm3','app.js?v=inventory-preview1');
+      if(file==='portal.html')content=content.toString().replace('style.css?v=radar-workbench10','style.css?v=radar-market2').replace('portal.js?v=lab-capture10','portal.js?v=lab-market3');
+      if(file==='index.html')content=content.toString().replace('style.css?v=professional-crm3','style.css?v=inventory-preview1').replace('app.js?v=professional-crm3','app.js?v=inventory-preview2');
       res.end(content);
     } catch (err) { console.error(err); send(res, 500, { error: 'No se pudo completar la operación' }); }
   });

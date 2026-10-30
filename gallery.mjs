@@ -1,6 +1,6 @@
 import {robotsAllowed} from './collector.mjs';
 import {adaptDatabase} from './database.mjs';
-export const safePhoto = value => typeof value==='string' && /^https:\/\/(cdn\.remax\.com\.ve|cdn\.photos\.sparkplatform\.com)\/[\w/.-]+$/.test(value);
+export const safePhoto = value => typeof value==='string' && /^https:\/\/(cdn\.remax\.com\.ve|cdn\.photos\.sparkplatform\.com|cdn\.21online\.lat|images\.wasi\.co)\/[\w/.-]+$/.test(value);
 export function parseGallery(html,p){
  const scope=p.sourceId==='rentahouse'?(html.split('id="Fotos"')[1]||'').split('id="Mapa"')[0]:html;
  const photos=[];
