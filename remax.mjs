@@ -1,3 +1,4 @@
+import {landType} from './land.mjs';
 import {DatabaseSync} from 'node:sqlite';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
@@ -13,8 +14,8 @@ export function parseRemax(html){
    const match=p.precioReferencial?.match(/^([\d.,]+)\s*USD/);const price=match?.[1].replace(/\./g,'').replace(',','.');
    if(price!==undefined&&!Number.isFinite(Number(price)))throw Error('Precio RE/MAX inválido');
    const lat=Number(p.latitud),lng=Number(p.longitud),located=!!p.latitud&&!!p.longitud&&Number.isFinite(lat)&&Number.isFinite(lng)&&lat>=9.7&&lat<=10.6&&lng>=-70&&lng<=-69;
-   const land=p.tipoInmueble==='Terreno y Parcela';const title=p.nombre.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();const rural=/\bterreno\s+rustico\b/.test(title),urban=/\bterreno\s+urbano\b/.test(title);const type=land?(rural&&!urban?'Terreno rústico':urban&&!rural?'Terreno urbano':'Terreno sin clasificar'):'Apartamento';
-   records.push({sourceId:'remax',sourceCode:String(p.idInmueble),titulo:p.nombre.trim(),foto:/^https:\/\/cdn\.remax\.com\.ve\//.test(p.foto||'')?p.foto:'',tipo:type,operacion:p.operacion.toLowerCase(),precio:price??'',moneda:'USD',fuente:url.href,estado:'activo',municipio:p.subRegion||'',parroquia:'',zona:'',calle:'',direccion:p.detalleUbicacion||'',habitaciones:String(p.nroHabitaciones??''),banos:String(p.nroBanios??''),superficie:String((land?p.areaTerreno:p.areaConstruccion)??''),descripcion:'',latitud:located?String(lat):'',longitud:located?String(lng):'',ubicacionPrecision:located?'publicada':'',ubicacionFuente:located?'RE/MAX: mapa del listado':'',ubicacionConsultadaEn:new Date().toISOString()});
+   const land=p.tipoInmueble==='Terreno y Parcela';const description=typeof p.descripcion==='string'?p.descripcion:'';const type=land?landType(p.nombre,description):'Apartamento';
+   records.push({sourceId:'remax',sourceCode:String(p.idInmueble),titulo:p.nombre.trim(),foto:/^https:\/\/cdn\.remax\.com\.ve\//.test(p.foto||'')?p.foto:'',tipo:type,operacion:p.operacion.toLowerCase(),precio:price??'',moneda:'USD',fuente:url.href,estado:'activo',municipio:p.subRegion||'',parroquia:'',zona:'',calle:'',direccion:p.detalleUbicacion||'',habitaciones:String(p.nroHabitaciones??''),banos:String(p.nroBanios??''),superficie:String((land?p.areaTerreno:p.areaConstruccion)??''),descripcion:description,latitud:located?String(lat):'',longitud:located?String(lng):'',ubicacionPrecision:located?'publicada':'',ubicacionFuente:located?'RE/MAX: mapa del listado':'',ubicacionConsultadaEn:new Date().toISOString()});
   }
  }
  if(!recognized)throw Error('Estructura RE/MAX no reconocida; no se importa un inventario vacío');
