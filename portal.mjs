@@ -10,6 +10,7 @@ import { recovery } from './recovery.mjs';
 import {captureListing} from './capture-link.mjs';
 import {refreshSources} from './source-refresh.mjs';
 import {sourceRegistry,automaticSourceIds,publicSource} from './source-registry.mjs';
+import {marketReferences} from './market-analysis.mjs';
 export function portal(database,options={}) {
  const db=adaptDatabase(database);
  const policy=options.security||security(options);
@@ -64,7 +65,8 @@ export function portal(database,options={}) {
   if(url.pathname==='/api/logout' && req.method==='POST'){const token=req.headers.cookie?.match(/radar_session=([a-f0-9]+)/)?.[1];if(token)await db.run('DELETE FROM sessions WHERE token=?',[hash(token)]);res.setHeader('Set-Cookie',policy.cookie());send(res,200,{ok:true});return true;}
   if(url.pathname==='/api/public/inmuebles' && req.method==='GET'){
    if(req.user?.role!=='admin'){send(res,401,{error:'Acceso reservado al administrador'});return true;}
-   send(res,200,(await records('inmuebles')).filter(r=>r.estado==='activo').map(r=>Object.fromEntries(['id','titulo','foto','zona','operacion','precio','moneda','latitud','longitud','municipio','parroquia','calle','tipo','habitaciones','banos','superficie','descripcion','fuente','actualizadoEn','ubicacionPrecision','ubicacionFuente','ubicacionConsultadaEn'].map(k=>[k,r[k]??'']))));return true;
+   const active=(await records('inmuebles')).filter(r=>r.estado==='activo'),references=marketReferences(active);
+   send(res,200,active.map(r=>({...Object.fromEntries(['id','titulo','foto','zona','operacion','precio','moneda','latitud','longitud','municipio','parroquia','calle','tipo','habitaciones','banos','superficie','descripcion','fuente','actualizadoEn','ubicacionPrecision','ubicacionFuente','ubicacionConsultadaEn'].map(k=>[k,r[k]??''])),marketReference:references[r.id]||null})));return true;
   }
   if(url.pathname==='/api/professional-applications' && req.method==='POST'){
    try{
