@@ -2,7 +2,7 @@ function listingPhoto(p){const url=p.foto||'';if(!/^https:\/\/(cdn\.remax\.com\.
 function photoFallback(){document.querySelectorAll('.listing-photo').forEach(img=>img.onerror=()=>{const box=document.createElement('div');box.className='photo-placeholder';box.textContent='Foto no disponible';img.replaceWith(box);});}
 const $=id=>document.getElementById(id);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let items=[],user=null,map=null,layer=null,mode='login',selected=null,markers=new Map(),activeListingId=null,capturePoll=null,inventoryFingerprint='',inventorySyncing=false;
+let items=[],user=null,map=null,layer=null,mode='login',selected=null,markers=new Map(),activeListingId=null,capturePoll=null,inventoryFingerprint='',inventorySyncing=false,exchangeRates=null;
 const inventorySyncChannel=typeof BroadcastChannel==='function'?new BroadcastChannel('radar-inventory-sync'):null;
 let currentMatches=[],currentPage=1;
 const pageSize=25;
@@ -140,9 +140,17 @@ const normalized=value=>String(value??'').normalize('NFD').replace(/[\u0300-\u03
 function pricePerSquare(p){const price=Number(p.precio),area=Number(p.superficie);return price>0&&area>0?price/area:null;}
 const marketSignalLabels={below:'Por debajo del mercado',market:'En precio de mercado',above:'Por encima del mercado'};
 function marketSignal(p){const reference=p.marketReference;if(!reference)return'';const difference=reference.differencePercent,sign=difference>0?'+':'';return `<div class="market-signal market-${esc(reference.signal)}" title="Referencia calculada con ${esc(reference.sampleSize)} anuncios comparables de ${esc(reference.scope)}"><strong>${esc(marketSignalLabels[reference.signal]||'Referencia disponible')}</strong><span>${esc(sign+difference)}% · mediana ${esc(reference.medianUnitPrice)} ${esc(p.moneda)}/m² · muestra ${esc(reference.sampleSize)}</span></div>`;}
+function convertedAmounts(p){
+ const price=Number(p.precio),rates=exchangeRates?.rates;if(!(price>=0)||!rates?.USD||!rates?.EUR||!['USD','VES','EUR'].includes(p.moneda))return null;
+ const ves=p.moneda==='VES'?price:p.moneda==='USD'?price*rates.USD:price*rates.EUR;
+ return {USD:ves/rates.USD,VES:ves,EUR:ves/rates.EUR};
+}
+function formatConverted(value,currency){const amount=new Intl.NumberFormat('es-VE',{minimumFractionDigits:0,maximumFractionDigits:currency==='VES'?0:2}).format(value);return currency==='USD'?`US$ ${amount}`:currency==='EUR'?`€ ${amount}`:`Bs. ${amount}`;}
+function exchangeDate(){if(!exchangeRates?.effectiveDate)return'';const [year,month,day]=exchangeRates.effectiveDate.split('-');return [day,month,year].filter(Boolean).join('/');}
+function convertedPrices(p){const amounts=convertedAmounts(p);if(!amounts)return'';return `<div class="currency-conversions" title="Cambio oficial BCV vigente ${esc(exchangeDate())}">${['USD','VES','EUR'].map(currency=>`<span class="${currency===p.moneda?'current-currency':''}">${esc(formatConverted(amounts[currency],currency))}</span>`).join('')}<small>BCV · ${esc(exchangeDate())}</small></div>`;}
 function listingCard(p){
  const unit=pricePerSquare(p);
- return `<article class="listing" data-listing-id="${esc(p.id)}"><div class="listing-media">${listingPhoto(p)}</div><div class="listing-copy"><span class="badge">${esc(p.operacion)} · ${esc(p.tipo||'Inmueble')}</span><h2>${esc(p.titulo)}</h2><div class="listing-value"><strong class="listing-price">${p.precio!==''?esc(p.precio)+' '+esc(p.moneda):'Consultar precio'}</strong>${unit?`<small>${esc(Math.round(unit))} ${esc(p.moneda)}/m²</small>`:''}</div>${marketSignal(p)}<p class="muted">${esc([p.zona,p.municipio].filter(Boolean).join(' · '))}</p><p>${esc([p.superficie?p.superficie+' m²':'',p.habitaciones?p.habitaciones+' habitaciones':'',p.banos?p.banos+' baños':''].filter(Boolean).join(' · '))}</p><p class="listing-description">${esc((p.descripcion||'').slice(0,170))}</p><div class="listing-actions"><button class="map-link" data-gallery="${p.id}">Ver fotos</button><div data-favorite-slot="${esc(p.id)}"></div>${p.latitud&&p.longitud?`<button class="map-link" data-map="${p.id}">Ver en mapa</button>`:''}</div><p class="muted location-note">${p.latitud&&p.longitud?(p.ubicacionPrecision==='verificada'?'Ubicación verificada':'Ubicación publicada · exactitud por confirmar'):'Ubicación pendiente'}</p>${/^https:\/\//.test(p.fuente)?`<a href="${esc(p.fuente)}" target="_blank" rel="noopener noreferrer">Anuncio original ↗</a>`:''}</div></article>`;
+ return `<article class="listing" data-listing-id="${esc(p.id)}"><div class="listing-media">${listingPhoto(p)}</div><div class="listing-copy"><span class="badge">${esc(p.operacion)} · ${esc(p.tipo||'Inmueble')}</span><h2>${esc(p.titulo)}</h2><div class="listing-value"><strong class="listing-price">${p.precio!==''?esc(p.precio)+' '+esc(p.moneda):'Consultar precio'}</strong>${unit?`<small>${esc(Math.round(unit))} ${esc(p.moneda)}/m²</small>`:''}</div>${convertedPrices(p)}${marketSignal(p)}<p class="muted">${esc([p.zona,p.municipio].filter(Boolean).join(' · '))}</p><p>${esc([p.superficie?p.superficie+' m²':'',p.habitaciones?p.habitaciones+' habitaciones':'',p.banos?p.banos+' baños':''].filter(Boolean).join(' · '))}</p><p class="listing-description">${esc((p.descripcion||'').slice(0,170))}</p><div class="listing-actions"><button class="map-link" data-gallery="${p.id}">Ver fotos</button><div data-favorite-slot="${esc(p.id)}"></div>${p.latitud&&p.longitud?`<button class="map-link" data-map="${p.id}">Ver en mapa</button>`:''}</div><p class="muted location-note">${p.latitud&&p.longitud?(p.ubicacionPrecision==='verificada'?'Ubicación verificada':'Ubicación publicada · exactitud por confirmar'):'Ubicación pendiente'}</p>${/^https:\/\//.test(p.fuente)?`<a href="${esc(p.fuente)}" target="_blank" rel="noopener noreferrer">Anuncio original ↗</a>`:''}</div></article>`;
 }
 function renderList(){
  const totalPages=Math.max(1,Math.ceil(currentMatches.length/pageSize));currentPage=Math.min(Math.max(1,currentPage),totalPages);
@@ -185,6 +193,7 @@ function draw(resetPage=false){
     }
     const photo=document.createElement('div');photo.innerHTML=listingPhoto(p);popup.append(photo);
     const title=document.createElement('h3');title.textContent=p.titulo;popup.append(title);
+    const conversions=convertedAmounts(p);if(conversions){const converted=document.createElement('div');converted.className='currency-conversions';converted.title='Cambio oficial BCV vigente '+exchangeDate();for(const currency of ['USD','VES','EUR']){const value=document.createElement('span');value.textContent=formatConverted(conversions[currency],currency);if(currency===p.moneda)value.className='current-currency';converted.append(value);}const date=document.createElement('small');date.textContent='BCV · '+exchangeDate();converted.append(date);popup.append(converted);}
     if(p.marketReference){const insight=document.createElement('div');insight.className='market-signal market-'+p.marketReference.signal;const strong=document.createElement('strong');strong.textContent=marketSignalLabels[p.marketReference.signal]||'Referencia disponible';const detail=document.createElement('span');const difference=p.marketReference.differencePercent;detail.textContent=(difference>0?'+':'')+difference+'% · mediana '+p.marketReference.medianUnitPrice+' '+p.moneda+'/m² · muestra '+p.marketReference.sampleSize;insight.append(strong,detail);popup.append(insight);}
     for(const text of [
      p.precio!==''?p.precio+' '+p.moneda:'Consultar precio',
@@ -228,8 +237,9 @@ async function refreshLaboratoryInventory({force=false,announce=false}={}){
  if(inventorySyncing||!user||$('radarContent').hidden)return false;inventorySyncing=true;
  try{
   const state=laboratoryState();
-  const [fresh,savedFavorites,savedLand]=await Promise.all([api('/api/public/inmuebles'),api('/api/favorites'),api('/api/land_labels')]);
-  const fingerprint=inventorySignature(fresh);if(!force&&fingerprint===inventoryFingerprint)return false;
+  const [fresh,savedFavorites,savedLand,freshRates]=await Promise.all([api('/api/public/inmuebles'),api('/api/favorites'),api('/api/land_labels'),api('/api/exchange-rates').catch(()=>null)]);
+  const ratesChanged=freshRates?.effectiveDate&&freshRates.effectiveDate!==exchangeRates?.effectiveDate;exchangeRates=freshRates||exchangeRates;
+  const fingerprint=inventorySignature(fresh);if(!force&&fingerprint===inventoryFingerprint&&!ratesChanged)return false;
   landLabels=new Map(savedLand.map(r=>[r.id,r.classification]));fresh.forEach(p=>{p.autoLandType=p.tipo;if(landLabels.has(p.id)&&p.tipo?.startsWith('Terreno'))p.tipo=landLabels.get(p.id);});favoriteItems=new Map(savedFavorites.map(f=>[f.id,f.interest]));items=fresh;inventoryFingerprint=fingerprint;
   filters();restoreLaboratoryState(state);updateLaboratoryTabs();
   if(announce){$('message').textContent='Laboratorio actualizado: anuncios, resultados y mapa sincronizados.';setTimeout(()=>{if($('message').textContent.startsWith('Laboratorio actualizado'))$('message').textContent='';},5000);}

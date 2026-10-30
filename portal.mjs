@@ -11,12 +11,14 @@ import {captureListing} from './capture-link.mjs';
 import {refreshSources} from './source-refresh.mjs';
 import {sourceRegistry,automaticSourceIds,publicSource} from './source-registry.mjs';
 import {marketReferences} from './market-analysis.mjs';
+import {createExchangeRateService} from './exchange-rates.mjs';
 export function portal(database,options={}) {
  const db=adaptDatabase(database);
  const policy=options.security||security(options);
  const handleLandLabels=landLabels(db);
  const handleFavorites=favorites(db);
  const handleRecovery=recovery(db,options);const handleGallery=gallery(db,options);
+ const loadExchangeRates=createExchangeRateService(options.exchangeRateFetch||fetch);
  const send=(res,status,value)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(value));};
  const body=async(req,limit=32768)=>{let text='';for await(const chunk of req){text+=chunk;if(text.length>limit)throw Error('Solicitud demasiado grande');}return JSON.parse(text||'{}');};
  const records=async kind=>(await db.all('SELECT body FROM records WHERE kind=?',[kind])).map(r=>classifyLand(JSON.parse(r.body)));
@@ -67,6 +69,10 @@ export function portal(database,options={}) {
    if(req.user?.role!=='admin'){send(res,401,{error:'Acceso reservado al administrador'});return true;}
    const active=(await records('inmuebles')).filter(r=>r.estado==='activo'),references=marketReferences(active);
    send(res,200,active.map(r=>({...Object.fromEntries(['id','titulo','foto','zona','operacion','precio','moneda','latitud','longitud','municipio','parroquia','calle','tipo','habitaciones','banos','superficie','descripcion','fuente','actualizadoEn','ubicacionPrecision','ubicacionFuente','ubicacionConsultadaEn'].map(k=>[k,r[k]??''])),marketReference:references[r.id]||null})));return true;
+  }
+  if(url.pathname==='/api/exchange-rates' && req.method==='GET'){
+   if(req.user?.role!=='admin'){send(res,401,{error:'Acceso reservado al administrador'});return true;}
+   try{send(res,200,await loadExchangeRates());}catch{send(res,503,{error:'El cambio oficial no está disponible temporalmente'});}return true;
   }
   if(url.pathname==='/api/professional-applications' && req.method==='POST'){
    try{
