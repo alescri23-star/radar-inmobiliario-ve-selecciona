@@ -102,7 +102,9 @@ export function createApp(directory = path.join(root, 'data'), options = {}) {
       if (!files[url.pathname] || req.method !== 'GET') return send(res, 404, { error: 'Página no encontrada' });
       const [file, type] = files[url.pathname];
       res.writeHead(200, { 'Content-Type': `${type}; charset=utf-8`, 'Cache-Control': 'no-cache', 'Content-Security-Policy': "default-src 'self'; style-src 'self' 'unsafe-inline' https://unpkg.com; script-src 'self' https://unpkg.com; img-src 'self' https://cdn.remax.com.ve https://cdn.photos.sparkplatform.com data: https://tile.openstreetmap.org https://unpkg.com; frame-ancestors 'none'", 'X-Content-Type-Options': 'nosniff' });
-      res.end(readFileSync(path.join(root, 'public', file)));
+      let content=readFileSync(path.join(root, 'public', file));
+      if(file==='portal.html')content=content.toString().replace('style.css?v=radar-workbench10','style.css?v=radar-market1').replace('portal.js?v=lab-capture10','portal.js?v=lab-market1');
+      res.end(content);
     } catch (err) { console.error(err); send(res, 500, { error: 'No se pudo completar la operación' }); }
   });
   server.on('close', () => { db.close().catch(error=>console.error('No se pudo cerrar la base de datos',error)); });
