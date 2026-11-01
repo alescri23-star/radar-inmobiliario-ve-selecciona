@@ -47,6 +47,14 @@ export function security(options = {}) {
       res.setHeader('Vary', 'Origin');
       return true;
     },
+    applyPublicReadCors(req, res) {
+      if (!this.allowsFormOrigin(req)) return false;
+      res.setHeader('Access-Control-Allow-Origin', formOrigin);
+      res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+      res.setHeader('Vary', 'Origin');
+      return true;
+    },
     cookie(token = '') {
       return `radar_session=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${token ? 86400 : 0}${origin?.startsWith('https://') ? '; Secure' : ''}`;
     }

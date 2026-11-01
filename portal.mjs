@@ -40,12 +40,18 @@ export function portal(database,options={}) {
   req.user=await session(req);
   if(!url.pathname.startsWith('/api/'))return false;
   const isProfessionalForm=url.pathname==='/api/professional-applications';
+  const isPublicTicker=url.pathname==='/api/public/market-ticker';
   const externalForm=isProfessionalForm&&['POST','OPTIONS'].includes(req.method)&&policy.applyFormCors(req,res);
+  const externalPublicRead=isPublicTicker&&['GET','OPTIONS'].includes(req.method)&&policy.applyPublicReadCors(req,res);
   if(isProfessionalForm&&req.method==='OPTIONS'){
    if(!externalForm&&!policy.allows(req)){send(res,403,{error:'Origen no permitido'});return true;}
    res.writeHead(204,{'Cache-Control':'no-store'});res.end();return true;
   }
-  if(!policy.allows(req)&&!externalForm){send(res,403,{error:'Origen no permitido'});return true;}
+  if(isPublicTicker&&req.method==='OPTIONS'){
+   if(!externalPublicRead&&!policy.allows(req)){send(res,403,{error:'Origen no permitido'});return true;}
+   res.writeHead(204,{'Cache-Control':'no-store'});res.end();return true;
+  }
+  if(!policy.allows(req)&&!externalForm&&!externalPublicRead){send(res,403,{error:'Origen no permitido'});return true;}
   if(url.pathname==='/api/setup'){send(res,403,{error:'La creación de administradores solo está disponible para el operador del servidor.'});return true;}
   if(await handleLandLabels(req,res,url))return true;
   if(await handleFavorites(req,res,url))return true;
@@ -79,6 +85,9 @@ export function portal(database,options={}) {
   if(url.pathname==='/api/market-ticker' && req.method==='GET'){
    if(req.user?.role!=='admin'){send(res,401,{error:'Acceso reservado al administrador'});return true;}
    try{send(res,200,await loadMarketTicker());}catch{send(res,503,{error:'Las cotizaciones no están disponibles temporalmente'});}return true;
+  }
+  if(isPublicTicker && req.method==='GET'){
+   try{const ticker=await loadMarketTicker();send(res,200,{items:ticker.items,fetchedAt:ticker.fetchedAt,partial:ticker.partial});}catch{send(res,503,{error:'Las cotizaciones no están disponibles temporalmente'});}return true;
   }
   if(url.pathname==='/api/professional-applications' && req.method==='POST'){
    try{

@@ -79,3 +79,20 @@ test('formulario WordPress acepta solo el origen configurado',async()=>{
     assert.equal(preflight.status,204);assert.equal(preflight.headers.get('access-control-allow-origin'),formOrigin);
   }finally{await new Promise(resolve=>server.close(resolve));rmSync(dir,{recursive:true,force:true});}
 });
+
+test('cotizaciones públicas permiten lectura solo desde la web configurada',async()=>{
+  const dir=mkdtempSync(path.join(tmpdir(),'radar-public-market-'));
+  const formOrigin='https://orangered-cod-348216.hostingersite.com';
+  const server=createApp(dir,{publicUrl:'https://radar.example.test',formOrigin,
+    marketFetch:async()=>({ok:true,json:async()=>({BTCUSD:{mid:70000,dayDiffPercent:1,marketState:'open',stale:false}})}),
+    exchangeRateFetch:async()=>({ok:true,json:async()=>({USD:900,EUR:1000,effective_date:'2026-11-01'})})});
+  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+  const base='http://127.0.0.1:'+server.address().port;
+  try{
+    const allowed=await fetch(base+'/api/public/market-ticker',{headers:{Origin:formOrigin}});
+    assert.equal(allowed.status,200);assert.equal(allowed.headers.get('access-control-allow-origin'),formOrigin);
+    assert.equal((await allowed.json()).items.length,3);
+    const denied=await fetch(base+'/api/public/market-ticker',{headers:{Origin:'https://attacker.example'}});
+    assert.equal(denied.status,403);
+  }finally{await new Promise(resolve=>server.close(resolve));rmSync(dir,{recursive:true,force:true});}
+});
