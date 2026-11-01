@@ -12,6 +12,7 @@ import {refreshSources} from './source-refresh.mjs';
 import {sourceRegistry,automaticSourceIds,publicSource} from './source-registry.mjs';
 import {marketReferences} from './market-analysis.mjs';
 import {createExchangeRateService} from './exchange-rates.mjs';
+import {createMarketTickerService} from './market-ticker.mjs';
 export function portal(database,options={}) {
  const db=adaptDatabase(database);
  const policy=options.security||security(options);
@@ -19,6 +20,7 @@ export function portal(database,options={}) {
  const handleFavorites=favorites(db);
  const handleRecovery=recovery(db,options);const handleGallery=gallery(db,options);
  const loadExchangeRates=createExchangeRateService(options.exchangeRateFetch||fetch);
+ const loadMarketTicker=createMarketTickerService({fetchImpl:options.marketFetch||fetch,loadExchangeRates});
  const send=(res,status,value)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(value));};
  const body=async(req,limit=32768)=>{let text='';for await(const chunk of req){text+=chunk;if(text.length>limit)throw Error('Solicitud demasiado grande');}return JSON.parse(text||'{}');};
  const records=async kind=>(await db.all('SELECT body FROM records WHERE kind=?',[kind])).map(r=>classifyLand(JSON.parse(r.body)));
@@ -73,6 +75,10 @@ export function portal(database,options={}) {
   if(url.pathname==='/api/exchange-rates' && req.method==='GET'){
    if(req.user?.role!=='admin'){send(res,401,{error:'Acceso reservado al administrador'});return true;}
    try{send(res,200,await loadExchangeRates());}catch{send(res,503,{error:'El cambio oficial no está disponible temporalmente'});}return true;
+  }
+  if(url.pathname==='/api/market-ticker' && req.method==='GET'){
+   if(req.user?.role!=='admin'){send(res,401,{error:'Acceso reservado al administrador'});return true;}
+   try{send(res,200,await loadMarketTicker());}catch{send(res,503,{error:'Las cotizaciones no están disponibles temporalmente'});}return true;
   }
   if(url.pathname==='/api/professional-applications' && req.method==='POST'){
    try{
