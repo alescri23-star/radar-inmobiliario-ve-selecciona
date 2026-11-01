@@ -204,7 +204,7 @@ function draw(resetPage=false){
     ]){if(text){const line=document.createElement('p');line.textContent=text;popup.append(line);}}
     const photos=document.createElement('button');photos.textContent='Ver fotos';photos.onclick=()=>RadarGallery.open(p);
     const favoriteSlot=document.createElement('div');favoriteSlot.dataset.favoriteSlot=p.id;favoriteSlot.append(favoriteControls(p));
-    popup.append(photos,favoriteSlot);photoFallback();selectListing(p.id);
+    popup.append(photos,favoriteSlot,RadarMaps.streetViewLink(p.latitud,p.longitud));photoFallback();selectListing(p.id);
    };
    marker.bindPopup(popup,{maxHeight:350,maxWidth:340,minWidth:230});
    marker.on('click',()=>{showProperty(group[0]);marker.openPopup();});
@@ -249,7 +249,7 @@ async function refreshLaboratoryInventory({force=false,announce=false}={}){
 }
 async function openRadar(){
  laboratoryTabs();if(!user)return;$('accessGate').hidden=true;$('radarContent').hidden=false;
- if(window.L&&!map){map=L.map('map').setView([10.067,-69.347],13);L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'}).addTo(map);layer=L.layerGroup().addTo(map);}else if(!window.L)$('map').textContent='El mapa no pudo cargarse. Comprueba internet.';
+ if(window.L&&!map){map=L.map('map').setView([10.067,-69.347],13);RadarMaps.configure(map);layer=L.layerGroup().addTo(map);}else if(!window.L)$('map').textContent='El mapa no pudo cargarse. Comprueba internet.';
  await refreshLaboratoryInventory({force:true});updateAccount();
  const request=new URLSearchParams(location.search);if(request.get('capturar')==='1'){
   const dialog=captureWorkspace(),municipality=request.get('municipio')||'Barquisimeto';dialog.querySelector('[name="keywords"]').value=`inmuebles en ${municipality}, Lara`;dialog.showModal();refreshCaptureSources();history.replaceState(null,'',location.pathname);
