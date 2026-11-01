@@ -2,6 +2,7 @@ function listingPhoto(p){const url=p.foto||'';if(!/^https:\/\/(cdn\.remax\.com\.
 function photoFallback(){document.querySelectorAll('.listing-photo').forEach(img=>img.onerror=()=>{const box=document.createElement('div');box.className='photo-placeholder';box.textContent='Foto no disponible';img.replaceWith(box);});}
 const $=id=>document.getElementById(id);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const coverageLink=document.createElement('a');coverageLink.id='coverageLink';coverageLink.href='/cobertura';coverageLink.textContent='Cobertura territorial';coverageLink.hidden=true;$('adminLink').before(coverageLink);
 let items=[],user=null,map=null,layer=null,mode='login',selected=null,markers=new Map(),activeListingId=null,capturePoll=null,inventoryFingerprint='',inventorySyncing=false,exchangeRates=null;
 const inventorySyncChannel=typeof BroadcastChannel==='function'?new BroadcastChannel('radar-inventory-sync'):null;
 let currentMatches=[],currentPage=1;
@@ -104,7 +105,7 @@ function applyTheme(theme){
  const toggle=$('themeToggle');toggle.textContent=dark?'Modo claro':'Modo oscuro';toggle.setAttribute('aria-pressed',String(dark));toggle.setAttribute('aria-label',dark?'Activar modo claro':'Activar modo oscuro');
  try{localStorage.setItem('radar-theme',dark?'dark':'light');}catch{}
 }
-function updateAccount(){ $('account').textContent=user?'Cerrar sesión':'Entrar';$('adminLink').hidden=user?.role!=='admin'; }
+function updateAccount(){ $('account').textContent=user?'Cerrar sesión':'Entrar';$('adminLink').hidden=user?.role!=='admin';$('coverageLink').hidden=user?.role!=='admin'; }
 function filters(){
  $('filters').innerHTML='<label class="lab-search">Buscar<input id="search" type="search" placeholder="Título, zona, referencia o fuente…" autocomplete="off"></label><label>Ordenar<select id="sort"><option value="updated-desc">Actualizados recientemente</option><option value="opportunity">Mejor oportunidad</option><option value="price-asc">Precio: menor primero</option><option value="price-desc">Precio: mayor primero</option><option value="sqm-asc">Precio/m²: menor primero</option></select></label><label>Estado<select disabled><option>Lara</option></select></label><label>Ciudad<select disabled><option>Barquisimeto</option></select></label>'+filterSpec.map(([k,label])=>`<label>${label}<select id="f-${k}"><option value="">Todos</option></select></label>`).join('')+'<label>Precio mínimo<input id="min" type="number" min="0" placeholder="Sin mínimo"></label><label>Precio máximo<input id="max" type="number" min="0" placeholder="Sin límite"></label><label>Moneda<select id="currency"><option value="">Todas</option><option>USD</option><option>VES</option></select></label>';
  function choices(){
@@ -250,6 +251,9 @@ async function openRadar(){
  laboratoryTabs();if(!user)return;$('accessGate').hidden=true;$('radarContent').hidden=false;
  if(window.L&&!map){map=L.map('map').setView([10.067,-69.347],13);L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'}).addTo(map);layer=L.layerGroup().addTo(map);}else if(!window.L)$('map').textContent='El mapa no pudo cargarse. Comprueba internet.';
  await refreshLaboratoryInventory({force:true});updateAccount();
+ const request=new URLSearchParams(location.search);if(request.get('capturar')==='1'){
+  const dialog=captureWorkspace(),municipality=request.get('municipio')||'Barquisimeto';dialog.querySelector('[name="keywords"]').value=`inmuebles en ${municipality}, Lara`;dialog.showModal();refreshCaptureSources();history.replaceState(null,'',location.pathname);
+ }
 }
 $('enterRadar').onclick=account;
 $('recoverRadar').onclick=showRecovery;

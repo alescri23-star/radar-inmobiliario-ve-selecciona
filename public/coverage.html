@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Cobertura territorial · Radar Venezuela</title><script src="/theme-init.js?v=1"></script>
+  <link rel="stylesheet" href="/style.css?v=coverage1"><link rel="stylesheet" href="/coverage.css?v=coverage1"><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script><script defer src="/coverage.js?v=coverage1"></script><link rel="icon" type="image/svg+xml" href="/favicon.svg?v=1">
+</head>
+<body class="portal coverage-page">
+  <header class="public-header"><a href="/" class="public-brand coverage-brand"><img src="/logo-radar.svg" alt="Radar Venezuela"><span class="public-space-label">Cobertura territorial</span></a><nav class="public-menu" aria-label="Navegación privada"><a href="/">Laboratorio</a><a href="/admin">Ir a gestión</a><button id="themeToggle" type="button" aria-pressed="false">Modo oscuro</button><button id="logout" type="button">Cerrar sesión</button></nav></header>
+  <main class="coverage-main">
+    <section class="coverage-hero"><div><p class="eyebrow">INTELIGENCIA TERRITORIAL · LARA</p><h1>¿Dónde estamos y qué nos falta?</h1><p>Controla la cobertura del inventario, la calidad de los datos y las zonas que necesitan una nueva búsqueda.</p></div><div class="coverage-hero-score"><span>Cobertura estimada</span><strong id="coverageScore">—</strong><small>comparación orientativa</small></div></section>
+    <p id="coverageMessage" class="coverage-message" role="status">Calculando la cobertura territorial…</p>
+    <section class="coverage-kpis" aria-label="Resumen de cobertura"><article><span>Inmuebles activos</span><strong id="coverageTotal">—</strong><small>Inventario de Radar</small></article><article><span>En venta</span><strong id="coverageSale">—</strong><small>Oportunidades activas</small></article><article><span>En alquiler</span><strong id="coverageRent">—</strong><small>Oportunidades activas</small></article><article><span>Calidad de datos</span><strong id="coverageQuality">—</strong><small>Fotos y coordenadas</small></article></section>
+    <section class="coverage-layout">
+      <article class="coverage-map-card"><header><div><p class="eyebrow">MAPA DE COBERTURA</p><h2>Municipios de Lara</h2></div><div class="coverage-legend"><span class="good">Buena</span><span class="attention">Mejorable</span><span class="missing">Sin datos</span></div></header><div id="coverageMap" aria-label="Mapa de cobertura inmobiliaria de Lara"></div><p class="coverage-note">El color combina cantidad de anuncios y calidad de sus fotografías y coordenadas.</p></article>
+      <aside class="coverage-reference-card"><p class="eyebrow">REFERENCIA EXTERNA</p><h2>Brecha de información</h2><div class="coverage-reference-values"><strong id="radarReference">—</strong><span>de</span><strong id="externalReference">—</strong></div><progress id="coverageProgress" max="100" value="0">0%</progress><p>La referencia externa sirve como orientación: puede contener duplicados, propiedades caducadas o anuncios fuera de nuestro foco.</p><a href="https://propiedash.com/estados" target="_blank" rel="noopener noreferrer">Consultar referencia ↗</a></aside>
+    </section>
+    <section class="coverage-table-card"><header><div><p class="eyebrow">PLAN DE CAPTURA</p><h2>Municipios y calidad del inventario</h2></div><label>Ordenar<select id="coverageSort"><option value="priority">Prioridad de búsqueda</option><option value="total">Más anuncios</option><option value="name">Nombre A–Z</option></select></label></header><div class="coverage-table-wrap"><table><thead><tr><th>Municipio</th><th>Total</th><th>Venta</th><th>Alquiler</th><th>Sin foto</th><th>Sin ubicación</th><th>Actualizados</th><th>Estado</th><th>Acción</th></tr></thead><tbody id="coverageRows"></tbody></table></div></section>
+  </main>
+</body></html>

@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import {discoverProfessionals,professionalMatchKey} from './professional-discovery.mjs';
+import {buildCoverage} from './coverage.mjs';
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 export function createApp(directory = path.join(root, 'data'), options = {}) {
@@ -25,6 +26,7 @@ export function createApp(directory = path.join(root, 'data'), options = {}) {
       const url = new URL(req.url, 'http://localhost');
       if(await handlePortal(req,res,url))return;
       if (url.pathname.startsWith('/api/')) {
+        if(url.pathname==='/api/coverage'&&req.method==='GET')return send(res,200,buildCoverage(await list('inmuebles')));
         if(url.pathname==='/api/professional-discovery'&&req.method==='GET'){
           if(req.user?.role!=='admin')return send(res,401,{error:'Acceso reservado al administrador'});
           const results=await discoverProfessionals(Object.fromEntries(url.searchParams),options.professionalSearchFetch||fetch),existing=await list('profesionales'),keys=existing.map(professionalMatchKey);
@@ -98,13 +100,14 @@ export function createApp(directory = path.join(root, 'data'), options = {}) {
         }
         return send(res, 405, { error: 'Método no permitido' });
       }
-      const files = { '/gallery.js':['gallery.js','text/javascript'], '/favicon.svg': ['favicon.svg','image/svg+xml'], '/logo-radar.svg': ['logo-radar.svg','image/svg+xml'], '/': ['portal.html','text/html'], '/red-profesional': ['professional-form.html','text/html'], '/professional-form.js': ['professional-form.js','text/javascript'], '/admin': ['index.html','text/html'], '/portal.js': ['portal.js','text/javascript'], '/app.js': ['app.js','text/javascript'], '/style.css': ['style.css','text/css'] };
+      const files = { '/coverage.css':['coverage.css','text/css'], '/gallery.js':['gallery.js','text/javascript'], '/favicon.svg': ['favicon.svg','image/svg+xml'], '/logo-radar.svg': ['logo-radar.svg','image/svg+xml'], '/': ['portal.html','text/html'], '/cobertura': ['coverage.html','text/html'], '/coverage.js':['coverage.js','text/javascript'], '/red-profesional': ['professional-form.html','text/html'], '/professional-form.js': ['professional-form.js','text/javascript'], '/admin': ['index.html','text/html'], '/portal.js': ['portal.js','text/javascript'], '/app.js': ['app.js','text/javascript'], '/style.css': ['style.css','text/css'] };
       if (!files[url.pathname] || req.method !== 'GET') return send(res, 404, { error: 'Página no encontrada' });
       const [file, type] = files[url.pathname];
       res.writeHead(200, { 'Content-Type': `${type}; charset=utf-8`, 'Cache-Control': 'no-cache', 'Content-Security-Policy': "default-src 'self'; style-src 'self' 'unsafe-inline' https://unpkg.com; script-src 'self' https://unpkg.com; img-src 'self' https://cdn.remax.com.ve https://cdn.photos.sparkplatform.com https://cdn.21online.lat https://images.wasi.co data: https://tile.openstreetmap.org https://unpkg.com; frame-ancestors 'none'", 'X-Content-Type-Options': 'nosniff' });
       let content=readFileSync(path.join(root, 'public', file));
-      if(file==='portal.html')content=content.toString().replace('style.css?v=radar-workbench10','style.css?v=radar-market2').replace('portal.js?v=lab-capture10','portal.js?v=lab-market3');
+      if(file==='portal.html')content=content.toString().replace('style.css?v=radar-workbench10','style.css?v=radar-market2').replace('portal.js?v=lab-capture10','portal.js?v=lab-coverage1');
       if(file==='index.html')content=content.toString().replace('style.css?v=professional-crm3','style.css?v=inventory-preview1').replace('app.js?v=professional-crm3','app.js?v=inventory-preview2');
+      if(file==='coverage.html')content=content.toString().replace('style.css?v=coverage1','style.css?v=coverage2').replace('coverage.js?v=coverage1','coverage.js?v=coverage2');
       res.end(content);
     } catch (err) { console.error(err); send(res, 500, { error: 'No se pudo completar la operación' }); }
   });
