@@ -23,7 +23,7 @@ function addStates(geojson,report){
   const byName=new Map(report.states.map(row=>[normalize(row.name),row]));
   geojson.features=geojson.features.filter(feature=>byName.has(normalize(feature.properties.Entidad))).map(feature=>{const row=byName.get(normalize(feature.properties.Entidad));feature.properties.radarName=row.name;feature.properties.radarTotal=row.total;feature.properties.sale=row.sale;feature.properties.rent=row.rent;return feature;});
   stateLayer=L.geoJSON(geojson,{style:stateStyle,onEachFeature(feature,layer){const properties=feature.properties;layer.bindTooltip(`<strong>${escape(properties.radarName)}</strong><br>${properties.radarTotal} anuncios · ${properties.sale} venta · ${properties.rent} alquiler`,{sticky:true,className:'state-tooltip'});layer.on({mouseover(){layer.setStyle({fillColor:'#f1c644',fillOpacity:.82,color:'#fff',weight:2.5});layer.bringToFront();},mouseout(){stateLayer.resetStyle(layer);},click(){map.fitBounds(layer.getBounds(),{padding:[40,40],maxZoom:10});}});}}).addTo(map);
-  map.fitBounds(stateLayer.getBounds(),{padding:[20,20]});
+  map.fitBounds([[0.5,-73.5],[12.5,-59.4]],{paddingTopLeft:[window.innerWidth>700?410:20,20],paddingBottomRight:[20,20]});
 }
 async function load(){
   try{
