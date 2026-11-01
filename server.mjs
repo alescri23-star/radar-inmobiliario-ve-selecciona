@@ -106,9 +106,9 @@ export function createApp(directory = path.join(root, 'data'), options = {}) {
       res.writeHead(200, { 'Content-Type': `${type}; charset=utf-8`, 'Cache-Control': 'no-cache', 'Content-Security-Policy': "default-src 'self'; style-src 'self' 'unsafe-inline' https://unpkg.com; script-src 'self' https://unpkg.com; img-src 'self' https://cdn.remax.com.ve https://cdn.photos.sparkplatform.com https://cdn.21online.lat https://images.wasi.co data: https://tile.openstreetmap.org https://server.arcgisonline.com https://unpkg.com; frame-ancestors 'none'", 'X-Content-Type-Options': 'nosniff' });
       let content=readFileSync(path.join(root, 'public', file));
       if(['portal.html','index.html','coverage.html'].includes(file))content=content.toString().replace('<script src="/theme-init.js?v=1"></script>','<script src="/theme-init.js?v=1"></script><script defer src="/map-tools.js?v=maps1"></script>');
-      if(file==='portal.html')content=content.toString().replace('style.css?v=radar-workbench10','style.css?v=radar-market2').replace('portal.js?v=lab-capture10','portal.js?v=lab-maps1');
+      if(file==='portal.html')content=content.toString().replace('style.css?v=radar-workbench10','style.css?v=radar-market2').replace('portal.js?v=lab-capture10','portal.js?v=lab-national1');
       if(file==='index.html')content=content.toString().replace('style.css?v=professional-crm3','style.css?v=inventory-preview1').replace('app.js?v=professional-crm3','app.js?v=inventory-maps1');
-      if(file==='coverage.html')content=content.toString().replace('style.css?v=coverage1','style.css?v=coverage2').replace('coverage.js?v=coverage1','coverage.js?v=coverage-maps1');
+      if(file==='coverage.html')content=content.toString().replace('style.css?v=coverage1','style.css?v=coverage-national1').replace('coverage.js?v=coverage1','coverage.js?v=coverage-national1');
       res.end(content);
     } catch (err) { console.error(err); send(res, 500, { error: 'No se pudo completar la operación' }); }
   });

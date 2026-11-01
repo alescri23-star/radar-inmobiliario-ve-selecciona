@@ -252,7 +252,7 @@ async function openRadar(){
  if(window.L&&!map){map=L.map('map').setView([10.067,-69.347],13);RadarMaps.configure(map);layer=L.layerGroup().addTo(map);}else if(!window.L)$('map').textContent='El mapa no pudo cargarse. Comprueba internet.';
  await refreshLaboratoryInventory({force:true});updateAccount();
  const request=new URLSearchParams(location.search);if(request.get('capturar')==='1'){
-  const dialog=captureWorkspace(),municipality=request.get('municipio')||'Barquisimeto';dialog.querySelector('[name="keywords"]').value=`inmuebles en ${municipality}, Lara`;dialog.showModal();refreshCaptureSources();history.replaceState(null,'',location.pathname);
+  const dialog=captureWorkspace(),state=request.get('estado'),municipality=request.get('municipio'),territory=state?`${state}, Venezuela`:`${municipality||'Barquisimeto'}, Lara`;dialog.querySelector('[name="keywords"]').value=`inmuebles en ${territory}`;dialog.showModal();refreshCaptureSources();history.replaceState(null,'',location.pathname);
  }
 }
 $('enterRadar').onclick=account;
