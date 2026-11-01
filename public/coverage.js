@@ -1,33 +1,38 @@
 const $=id=>document.getElementById(id);
 const escape=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
-let report=null,map=null,scope='national';
+const normalize=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase().trim();
+const safePhoto=value=>/^https:\/\/(cdn\.remax\.com\.ve|cdn\.photos\.sparkplatform\.com|cdn\.21online\.lat|images\.wasi\.co)\//i.test(String(value||''))?String(value):'';
+const safeSource=value=>/^https:\/\/[a-z0-9.-]+(?:[\/:?#]|$)/i.test(String(value||''))?String(value):'';
+let map=null,stateLayer=null;
+
 function applyTheme(theme){document.documentElement.dataset.theme=theme;localStorage.setItem('radar-theme',theme);$('themeToggle').textContent=theme==='dark'?'Modo claro':'Modo oscuro';$('themeToggle').setAttribute('aria-pressed',String(theme==='dark'));}
-const rows=()=>scope==='national'?report.states:report.municipalities;
-const health=row=>{if(row.total===0)return'missing';if(row.referenceTotal&&row.total/row.referenceTotal<.1)return'critical';if(row.referenceTotal&&row.total/row.referenceTotal<.5)return'attention';if(row.withoutPhoto+row.withoutCoordinates>row.total*.6)return'critical';if(row.withoutPhoto+row.withoutCoordinates>row.total*.3)return'attention';return'good';};
-const healthLabel=value=>({missing:'Sin datos',critical:'Prioridad alta',attention:'Mejorable',good:'Buena cobertura'}[value]);
-const priority=row=>({critical:0,missing:1,attention:2,good:3}[health(row)]??4);
-const searchUrl=row=>scope==='national'?`/?capturar=1&estado=${encodeURIComponent(row.name==='Sin clasificar'?'Venezuela':row.name)}`:`/?capturar=1&municipio=${encodeURIComponent(row.name==='Sin clasificar'?'Barquisimeto':row.name)}`;
-function renderRows(){
-  const mode=$('coverageSort').value,items=[...rows()];
-  if(mode==='name')items.sort((a,b)=>a.name.localeCompare(b.name,'es'));
-  if(mode==='total')items.sort((a,b)=>b.total-a.total);
-  if(mode==='reference')items.sort((a,b)=>(b.referenceTotal||0)-(a.referenceTotal||0));
-  if(mode==='priority')items.sort((a,b)=>priority(a)-priority(b)||(b.referenceTotal||0)-(a.referenceTotal||0)||b.total-a.total);
-  $('coverageRows').innerHTML=items.map(row=>{const state=health(row),coverage=row.estimatedCoverage===null||row.estimatedCoverage===undefined?healthLabel(state):row.estimatedCoverage+'%';return `<tr data-territory="${escape(row.name)}"><td><strong>${escape(row.name)}</strong><small>${escape(row.capital)}</small></td><td><b>${row.total}</b></td><td>${row.referenceTotal===null?'—':row.referenceTotal}</td><td>${row.sale}</td><td>${row.rent}</td><td class="${row.withoutPhoto?'coverage-warning':''}">${row.withoutPhoto}</td><td class="${row.withoutCoordinates?'coverage-warning':''}">${row.withoutCoordinates}</td><td><span class="coverage-health ${state}">${coverage}</span></td><td><a class="coverage-search" href="${searchUrl(row)}">Buscar anuncios</a>${scope==='national'&&row.name==='Lara'?'<button class="coverage-detail" type="button" data-open-lara>Ver municipios</button>':''}</td></tr>`;}).join('');
-  document.querySelector('[data-open-lara]')?.addEventListener('click',()=>setScope('lara'));
+function stateStyle(feature){const total=Number(feature.properties.radarTotal)||0;return{color:'#f6f9fc',weight:1.2,fillColor:total?'#2d6fa9':'#9cb2c7',fillOpacity:total?Math.min(.72,.28+Math.log10(total+1)*.19):.2};}
+function propertyPopup(listing){
+  const card=document.createElement('article');card.className='map-property-card';
+  const photo=safePhoto(listing.photo),source=safeSource(listing.source),price=listing.price?`${escape(listing.price)} ${escape(listing.currency)}`:'Precio por consultar';
+  card.innerHTML=`${photo?`<img src="${escape(photo)}" alt="Foto de ${escape(listing.title)}" loading="lazy" referrerpolicy="no-referrer">`:'<div class="map-photo-placeholder">Foto no disponible</div>'}<div class="map-property-body"><div class="map-property-badges"><span class="${listing.operation==='alquiler'?'rent':'sale'}">${escape(listing.operation||'anuncio')}</span>${listing.type?`<span>${escape(listing.type)}</span>`:''}</div><h2>${escape(listing.title)}</h2><strong>${price}</strong><p>${escape([listing.zone,listing.address].filter(Boolean).join(' · ')||listing.state)}</p><div class="map-property-actions">${source?`<a href="${escape(source)}" target="_blank" rel="noopener noreferrer">Abrir anuncio ↗</a>`:''}</div></div>`;
+  card.querySelector('img')?.addEventListener('error',event=>{const fallback=document.createElement('div');fallback.className='map-photo-placeholder';fallback.textContent='Foto no disponible';event.currentTarget.replaceWith(fallback);});
+  card.querySelector('.map-property-actions').append(RadarMaps.streetViewLink(listing.lat,listing.lng,'Ver zona en Street View ↗'));
+  return card;
 }
-function renderMap(){
-  if(map){map.remove();map=null;}
-  if(!window.L){$('coverageMap').textContent='El mapa no pudo cargarse.';return;}
-  const national=scope==='national';map=L.map('coverageMap').setView(national?[7.8,-66.8]:[10.12,-69.55],national?5:9);RadarMaps.configure(map);
-  const colors={good:'#2a9b68',attention:'#e4b62e',critical:'#df7d32',missing:'#bd4b50'};
-  for(const row of rows().filter(item=>item.name!=='Sin clasificar')){
-    const state=health(row),circle=L.circleMarker([row.lat,row.lng],{radius:Math.max(national?6:8,Math.min(national?22:25,(national?6:8)+Math.sqrt(row.total)*1.1)),color:'#fff',weight:2,fillColor:colors[state],fillOpacity:.9}).addTo(map),popup=document.createElement('div');
-    popup.innerHTML=`<strong>${escape(row.name)}</strong><br>${row.total} anuncios Radar${row.referenceTotal===null?'':` · ${row.referenceTotal} referencia`}<br>${row.sale} venta · ${row.rent} alquiler<br><a href="${searchUrl(row)}">Buscar anuncios →</a><br>`;
-    if(national&&row.name==='Lara'){const detail=document.createElement('button');detail.type='button';detail.className='coverage-popup-detail';detail.textContent='Ver municipios de Lara';detail.onclick=()=>setScope('lara');popup.append(detail,document.createElement('br'));}
-    popup.append(RadarMaps.streetViewLink(row.lat,row.lng,'Ver zona en Street View ↗'));circle.bindPopup(popup);circle.on('click',()=>document.querySelector(`[data-territory="${CSS.escape(row.name)}"]`)?.scrollIntoView({behavior:'smooth',block:'center'}));
-  }
+function addListings(listings){
+  const markerPane=map.createPane('propertyMarkers');markerPane.style.zIndex='650';
+  listings.forEach(listing=>{const marker=L.circleMarker([listing.lat,listing.lng],{pane:'propertyMarkers',radius:7,color:'#fff',weight:2,fillColor:listing.operation==='alquiler'?'#c64b55':'#123f78',fillOpacity:1}).addTo(map);marker.bindPopup(propertyPopup(listing),{className:'property-map-popup',maxWidth:340,minWidth:280});marker.bindTooltip(listing.title,{direction:'top',offset:[0,-7],opacity:.92});});
 }
-function setScope(next){scope=next;const national=scope==='national';const lara=report.states.find(row=>row.name==='Lara');const total=national?report.total:(lara?.total||0);const reference=national?report.referenceTotal:(lara?.referenceTotal||0);const estimated=reference?Math.min(100,Math.round(total/reference*100)):0;$('nationalScope').setAttribute('aria-pressed',String(national));$('laraScope').setAttribute('aria-pressed',String(!national));$('mapScopeTitle').textContent=national?'Estados de Venezuela':'Municipios de Lara';$('tableScopeTitle').textContent=national?'Estados y cobertura del inventario':'Municipios y calidad del inventario en Lara';$('referenceScopeTitle').textContent=national?'Brecha nacional':'Brecha en Lara';$('radarReference').textContent=total;$('externalReference').textContent=reference;$('coverageProgress').value=estimated;$('coverageProgress').textContent=estimated+'%';$('territoryHeading').textContent=national?'Estado':'Municipio';$('coverageMap').setAttribute('aria-label',national?'Mapa de cobertura inmobiliaria de Venezuela':'Mapa de cobertura inmobiliaria de Lara');renderRows();renderMap();}
-async function load(){try{const session=await fetch('/api/session').then(response=>response.json());if(!session.user){location.href='/';return;}const response=await fetch('/api/coverage');if(response.status===401){location.href='/';return;}if(!response.ok)throw Error('No se pudo calcular la cobertura');report=await response.json();$('coverageTotal').textContent=report.total;$('coverageSale').textContent=report.sale;$('coverageRent').textContent=report.rent;$('coverageQuality').textContent=report.quality+'%';$('coverageScore').textContent=report.estimatedCoverage+'%';$('radarReference').textContent=report.total;$('externalReference').textContent=report.referenceTotal;$('coverageProgress').value=report.estimatedCoverage;$('referenceDate').textContent='Referencia revisada el '+new Intl.DateTimeFormat('es-ES',{dateStyle:'medium'}).format(new Date(report.referenceReviewedAt+'T12:00:00'))+'.';$('coverageMessage').textContent=`Cobertura nacional · ${report.withPhotos} anuncios con foto · ${report.located} situados en el mapa.`;setScope('national');}catch(error){$('coverageMessage').textContent=error.message;$('coverageMessage').classList.add('error');}}
-$('coverageSort').onchange=renderRows;$('nationalScope').onclick=()=>setScope('national');$('laraScope').onclick=()=>setScope('lara');$('themeToggle').onclick=()=>applyTheme(document.documentElement.dataset.theme==='dark'?'light':'dark');$('account').onclick=async()=>{await fetch('/api/logout',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});location.href='/';};applyTheme(document.documentElement.dataset.theme==='dark'?'dark':'light');window.addEventListener('load',load,{once:true});
+function addStates(geojson,report){
+  const byName=new Map(report.states.map(row=>[normalize(row.name),row]));
+  geojson.features=geojson.features.filter(feature=>byName.has(normalize(feature.properties.Entidad))).map(feature=>{const row=byName.get(normalize(feature.properties.Entidad));feature.properties.radarName=row.name;feature.properties.radarTotal=row.total;feature.properties.sale=row.sale;feature.properties.rent=row.rent;return feature;});
+  stateLayer=L.geoJSON(geojson,{style:stateStyle,onEachFeature(feature,layer){const properties=feature.properties;layer.bindTooltip(`<strong>${escape(properties.radarName)}</strong><br>${properties.radarTotal} anuncios · ${properties.sale} venta · ${properties.rent} alquiler`,{sticky:true,className:'state-tooltip'});layer.on({mouseover(){layer.setStyle({fillColor:'#f1c644',fillOpacity:.82,color:'#fff',weight:2.5});layer.bringToFront();},mouseout(){stateLayer.resetStyle(layer);},click(){map.fitBounds(layer.getBounds(),{padding:[40,40],maxZoom:10});}});}}).addTo(map);
+  map.fitBounds(stateLayer.getBounds(),{padding:[20,20]});
+}
+async function load(){
+  try{
+    const session=await fetch('/api/session').then(response=>response.json());if(!session.user){location.href='/';return;}
+    const [coverageResponse,geoResponse]=await Promise.all([fetch('/api/coverage'),fetch('/venezuela-states.geojson')]);if(coverageResponse.status===401){location.href='/';return;}if(!coverageResponse.ok||!geoResponse.ok)throw Error('No se pudo cargar el mapa territorial.');
+    const [report,geojson]=await Promise.all([coverageResponse.json(),geoResponse.json()]);
+    $('saleCount').textContent=report.sale;$('rentCount').textContent=report.rent;$('locatedCount').textContent=report.listings.length;$('missingCount').textContent=`${report.total-report.listings.length} sin coordenadas`;$('coverageMessage').textContent=`${report.total} inmuebles activos en ${report.states.filter(row=>row.total).length} estados.`;
+    if(!window.L)throw Error('El mapa no pudo iniciarse.');
+    map=L.map('coverageMap',{zoomControl:true,scrollWheelZoom:true,minZoom:4,maxZoom:18}).setView([7.8,-66.8],5);RadarMaps.configure(map);map.attributionControl.addAttribution('<a href="https://services3.arcgis.com/yaewiDuOIcucvCmt/ArcGIS/rest/services/DPA_Venezuela/FeatureServer/0" target="_blank" rel="noopener">Límites DPA Venezuela</a>');addStates(geojson,report);addListings(report.listings);
+  }catch(error){$('coverageMessage').textContent=error.message;$('coverageMessage').classList.add('error');}
+}
+$('themeToggle').onclick=()=>applyTheme(document.documentElement.dataset.theme==='dark'?'light':'dark');$('account').onclick=async()=>{await fetch('/api/logout',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});location.href='/';};applyTheme(document.documentElement.dataset.theme==='dark'?'dark':'light');window.addEventListener('load',load,{once:true});

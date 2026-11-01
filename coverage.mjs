@@ -48,6 +48,7 @@ const recent=value=>{const time=Date.parse(value||'');return Number.isFinite(tim
 const withPhoto=property=>Boolean(String(property.foto||'').trim()||(Array.isArray(property.fotos)&&property.fotos.length));
 const withCoordinates=property=>Number.isFinite(Number(property.latitud))&&Number.isFinite(Number(property.longitud))&&String(property.latitud)!==''&&String(property.longitud)!=='';
 const summarize=items=>({total:items.length,sale:items.filter(item=>item.operacion==='venta').length,rent:items.filter(item=>item.operacion==='alquiler').length,withoutPhoto:items.filter(item=>!withPhoto(item)).length,withoutCoordinates:items.filter(item=>!withCoordinates(item)).length,recentlyUpdated:items.filter(item=>recent(item.actualizadoEn)).length});
+const mapListing=property=>({id:property.id||'',title:property.titulo||'Inmueble',state:propertyState(property),operation:property.operacion||'',type:property.tipo||'',price:property.precio||'',currency:property.moneda||'',zone:property.zona||property.municipio||'',address:property.direccion||property.calle||'',photo:property.foto||property.fotos?.[0]||'',source:property.fuente||'',lat:Number(property.latitud),lng:Number(property.longitud)});
 
 export function buildCoverage(properties=[]){
   const active=properties.filter(property=>property.estado==='activo');
@@ -59,5 +60,5 @@ export function buildCoverage(properties=[]){
   for(const property of lara)(municipalityRows.find(row=>row.name===propertyMunicipality(property))||municipalityRows.at(-1)).properties.push(property);
   const municipalities=municipalityRows.map(({properties:items,...municipality})=>({...municipality,referenceTotal:null,estimatedCoverage:null,...summarize(items)})).sort((a,b)=>b.total-a.total||a.name.localeCompare(b.name,'es'));
   const total=active.length,withPhotos=active.filter(withPhoto).length,located=active.filter(withCoordinates).length,referenceTotal=venezuelaStates.reduce((sum,state)=>sum+state.referenceTotal,0);
-  return {generatedAt:new Date().toISOString(),scope:'Venezuela',total,referenceTotal,referenceReviewedAt:'2026-11-01',estimatedCoverage:referenceTotal?Math.min(100,Math.round(total/referenceTotal*100)):null,sale:active.filter(item=>item.operacion==='venta').length,rent:active.filter(item=>item.operacion==='alquiler').length,withPhotos,located,quality:total?Math.round(((withPhotos+located)/(total*2))*100):0,states,municipalities};
+  return {generatedAt:new Date().toISOString(),scope:'Venezuela',total,referenceTotal,referenceReviewedAt:'2026-11-01',estimatedCoverage:referenceTotal?Math.min(100,Math.round(total/referenceTotal*100)):null,sale:active.filter(item=>item.operacion==='venta').length,rent:active.filter(item=>item.operacion==='alquiler').length,withPhotos,located,quality:total?Math.round(((withPhotos+located)/(total*2))*100):0,states,municipalities,listings:active.filter(withCoordinates).map(mapListing)};
 }

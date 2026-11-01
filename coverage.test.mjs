@@ -18,7 +18,7 @@ test('normaliza municipios usando municipio, ciudad o zona',()=>{
 
 test('resume únicamente inmuebles activos y calcula calidad',()=>{
   const report=buildCoverage([
-    {estado:'activo',municipio:'Iribarren',operacion:'venta',foto:'https://example.test/a.jpg',latitud:'10',longitud:'-69'},
+    {id:'lara-1',estado:'activo',municipio:'Iribarren',titulo:'Apartamento centro',operacion:'venta',precio:'50000',moneda:'USD',foto:'https://example.test/a.jpg',latitud:'10',longitud:'-69'},
     {estado:'activo',municipio:'Cabudare',operacion:'alquiler',foto:'',latitud:'',longitud:''},
     {estado:'archivado',municipio:'Iribarren',operacion:'venta',foto:'x',latitud:'10',longitud:'-69'}
   ]);
@@ -32,4 +32,5 @@ test('resume únicamente inmuebles activos y calcula calidad',()=>{
   assert.equal(report.states.find(item=>item.name==='Lara').referenceTotal,432);
   assert.equal(report.municipalities.find(item=>item.name==='Iribarren').total,1);
   assert.equal(report.municipalities.find(item=>item.name==='Palavecino').withoutPhoto,1);
+  assert.deepEqual(report.listings,[{id:'lara-1',title:'Apartamento centro',state:'Lara',operation:'venta',type:'',price:'50000',currency:'USD',zone:'Iribarren',address:'',photo:'https://example.test/a.jpg',source:'',lat:10,lng:-69}]);
 });
