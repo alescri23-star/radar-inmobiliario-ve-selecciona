@@ -4,7 +4,7 @@ import {landLabels} from './land-labels.mjs';
 import {classifyLand} from './land.mjs';
 import {favorites} from './favorites.mjs';
 import {gallery} from './gallery.mjs';
-import { randomBytes, scryptSync, timingSafeEqual, createHash } from 'node:crypto';
+import { randomBytes, randomUUID, scryptSync, timingSafeEqual, createHash } from 'node:crypto';
 const hash = v => createHash('sha256').update(v).digest('hex');
 import { recovery } from './recovery.mjs';
 import {captureListing} from './capture-link.mjs';
@@ -14,6 +14,7 @@ import {marketReferences} from './market-analysis.mjs';
 import {createExchangeRateService} from './exchange-rates.mjs';
 import {createMarketTickerService} from './market-ticker.mjs';
 import {createEconomicPreviewService} from './economic-preview.mjs';
+import {listEconomicSignals,normalizeEconomicSignal,publicEconomicSignal} from './economic-signals.mjs';
 export function portal(database,options={}) {
  const db=adaptDatabase(database);
  const policy=options.security||security(options);
@@ -23,6 +24,7 @@ export function portal(database,options={}) {
  const loadExchangeRates=createExchangeRateService(options.exchangeRateFetch||fetch);
  const loadMarketTicker=createMarketTickerService({fetchImpl:options.marketFetch||fetch,loadExchangeRates});
  const loadEconomicPreview=createEconomicPreviewService(options.economicPreviewFetch||fetch);
+ const publicOrigin=String(options.publicUrl??process.env.RADAR_PUBLIC_URL??'').replace(/\/$/,'');
  const send=(res,status,value)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(value));};
  const body=async(req,limit=32768)=>{let text='';for await(const chunk of req){text+=chunk;if(text.length>limit)throw Error('Solicitud demasiado grande');}return JSON.parse(text||'{}');};
  const records=async kind=>(await db.all('SELECT body FROM records WHERE kind=?',[kind])).map(r=>classifyLand(JSON.parse(r.body)));
@@ -43,13 +45,15 @@ export function portal(database,options={}) {
   if(!url.pathname.startsWith('/api/'))return false;
   const isProfessionalForm=url.pathname==='/api/professional-applications';
   const isPublicTicker=url.pathname==='/api/public/market-ticker';
+  const isPublicEconomic=url.pathname==='/api/public/economic-signals'||url.pathname.startsWith('/api/public/economic-preview/');
+  const isPublicRead=isPublicTicker||isPublicEconomic;
   const externalForm=isProfessionalForm&&['POST','OPTIONS'].includes(req.method)&&policy.applyFormCors(req,res);
-  const externalPublicRead=isPublicTicker&&['GET','OPTIONS'].includes(req.method)&&policy.applyPublicReadCors(req,res);
+  const externalPublicRead=isPublicRead&&['GET','OPTIONS'].includes(req.method)&&policy.applyPublicReadCors(req,res);
   if(isProfessionalForm&&req.method==='OPTIONS'){
    if(!externalForm&&!policy.allows(req)){send(res,403,{error:'Origen no permitido'});return true;}
    res.writeHead(204,{'Cache-Control':'no-store'});res.end();return true;
   }
-  if(isPublicTicker&&req.method==='OPTIONS'){
+  if(isPublicRead&&req.method==='OPTIONS'){
    if(!externalPublicRead&&!policy.allows(req)){send(res,403,{error:'Origen no permitido'});return true;}
    res.writeHead(204,{'Cache-Control':'no-store'});res.end();return true;
   }
@@ -90,12 +94,25 @@ export function portal(database,options={}) {
   }
   if(url.pathname.startsWith('/api/economic-preview/') && req.method==='GET'){
    if(req.user?.role!=='admin'){send(res,401,{error:'Acceso reservado al administrador'});return true;}
-   const preview=await loadEconomicPreview(decodeURIComponent(url.pathname.slice('/api/economic-preview/'.length)));
+   const id=decodeURIComponent(url.pathname.slice('/api/economic-preview/'.length)),signal=(await listEconomicSignals(db)).find(item=>item.id===id);
+   const preview=await loadEconomicPreview(signal);
    if(!preview){send(res,404,{error:'Señal no disponible'});return true;}
    res.writeHead(200,{'Content-Type':preview.contentType,'Cache-Control':'private, max-age=21600','X-Content-Type-Options':'nosniff'});res.end(preview.buffer);return true;
   }
   if(isPublicTicker && req.method==='GET'){
    try{const ticker=await loadMarketTicker();send(res,200,{items:ticker.items,fetchedAt:ticker.fetchedAt,partial:ticker.partial});}catch{send(res,503,{error:'Las cotizaciones no están disponibles temporalmente'});}return true;
+  }
+  if(url.pathname==='/api/public/economic-signals'&&req.method==='GET'){
+   const today=new Date().toLocaleDateString('en-CA'),topic=String(url.searchParams.get('topic')||'').trim().toLocaleLowerCase(),state=String(url.searchParams.get('state')||'').trim().toLocaleLowerCase(),featured=url.searchParams.get('featured'),limit=Math.min(100,Math.max(1,Number(url.searchParams.get('limit'))||50));
+   const visible=(await listEconomicSignals(db)).filter(signal=>signal.visibleInWeb&&!signal.archived&&(!signal.expiresAt||signal.expiresAt>=today)&&(!topic||(signal.topics||[]).some(value=>String(value).toLocaleLowerCase()===topic))&&(!state||String(signal.state).toLocaleLowerCase()===state)&&(featured!=='true'||signal.featured)).slice(0,limit);
+   const updatedAt=visible.reduce((latest,signal)=>String(signal.updatedAt)>latest?String(signal.updatedAt):latest,'');
+   send(res,200,{updatedAt,total:visible.length,signals:visible.map(signal=>publicEconomicSignal(signal,publicOrigin))});return true;
+  }
+  if(url.pathname.startsWith('/api/public/economic-preview/')&&req.method==='GET'){
+   const id=decodeURIComponent(url.pathname.slice('/api/public/economic-preview/'.length)),signal=(await listEconomicSignals(db)).find(item=>item.id===id&&item.visibleInWeb&&!item.archived);
+   if(!signal){send(res,404,{error:'Señal no disponible'});return true;}
+   const preview=await loadEconomicPreview(signal);if(!preview){send(res,404,{error:'Imagen no disponible'});return true;}
+   res.writeHead(200,{'Content-Type':preview.contentType,'Cache-Control':'public, max-age=3600','X-Content-Type-Options':'nosniff'});res.end(preview.buffer);return true;
   }
   if(url.pathname==='/api/professional-applications' && req.method==='POST'){
    try{
@@ -118,6 +135,21 @@ export function portal(database,options={}) {
    }catch(e){send(res,400,{error:e.message});}return true;
   }
   if(req.user?.role!=='admin'){send(res,401,{error:'Acceso reservado al administrador'});return true;}
+  if(url.pathname==='/api/economic-signals'&&req.method==='GET'){send(res,200,await listEconomicSignals(db));return true;}
+  if(url.pathname==='/api/economic-signals'&&req.method==='POST'){
+   try{const input=await body(req,65536),record=normalizeEconomicSignal(input,null,randomUUID());await db.upsertRecord(record.id,'economic_signals',JSON.stringify(record));send(res,201,record);}catch(error){send(res,400,{error:error.message});}return true;
+  }
+  const economicMatch=url.pathname.match(/^\/api\/economic-signals\/([^/]+)(?:\/(archive))?$/);
+  if(economicMatch){
+   const id=decodeURIComponent(economicMatch[1]),previous=(await listEconomicSignals(db)).find(item=>item.id===id);if(!previous){send(res,404,{error:'Señal económica no encontrada'});return true;}
+   if(req.method==='PUT'&&!economicMatch[2]){
+    try{const input=await body(req,65536),record=normalizeEconomicSignal(input,previous,id),history=[{updatedAt:previous.updatedAt,title:previous.title,summary:previous.summary,url:previous.url,visibleInWeb:previous.visibleInWeb},...(Array.isArray(previous.history)?previous.history:[])].slice(0,30);record.history=history;await db.upsertRecord(id,'economic_signals',JSON.stringify(record));send(res,200,record);}catch(error){send(res,400,{error:error.message});}return true;
+   }
+   if(req.method==='POST'&&economicMatch[2]==='archive'){
+    const record={...previous,archived:true,visibleInWeb:false,updatedAt:new Date().toISOString()};await db.upsertRecord(id,'economic_signals',JSON.stringify(record));send(res,200,record);return true;
+   }
+   send(res,405,{error:'Método no permitido'});return true;
+  }
   if(url.pathname==='/api/admin/import'&&req.method==='POST'){
    try{
     const input=await body(req,5_000_000),items=input.records;

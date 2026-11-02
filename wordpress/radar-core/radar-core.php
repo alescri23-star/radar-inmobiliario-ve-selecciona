@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Radar Venezuela Core
  * Description: Inmuebles publicados y solicitudes privadas para Radar Venezuela.
- * Version: 0.1.0
+ * Version: 0.2.0
  * Requires at least: 6.5
  * Requires PHP: 8.1
  * Author: Radar Venezuela
@@ -213,4 +213,58 @@ function radar_core_handle_contact() {
 }
 add_action( 'admin_post_nopriv_radar_contact', 'radar_core_handle_contact' );
 add_action( 'admin_post_radar_contact', 'radar_core_handle_contact' );
+
+/**
+ * Devuelve las señales públicas desde el Radar. La respuesta correcta no se
+ * almacena para que cada guardado en el panel se vea en la web al recargar.
+ * Solo conservamos la última copia válida como respaldo ante una caída breve.
+ */
+function radar_core_economic_signals( $attributes = array() ) {
+	$api_base = untrailingslashit( apply_filters( 'radar_core_api_base', 'https://white-shrew-789999.hostingersite.com' ) );
+	$query = array( 'limit' => min( 24, max( 1, absint( $attributes['limit'] ?? 6 ) ) ) );
+	if ( ! empty( $attributes['topic'] ) ) { $query['topic'] = sanitize_text_field( $attributes['topic'] ); }
+	if ( ! empty( $attributes['featured'] ) && 'true' === $attributes['featured'] ) { $query['featured'] = 'true'; }
+	$url = add_query_arg( $query, $api_base . '/api/public/economic-signals' );
+	$cache_key = 'radar_economic_' . md5( $url );
+	$response = wp_remote_get( $url, array( 'timeout' => 8, 'redirection' => 3, 'headers' => array( 'Accept' => 'application/json' ) ) );
+	$payload = null;
+	if ( ! is_wp_error( $response ) && 200 === wp_remote_retrieve_response_code( $response ) ) {
+		$decoded = json_decode( wp_remote_retrieve_body( $response ), true );
+		if ( is_array( $decoded ) && isset( $decoded['signals'] ) && is_array( $decoded['signals'] ) ) {
+			$payload = $decoded;
+			set_transient( $cache_key, $payload, HOUR_IN_SECONDS );
+		}
+	}
+	if ( null === $payload ) { $payload = get_transient( $cache_key ); }
+	return is_array( $payload ) ? $payload : array( 'signals' => array(), 'updatedAt' => '' );
+}
+
+function radar_core_economic_shortcode( $attributes ) {
+	$attributes = shortcode_atts( array( 'topic' => '', 'featured' => 'false', 'limit' => 6 ), $attributes, 'radar_economico' );
+	$payload = radar_core_economic_signals( $attributes );
+	$signals = $payload['signals'];
+	wp_enqueue_style( 'radar-economic', plugin_dir_url( __FILE__ ) . 'assets/economic.css', array(), '0.2.0' );
+	ob_start();
+	if ( empty( $signals ) ) {
+		echo '<p class="radar-economic-empty">' . esc_html__( 'El Radar económico se está actualizando. Vuelve a intentarlo en unos minutos.', 'radar-core' ) . '</p>';
+		return ob_get_clean();
+	}
+	echo '<div class="radar-economic-grid">';
+	foreach ( $signals as $signal ) {
+		$title = sanitize_text_field( $signal['title'] ?? '' );
+		$topics = array_map( 'sanitize_text_field', is_array( $signal['topics'] ?? null ) ? $signal['topics'] : array() );
+		?>
+		<article class="radar-economic-card<?php echo ! empty( $signal['featured'] ) ? ' is-featured' : ''; ?>">
+			<a class="radar-economic-image" href="<?php echo esc_url( $signal['url'] ?? '' ); ?>" target="_blank" rel="noopener noreferrer"><img src="<?php echo esc_url( $signal['imageUrl'] ?? '' ); ?>" alt="<?php echo esc_attr( $title ); ?>" loading="lazy" decoding="async"><span><?php echo esc_html( $signal['source'] ?? '' ); ?></span></a>
+			<div class="radar-economic-copy"><div class="radar-economic-meta"><span><?php echo esc_html( $signal['sector'] ?? '' ); ?></span><time datetime="<?php echo esc_attr( $signal['date'] ?? '' ); ?>"><?php echo esc_html( $signal['date'] ?? '' ); ?></time></div><h3><a href="<?php echo esc_url( $signal['url'] ?? '' ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $title ); ?></a></h3><p><?php echo esc_html( $signal['summary'] ?? '' ); ?></p>
+			<?php if ( ! empty( $signal['opportunity'] ) ) : ?><div class="radar-economic-opportunity"><strong><?php esc_html_e( 'Por qué importa', 'radar-core' ); ?></strong><p><?php echo esc_html( $signal['opportunity'] ); ?></p></div><?php endif; ?>
+			<footer><div><?php foreach ( array_slice( $topics, 0, 3 ) as $topic ) { echo '<span>' . esc_html( $topic ) . '</span>'; } ?></div><a href="<?php echo esc_url( $signal['url'] ?? '' ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Leer fuente', 'radar-core' ); ?> ↗</a></footer></div>
+		</article>
+		<?php
+	}
+	echo '</div>';
+	if ( ! empty( $payload['updatedAt'] ) ) { echo '<p class="radar-economic-updated">' . esc_html__( 'Última edición del Radar:', 'radar-core' ) . ' ' . esc_html( wp_date( 'd/m/Y H:i', strtotime( $payload['updatedAt'] ) ) ) . '</p>'; }
+	return ob_get_clean();
+}
+add_shortcode( 'radar_economico', 'radar_core_economic_shortcode' );
 

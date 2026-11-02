@@ -21,13 +21,18 @@ get_header();
 	<p><?php esc_html_e( 'Radar reúne información publicada y herramientas orientativas para ayudarte a comparar ubicación, precio, superficie y posibles necesidades de reforma. Cada dato debe confirmarse antes de tomar una decisión.', 'radar-venezuela' ); ?></p>
 </section>
 
+<section id="radar-economico" class="section economic-public-section">
+	<header class="section-heading"><div><p class="eyebrow">02 · <?php esc_html_e( 'RADAR ECONÓMICO', 'radar-venezuela' ); ?></p><h2><?php esc_html_e( 'Las señales que están moviendo Venezuela', 'radar-venezuela' ); ?></h2><p><?php esc_html_e( 'Noticias, iniciativas empresariales y cambios de entorno convertidos en pistas verificables para seguir nuevas oportunidades.', 'radar-venezuela' ); ?></p></div></header>
+	<?php echo do_shortcode( '[radar_economico limit="6"]' ); ?>
+</section>
+
 <section id="inmuebles" class="section section-soft">
-	<header class="section-heading"><div><p class="eyebrow">02 · <?php esc_html_e( 'INMUEBLES', 'radar-venezuela' ); ?></p><h2><?php esc_html_e( 'Oportunidades publicadas', 'radar-venezuela' ); ?></h2></div><a href="<?php echo esc_url( get_post_type_archive_link( 'radar_inmueble' ) ?: '#inmuebles' ); ?>"><?php esc_html_e( 'Ver todos', 'radar-venezuela' ); ?> →</a></header>
+	<header class="section-heading"><div><p class="eyebrow">03 · <?php esc_html_e( 'INMUEBLES', 'radar-venezuela' ); ?></p><h2><?php esc_html_e( 'Oportunidades publicadas', 'radar-venezuela' ); ?></h2></div><a href="<?php echo esc_url( get_post_type_archive_link( 'radar_inmueble' ) ?: '#inmuebles' ); ?>"><?php esc_html_e( 'Ver todos', 'radar-venezuela' ); ?> →</a></header>
 	<?php echo do_shortcode( '[radar_inmuebles limite="6"]' ); ?>
 </section>
 
 <section id="como-funciona" class="section process">
-	<header class="section-heading"><div><p class="eyebrow">03 · <?php esc_html_e( 'CÓMO FUNCIONA', 'radar-venezuela' ); ?></p><h2><?php esc_html_e( 'Un recorrido sencillo y transparente', 'radar-venezuela' ); ?></h2></div></header>
+	<header class="section-heading"><div><p class="eyebrow">04 · <?php esc_html_e( 'CÓMO FUNCIONA', 'radar-venezuela' ); ?></p><h2><?php esc_html_e( 'Un recorrido sencillo y transparente', 'radar-venezuela' ); ?></h2></div></header>
 	<div class="process-grid">
 		<article><span>1</span><h3><?php esc_html_e( 'Explora', 'radar-venezuela' ); ?></h3><p><?php esc_html_e( 'Filtra los inmuebles publicados y revisa sus datos principales.', 'radar-venezuela' ); ?></p></article>
 		<article><span>2</span><h3><?php esc_html_e( 'Compara', 'radar-venezuela' ); ?></h3><p><?php esc_html_e( 'Contrasta precio, superficie, zona y estado de la información.', 'radar-venezuela' ); ?></p></article>
@@ -37,7 +42,7 @@ get_header();
 </section>
 
 <section id="contacto" class="section contact-section">
-	<div><p class="eyebrow">04 · <?php esc_html_e( 'CONTACTO', 'radar-venezuela' ); ?></p><h2><?php esc_html_e( 'Cuéntanos qué estás buscando.', 'radar-venezuela' ); ?></h2><p><?php esc_html_e( 'La solicitud se guardará de forma privada para que un administrador autorizado pueda revisarla.', 'radar-venezuela' ); ?></p></div>
+	<div><p class="eyebrow">05 · <?php esc_html_e( 'CONTACTO', 'radar-venezuela' ); ?></p><h2><?php esc_html_e( 'Cuéntanos qué estás buscando.', 'radar-venezuela' ); ?></h2><p><?php esc_html_e( 'La solicitud se guardará de forma privada para que un administrador autorizado pueda revisarla.', 'radar-venezuela' ); ?></p></div>
 	<div><?php echo do_shortcode( '[radar_contacto]' ); ?></div>
 </section>
 <?php get_footer(); ?>
