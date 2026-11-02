@@ -25,6 +25,22 @@ function radar_venezuela_assets() {
 }
 add_action( 'wp_enqueue_scripts', 'radar_venezuela_assets' );
 
+function radar_venezuela_document_title( $parts ) {
+	if ( is_front_page() ) {
+		return array( 'title' => 'Tu Radar Venezuela' );
+	}
+	$parts['site'] = 'Tu Radar Venezuela';
+	return $parts;
+}
+add_filter( 'document_title_parts', 'radar_venezuela_document_title' );
+
+function radar_venezuela_favicon() {
+	$icon = get_template_directory_uri() . '/assets/favicon-radar.svg';
+	printf( '<link rel="icon" href="%1$s" type="image/svg+xml"><link rel="shortcut icon" href="%1$s" type="image/svg+xml">', esc_url( $icon ) );
+}
+add_action( 'wp_head', 'radar_venezuela_favicon', 2 );
+add_action( 'admin_head', 'radar_venezuela_favicon', 2 );
+
 function radar_venezuela_menu_fallback() {
 	echo '<ul class="radar-menu">';
 	foreach ( array(
