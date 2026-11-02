@@ -221,7 +221,7 @@ add_action( 'admin_post_radar_contact', 'radar_core_handle_contact' );
  */
 function radar_core_economic_signals( $attributes = array() ) {
 	$api_base = untrailingslashit( apply_filters( 'radar_core_api_base', 'https://white-shrew-789999.hostingersite.com' ) );
-	$query = array( 'limit' => min( 24, max( 1, absint( $attributes['limit'] ?? 6 ) ) ) );
+	$query = array( 'limit' => 24 );
 	if ( ! empty( $attributes['topic'] ) ) { $query['topic'] = sanitize_text_field( $attributes['topic'] ); }
 	if ( ! empty( $attributes['featured'] ) && 'true' === $attributes['featured'] ) { $query['featured'] = 'true'; }
 	$url = add_query_arg( $query, $api_base . '/api/public/economic-signals' );
@@ -247,8 +247,8 @@ function radar_core_economic_shortcode( $attributes ) {
 	$attributes = shortcode_atts( array( 'topic' => '', 'featured' => 'false', 'limit' => 6 ), $attributes, 'radar_economico' );
 	$payload = radar_core_economic_signals( $attributes );
 	$signals = $payload['signals'];
-	wp_enqueue_style( 'radar-economic', plugin_dir_url( __FILE__ ) . 'assets/economic.css', array(), '0.3.0' );
-	wp_enqueue_script( 'radar-economic', plugin_dir_url( __FILE__ ) . 'assets/economic.js', array(), '0.3.0', true );
+	wp_enqueue_style( 'radar-economic', plugin_dir_url( __FILE__ ) . 'assets/economic.css', array(), '0.3.1' );
+	wp_enqueue_script( 'radar-economic', plugin_dir_url( __FILE__ ) . 'assets/economic.js', array(), '0.3.1', true );
 	ob_start();
 	if ( empty( $signals ) ) {
 		echo '<p class="radar-economic-empty">' . esc_html__( 'El Radar económico se está actualizando. Vuelve a intentarlo en unos minutos.', 'radar-core' ) . '</p>';
