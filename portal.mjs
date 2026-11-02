@@ -24,6 +24,7 @@ export function portal(database,options={}) {
  const loadExchangeRates=createExchangeRateService(options.exchangeRateFetch||fetch);
  const loadMarketTicker=createMarketTickerService({fetchImpl:options.marketFetch||fetch,loadExchangeRates});
  const loadEconomicPreview=createEconomicPreviewService(options.economicPreviewFetch||fetch);
+ const economicCapture=options.economicCapture;
  const publicOrigin=String(options.publicUrl??process.env.RADAR_PUBLIC_URL??'').replace(/\/$/,'');
  const send=(res,status,value)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(value));};
  const body=async(req,limit=32768)=>{let text='';for await(const chunk of req){text+=chunk;if(text.length>limit)throw Error('Solicitud demasiado grande');}return JSON.parse(text||'{}');};
@@ -135,6 +136,14 @@ export function portal(database,options={}) {
    }catch(e){send(res,400,{error:e.message});}return true;
   }
   if(req.user?.role!=='admin'){send(res,401,{error:'Acceso reservado al administrador'});return true;}
+  if(url.pathname==='/api/economic-captures/status'&&req.method==='GET'){
+   const recent=(await db.all('SELECT body FROM records WHERE kind=?',['economic_capture_runs'])).map(row=>JSON.parse(row.body)).sort((a,b)=>String(b.finishedAt).localeCompare(String(a.finishedAt))).slice(0,10);
+   send(res,200,{...(economicCapture?.status?.()||{running:false,phase:'Captura automática no configurada'}),recent});return true;
+  }
+  if(url.pathname==='/api/economic-captures/run'&&req.method==='POST'){
+   if(!economicCapture){send(res,503,{error:'Captura automática no configurada'});return true;}
+   try{if(economicCapture.status().running)throw Error('La actualización económica ya está en curso');economicCapture.run().catch(()=>{});send(res,202,{ok:true,status:economicCapture.status()});}catch(error){send(res,409,{error:error.message});}return true;
+  }
   if(url.pathname==='/api/economic-signals'&&req.method==='GET'){send(res,200,await listEconomicSignals(db));return true;}
   if(url.pathname==='/api/economic-signals'&&req.method==='POST'){
    try{const input=await body(req,65536),record=normalizeEconomicSignal(input,null,randomUUID());await db.upsertRecord(record.id,'economic_signals',JSON.stringify(record));send(res,201,record);}catch(error){send(res,400,{error:error.message});}return true;

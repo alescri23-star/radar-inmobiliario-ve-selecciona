@@ -11,12 +11,18 @@ import { randomUUID } from 'node:crypto';
 import {discoverProfessionals,professionalMatchKey} from './professional-discovery.mjs';
 import {buildCoverage} from './coverage.mjs';
 import {seedEconomicSignals} from './economic-signals.mjs';
+import {createEconomicCaptureService} from './economic-capture.mjs';
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 export function createApp(directory = path.join(root, 'data'), options = {}) {
   options={...options,security:security(options)};
   const db = options.database || connectDatabase(directory);
-  const ready = initializeDatabase(db).then(()=>bootstrapAdminFromEnvironment(db)).then(()=>seedEconomicSignals(db));
+  const economicCapture=options.economicCapture||createEconomicCaptureService(db,{fetcher:options.economicCaptureFetch||fetch,sources:options.economicSources});
+  options={...options,economicCapture};
+  const ready = initializeDatabase(db).then(()=>bootstrapAdminFromEnvironment(db)).then(()=>seedEconomicSignals(db)).then(result=>{
+    if(options.startEconomicScheduler??process.env.RADAR_HOSTINGER==='true')economicCapture.start(Number(process.env.ECONOMIC_CAPTURE_INTERVAL_MS)||21_600_000);
+    return result;
+  });
   const handlePortal=portal(db,options);
   const kinds = ['inmuebles', 'leads', 'reformas', 'profesionales'];
   const list = async kind => (await db.all('SELECT body FROM records WHERE kind=?',[kind])).map(r => classifyLand(JSON.parse(r.body)));
@@ -108,12 +114,12 @@ export function createApp(directory = path.join(root, 'data'), options = {}) {
       let content=readFileSync(path.join(root, 'public', file));
       if(['portal.html','index.html','coverage.html'].includes(file))content=content.toString().replace('<script src="/theme-init.js?v=1"></script>','<script src="/theme-init.js?v=1"></script><script defer src="/map-tools.js?v=maps1"></script>');
       if(file==='portal.html')content=content.toString().replace('style.css?v=radar-workbench10','style.css?v=radar-market2').replace('portal.js?v=lab-capture10','portal.js?v=lab-national1');
-      if(file==='index.html')content=content.toString().replace('style.css?v=professional-crm3','style.css?v=economic-editor1').replace('app.js?v=professional-crm3','app.js?v=economic-editor1');
+      if(file==='index.html')content=content.toString().replace(/style\.css\?v=[^"']+/,'style.css?v=economic-capture1').replace(/app\.js\?v=[^"']+/,'app.js?v=economic-capture1');
       if(file==='coverage.html')content=content.toString().replace('style.css?v=coverage1','style.css?v=coverage-map3').replace('coverage.css?v=coverage2','coverage.css?v=coverage-map3').replace('coverage.js?v=coverage1','coverage.js?v=coverage-map3');
       res.end(content);
     } catch (err) { console.error(err); send(res, 500, { error: 'No se pudo completar la operación' }); }
   });
-  server.on('close', () => { db.close().catch(error=>console.error('No se pudo cerrar la base de datos',error)); });
+  server.on('close', () => { economicCapture.stop?.();db.close().catch(error=>console.error('No se pudo cerrar la base de datos',error)); });
   return server;
 }
 const isDirectStart = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
