@@ -248,6 +248,7 @@ function radar_core_economic_shortcode( $attributes ) {
 	$payload = radar_core_economic_signals( $attributes );
 	$signals = $payload['signals'];
 	wp_enqueue_style( 'radar-economic', plugin_dir_url( __FILE__ ) . 'assets/economic.css', array(), '0.3.1' );
+	wp_enqueue_style( 'radar-economic-colors', plugin_dir_url( __FILE__ ) . 'assets/economic-colors.css', array( 'radar-economic' ), '0.3.2' );
 	wp_enqueue_script( 'radar-economic', plugin_dir_url( __FILE__ ) . 'assets/economic.js', array(), '0.3.1', true );
 	ob_start();
 	if ( empty( $signals ) ) {
