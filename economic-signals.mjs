@@ -25,7 +25,7 @@ const bool=value=>value===true||value==='true'||value===1||value==='1';
 export const defaultEconomicSignals=defaults.map((signal,index)=>({...signal,slug:slug(signal.title),visibleInWeb:true,featured:Boolean(signal.featured),order:index+1,expiresAt:'',imageUrl:'',internalNotes:'',createdAt:'2026-11-02T00:00:00.000Z',updatedAt:'2026-11-02T00:00:00.000Z'}));
 
 export async function listEconomicSignals(db){
- return (await db.all('SELECT body FROM records WHERE kind=?',['economic_signals'])).map(row=>JSON.parse(row.body)).sort((a,b)=>Number(a.order||999)-Number(b.order||999)||String(b.date).localeCompare(String(a.date)));
+ return (await db.all('SELECT body FROM records WHERE kind=?',['economic_signals'])).map(row=>JSON.parse(row.body)).sort((a,b)=>Number(a.order??999)-Number(b.order??999)||String(b.date).localeCompare(String(a.date)));
 }
 
 export async function seedEconomicSignals(db){

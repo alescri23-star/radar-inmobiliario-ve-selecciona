@@ -31,7 +31,7 @@ test('guarda una sola vez y registra duplicados en la siguiente captura',async()
  const fetcher=async url=>new Response(pages.get(url),{status:pages.has(url)?200:404});
  const first=await captureEconomicSignals(db,{fetcher,sources:[source]}),second=await captureEconomicSignals(db,{fetcher,sources:[source]});
  assert.equal(first.added,1);assert.equal(second.added,0);assert.equal(second.duplicates,1);
- const saved=(await db.all('SELECT body FROM records WHERE kind=?',['economic_signals'])).map(row=>JSON.parse(row.body));assert.equal(saved.length,1);assert.equal(saved[0].visibleInWeb,true);raw.close();
+ const saved=(await db.all('SELECT body FROM records WHERE kind=?',['economic_signals'])).map(row=>JSON.parse(row.body));assert.equal(saved.length,1);assert.equal(saved[0].visibleInWeb,true);assert.equal(saved[0].order,0);raw.close();
 });
 
 test('avisa cuando una fuente externa termina con error',async()=>{

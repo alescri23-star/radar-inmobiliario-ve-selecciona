@@ -64,6 +64,7 @@ export function parseEconomicDetail(html,fallback={}){
 
 export async function captureEconomicSignals(db,options={}){
  const fetcher=options.fetcher||fetch,sources=options.sources||economicSources,existing=await listEconomicSignals(db),urls=new Set(existing.map(item=>canonical(item.url)).filter(Boolean)),titles=new Set(existing.map(item=>shortHash(strip(item.title).toLowerCase())));
+ for(const item of existing.filter(signal=>signal.automatic&&Number(signal.order)!==0)){item.order=0;item.updatedAt=new Date().toISOString();await db.upsertRecord(item.id,'economic_signals',JSON.stringify(item));}
  let discovered=0,added=0,duplicates=0,failed=0;const errors=[];
  for(const source of sources){
   try{
@@ -74,7 +75,7 @@ export async function captureEconomicSignals(db,options={}){
     try{
      const detail=parseEconomicDetail(await download(fetcher,link.url),{title:link.title,source:source.name}),classification=classifyEconomicItem(detail),now=new Date().toISOString();
      if(urls.has(link.url)||titles.has(shortHash(detail.title.toLowerCase()))){duplicates++;continue;}
-     const record=normalizeEconomicSignal({...detail,...classification,source:source.name,channel:source.channel,url:link.url,state:'Nacional',confidence:source.confidence||(source.trusted?'fuente oficial':'por verificar'),opportunity:`Revisar si esta señal genera demanda de inmuebles, suelo, proveedores o servicios profesionales y vincularla con el territorio afectado.`,risk:'La publicación confirma una novedad, pero su impacto económico e inmobiliario debe comprobarse con ubicación, presupuesto, responsables y calendario.',visibleInWeb:Boolean(source.autoPublish??source.trusted),featured:false,order:500},null,randomUUID());
+     const record=normalizeEconomicSignal({...detail,...classification,source:source.name,channel:source.channel,url:link.url,state:'Nacional',confidence:source.confidence||(source.trusted?'fuente oficial':'por verificar'),opportunity:`Revisar si esta señal genera demanda de inmuebles, suelo, proveedores o servicios profesionales y vincularla con el territorio afectado.`,risk:'La publicación confirma una novedad, pero su impacto económico e inmobiliario debe comprobarse con ubicación, presupuesto, responsables y calendario.',visibleInWeb:Boolean(source.autoPublish??source.trusted),featured:false,order:0},null,randomUUID());
      record.captureSourceId=source.id;record.capturedAt=now;record.automatic=true;
      await db.upsertRecord(record.id,'economic_signals',JSON.stringify(record));urls.add(link.url);titles.add(shortHash(detail.title.toLowerCase()));added++;
     }catch(error){failed++;errors.push(`${source.name}: ${error.message}`);}
