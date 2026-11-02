@@ -79,7 +79,7 @@ export function createEconomicCaptureService(db,options={}){
  const run=async()=>{
   if(status.running)throw Error('La actualización económica ya está en curso');
   status={...status,running:true,startedAt:new Date().toISOString(),phase:'Buscando novedades',error:''};
-  try{const lastRun=await captureEconomicSignals(db,{...options,startedAt:status.startedAt,onProgress:event=>{status={...status,phase:event.phase};}});status={running:false,startedAt:status.startedAt,finishedAt:lastRun.finishedAt,phase:'Radar económico actualizado',lastRun,error:''};return lastRun;}
+  try{const lastRun=await captureEconomicSignals(db,{...options,startedAt:status.startedAt,onProgress:event=>{status={...status,phase:event.phase};}}),partial=lastRun.failed>0;status={running:false,startedAt:status.startedAt,finishedAt:lastRun.finishedAt,phase:partial?'Actualización parcial · revisar fuentes':'Radar económico actualizado',lastRun,error:partial?lastRun.errors.join(' · ').slice(0,300):''};return lastRun;}
   catch(error){status={...status,running:false,finishedAt:new Date().toISOString(),phase:'Actualización incompleta',error:String(error.message||error).slice(0,300)};throw error;}
  };
  const start=intervalMs=>{if(timer)return;const interval=Math.max(900000,Number(intervalMs)||21600000);timer=setInterval(()=>run().catch(()=>{}),interval);timer.unref?.();setTimeout(()=>run().catch(()=>{}),15000).unref?.();};

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {DatabaseSync} from 'node:sqlite';
 import {adaptDatabase,initializeDatabase} from './database.mjs';
-import {captureEconomicSignals,classifyEconomicItem,discoverEconomicLinks,parseEconomicDetail} from './economic-capture.mjs';
+import {captureEconomicSignals,classifyEconomicItem,createEconomicCaptureService,discoverEconomicLinks,parseEconomicDetail} from './economic-capture.mjs';
 
 const source={id:'official',name:'Fuente oficial',url:'https://example.com/noticias',allowedPath:'/economia/',channel:'Fuente oficial',trusted:true};
 
@@ -27,4 +27,10 @@ test('guarda una sola vez y registra duplicados en la siguiente captura',async()
  const first=await captureEconomicSignals(db,{fetcher,sources:[source]}),second=await captureEconomicSignals(db,{fetcher,sources:[source]});
  assert.equal(first.added,1);assert.equal(second.added,0);assert.equal(second.duplicates,1);
  const saved=(await db.all('SELECT body FROM records WHERE kind=?',['economic_signals'])).map(row=>JSON.parse(row.body));assert.equal(saved.length,1);assert.equal(saved[0].visibleInWeb,true);raw.close();
+});
+
+test('avisa cuando una fuente externa termina con error',async()=>{
+ const raw=new DatabaseSync(':memory:'),db=adaptDatabase(raw);await initializeDatabase(db);
+ const service=createEconomicCaptureService(db,{sources:[source],fetcher:async()=>new Response('',{status:503})});
+ const result=await service.run();assert.equal(result.failed,1);assert.match(service.status().phase,/parcial/i);assert.match(service.status().error,/HTTP 503/);raw.close();
 });
