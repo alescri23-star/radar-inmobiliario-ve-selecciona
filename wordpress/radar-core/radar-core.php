@@ -239,26 +239,46 @@ function radar_core_economic_signals( $attributes = array() ) {
 	return is_array( $payload ) ? $payload : array( 'signals' => array(), 'updatedAt' => '' );
 }
 
+function radar_core_topic_slug( $topic ) {
+	return sanitize_html_class( remove_accents( strtolower( (string) $topic ) ) );
+}
+
 function radar_core_economic_shortcode( $attributes ) {
 	$attributes = shortcode_atts( array( 'topic' => '', 'featured' => 'false', 'limit' => 6 ), $attributes, 'radar_economico' );
 	$payload = radar_core_economic_signals( $attributes );
 	$signals = $payload['signals'];
-	wp_enqueue_style( 'radar-economic', plugin_dir_url( __FILE__ ) . 'assets/economic.css', array(), '0.2.0' );
+	wp_enqueue_style( 'radar-economic', plugin_dir_url( __FILE__ ) . 'assets/economic.css', array(), '0.3.0' );
+	wp_enqueue_script( 'radar-economic', plugin_dir_url( __FILE__ ) . 'assets/economic.js', array(), '0.3.0', true );
 	ob_start();
 	if ( empty( $signals ) ) {
 		echo '<p class="radar-economic-empty">' . esc_html__( 'El Radar económico se está actualizando. Vuelve a intentarlo en unos minutos.', 'radar-core' ) . '</p>';
 		return ob_get_clean();
 	}
-	echo '<div class="radar-economic-grid">';
+	$preferred_topics = array( 'Empresas', 'LinkedIn', 'Petróleo', 'Electricidad', 'Política', 'Inversión', 'Tecnología' );
+	$topic_counts = array();
+	foreach ( $signals as $signal ) {
+		foreach ( is_array( $signal['topics'] ?? null ) ? $signal['topics'] : array() as $topic ) {
+			$topic = sanitize_text_field( $topic );
+			$topic_counts[ $topic ] = ( $topic_counts[ $topic ] ?? 0 ) + 1;
+		}
+	}
+	echo '<div class="radar-economic-tabs" role="group" aria-label="' . esc_attr__( 'Filtrar noticias por tema', 'radar-core' ) . '">';
+	echo '<button type="button" class="topic-todo is-active" data-radar-economic-topic="todo">' . esc_html__( 'Todo', 'radar-core' ) . '<span>' . count( $signals ) . '</span></button>';
+	foreach ( $preferred_topics as $topic ) {
+		if ( empty( $topic_counts[ $topic ] ) ) { continue; }
+		echo '<button type="button" class="topic-' . esc_attr( radar_core_topic_slug( $topic ) ) . '" data-radar-economic-topic="' . esc_attr( radar_core_topic_slug( $topic ) ) . '">' . esc_html( $topic ) . '<span>' . absint( $topic_counts[ $topic ] ) . '</span></button>';
+	}
+	echo '</div><div class="radar-economic-grid">';
 	foreach ( $signals as $signal ) {
 		$title = sanitize_text_field( $signal['title'] ?? '' );
 		$topics = array_map( 'sanitize_text_field', is_array( $signal['topics'] ?? null ) ? $signal['topics'] : array() );
+		$topic_slugs = array_map( 'radar_core_topic_slug', $topics );
 		?>
-		<article class="radar-economic-card<?php echo ! empty( $signal['featured'] ) ? ' is-featured' : ''; ?>">
+		<article class="radar-economic-card<?php echo ! empty( $signal['featured'] ) ? ' is-featured' : ''; ?>" data-radar-economic-topics="<?php echo esc_attr( implode( ' ', $topic_slugs ) ); ?>">
 			<a class="radar-economic-image" href="<?php echo esc_url( $signal['url'] ?? '' ); ?>" target="_blank" rel="noopener noreferrer"><img src="<?php echo esc_url( $signal['imageUrl'] ?? '' ); ?>" alt="<?php echo esc_attr( $title ); ?>" loading="lazy" decoding="async"><span><?php echo esc_html( $signal['source'] ?? '' ); ?></span></a>
 			<div class="radar-economic-copy"><div class="radar-economic-meta"><span><?php echo esc_html( $signal['sector'] ?? '' ); ?></span><time datetime="<?php echo esc_attr( $signal['date'] ?? '' ); ?>"><?php echo esc_html( $signal['date'] ?? '' ); ?></time></div><h3><a href="<?php echo esc_url( $signal['url'] ?? '' ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $title ); ?></a></h3><p><?php echo esc_html( $signal['summary'] ?? '' ); ?></p>
 			<?php if ( ! empty( $signal['opportunity'] ) ) : ?><div class="radar-economic-opportunity"><strong><?php esc_html_e( 'Por qué importa', 'radar-core' ); ?></strong><p><?php echo esc_html( $signal['opportunity'] ); ?></p></div><?php endif; ?>
-			<footer><div><?php foreach ( array_slice( $topics, 0, 3 ) as $topic ) { echo '<span>' . esc_html( $topic ) . '</span>'; } ?></div><a href="<?php echo esc_url( $signal['url'] ?? '' ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Leer fuente', 'radar-core' ); ?> ↗</a></footer></div>
+			<footer><div><?php foreach ( array_slice( $topics, 0, 3 ) as $topic ) { echo '<span class="topic-' . esc_attr( radar_core_topic_slug( $topic ) ) . '">' . esc_html( $topic ) . '</span>'; } ?></div><a href="<?php echo esc_url( $signal['url'] ?? '' ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Leer fuente', 'radar-core' ); ?> ↗</a></footer></div>
 		</article>
 		<?php
 	}
