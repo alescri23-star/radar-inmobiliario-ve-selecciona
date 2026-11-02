@@ -11,6 +11,11 @@ test('descubre solo enlaces económicos permitidos de la fuente',()=>{
  assert.deepEqual(discoverEconomicLinks(html,source),[{url:'https://example.com/economia/nueva-inversion',title:'Nueva inversión en infraestructura y vivienda'}]);
 });
 
+test('lee titulares relevantes desde una fuente RSS',()=>{
+ const rss={...source,format:'rss'},xml='<rss><channel><item><title><![CDATA[Empresas anuncian inversión en tecnología]]></title><link>https://example.com/economia/plan</link></item><item><title>Resultado deportivo</title><link>https://example.com/deportes/uno</link></item></channel></rss>';
+ assert.deepEqual(discoverEconomicLinks(xml,rss),[{url:'https://example.com/economia/plan',title:'Empresas anuncian inversión en tecnología'}]);
+});
+
 test('extrae metadatos y clasifica la señal',()=>{
  const detail=parseEconomicDetail('<meta property="og:title" content="Nueva planta de energía"><meta property="og:description" content="Proyecto de generación eléctrica"><meta property="article:published_time" content="2026-10-31T10:00:00Z"><meta property="og:image" content="https://example.com/foto.jpg">');
  assert.equal(detail.date,'2026-10-31');assert.equal(detail.imageUrl,'https://example.com/foto.jpg');

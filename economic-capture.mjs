@@ -3,10 +3,11 @@ import {listEconomicSignals,normalizeEconomicSignal} from './economic-signals.mj
 
 export const economicSources=[
  {id:'pnud-venezuela',name:'PNUD Venezuela',url:'https://www.undp.org/es/venezuela/centro-de-prensa',allowedPath:'/es/venezuela/noticias/',channel:'Fuente oficial',trusted:true},
- {id:'caf-venezuela',name:'CAF · Venezuela',url:'https://www.caf.com/es/paises/venezuela/',allowedPath:'/es/actualidad/noticias/',channel:'Fuente oficial',trusted:true}
+ {id:'caf-venezuela',name:'CAF · Venezuela',url:'https://www.caf.com/es/paises/venezuela/',allowedPath:'/es/actualidad/noticias/',channel:'Fuente oficial',trusted:true},
+ {id:'finanzas-digital',name:'Finanzas Digital',url:'https://finanzasdigital.com/feed/',allowedPath:'/',channel:'Prensa económica',confidence:'prensa económica',autoPublish:true,format:'rss',requiredTitle:'venezuela|venezolan|bcv|bol[ií]var|digitel|pdvsa|caracas|lara'}
 ];
 
-const relevant=/\b(inversi[oó]n|infraestructura|vivienda|empresa|energ[ií]a|petr[oó]leo|electricidad|financia|comercio|empleo|emprend|reconstru|cooperaci[oó]n|transporte|tecnolog[ií]a|producci[oó]n|agricultura|turismo|inmobili|pyme|desarrollo)\b/i;
+const relevant=/\b(inversi[oó]n|infraestructura|vivienda|empresa|energ[ií]a|petr[oó]leo|electricidad|financia|comercio|empleo|emprend|reconstru|cooperaci[oó]n|transporte|tecnolog[ií]a|producci[oó]n|agricultura|turismo|inmobili|pyme|desarrollo|econom[ií]a|inflaci[oó]n|reservas|cambiari|divisas|d[oó]lar|bol[ií]var|precios|banco|bolsa|bonos|mercado)\b/i;
 const strip=value=>String(value||'').replace(/<[^>]+>/g,' ').replace(/&nbsp;|&#160;/gi,' ').replace(/&amp;/gi,'&').replace(/&quot;|&#34;/gi,'"').replace(/&#39;|&apos;/gi,"'").replace(/\s+/g,' ').trim();
 const meta=(html,key)=>strip(html.match(new RegExp(`<meta[^>]+(?:property|name)=["']${key.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}["'][^>]+content=["']([^"']+)["']|<meta[^>]+content=["']([^"']+)["'][^>]+(?:property|name)=["']${key.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}["']`,'i'))?.slice(1).find(Boolean)||'');
 const canonical=value=>{try{const url=new URL(value);url.hash='';for(const key of [...url.searchParams.keys()])if(/^utm_|^(fbclid|gclid)$/i.test(key))url.searchParams.delete(key);return url.href.replace(/\/$/,'');}catch{return '';}};
@@ -14,6 +15,16 @@ const shortHash=value=>createHash('sha256').update(String(value)).digest('hex').
 const isoDate=value=>{const match=String(value||'').match(/(20\d{2})[-/]([01]\d)[-/]([0-3]\d)/);return match?`${match[1]}-${match[2]}-${match[3]}`:new Date().toLocaleDateString('en-CA');};
 
 export function discoverEconomicLinks(html,source){
+ if(source.format==='rss'){
+  const found=new Map(),pattern=/<item\b[^>]*>([\s\S]*?)<\/item>/gi;let item;
+  while((item=pattern.exec(String(html)))){
+   const title=strip(String(item[1].match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]||'').replace(/^<!\[CDATA\[|\]\]>$/g,'')),raw=strip(String(item[1].match(/<link[^>]*>([\s\S]*?)<\/link>/i)?.[1]||'').replace(/^<!\[CDATA\[|\]\]>$/g,''));
+   let url;try{url=new URL(raw,source.url);}catch{continue;}
+   if(url.origin!==new URL(source.url).origin||!url.pathname.toLowerCase().startsWith(source.allowedPath.toLowerCase())||title.length<12||!relevant.test(title)||source.requiredTitle&&!new RegExp(source.requiredTitle,'i').test(title))continue;
+   found.set(canonical(url.href),title);
+  }
+  return [...found].map(([url,title])=>({url,title})).slice(0,12);
+ }
  const found=new Map(),pattern=/<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;let match;
  while((match=pattern.exec(String(html)))){
   let url;try{url=new URL(match[1],source.url);}catch{continue;}
@@ -63,7 +74,7 @@ export async function captureEconomicSignals(db,options={}){
     try{
      const detail=parseEconomicDetail(await download(fetcher,link.url),{title:link.title,source:source.name}),classification=classifyEconomicItem(detail),now=new Date().toISOString();
      if(urls.has(link.url)||titles.has(shortHash(detail.title.toLowerCase()))){duplicates++;continue;}
-     const record=normalizeEconomicSignal({...detail,...classification,source:source.name,channel:source.channel,url:link.url,state:'Nacional',confidence:source.trusted?'fuente oficial':'por verificar',opportunity:`Revisar si esta señal genera demanda de inmuebles, suelo, proveedores o servicios profesionales y vincularla con el territorio afectado.`,risk:'La publicación confirma una novedad, pero su impacto económico e inmobiliario debe comprobarse con ubicación, presupuesto, responsables y calendario.',visibleInWeb:Boolean(source.trusted),featured:false,order:500},null,randomUUID());
+     const record=normalizeEconomicSignal({...detail,...classification,source:source.name,channel:source.channel,url:link.url,state:'Nacional',confidence:source.confidence||(source.trusted?'fuente oficial':'por verificar'),opportunity:`Revisar si esta señal genera demanda de inmuebles, suelo, proveedores o servicios profesionales y vincularla con el territorio afectado.`,risk:'La publicación confirma una novedad, pero su impacto económico e inmobiliario debe comprobarse con ubicación, presupuesto, responsables y calendario.',visibleInWeb:Boolean(source.autoPublish??source.trusted),featured:false,order:500},null,randomUUID());
      record.captureSourceId=source.id;record.capturedAt=now;record.automatic=true;
      await db.upsertRecord(record.id,'economic_signals',JSON.stringify(record));urls.add(link.url);titles.add(shortHash(detail.title.toLowerCase()));added++;
     }catch(error){failed++;errors.push(`${source.name}: ${error.message}`);}
