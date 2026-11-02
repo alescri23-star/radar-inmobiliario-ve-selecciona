@@ -13,6 +13,7 @@ import {sourceRegistry,automaticSourceIds,publicSource} from './source-registry.
 import {marketReferences} from './market-analysis.mjs';
 import {createExchangeRateService} from './exchange-rates.mjs';
 import {createMarketTickerService} from './market-ticker.mjs';
+import {createEconomicPreviewService} from './economic-preview.mjs';
 export function portal(database,options={}) {
  const db=adaptDatabase(database);
  const policy=options.security||security(options);
@@ -21,6 +22,7 @@ export function portal(database,options={}) {
  const handleRecovery=recovery(db,options);const handleGallery=gallery(db,options);
  const loadExchangeRates=createExchangeRateService(options.exchangeRateFetch||fetch);
  const loadMarketTicker=createMarketTickerService({fetchImpl:options.marketFetch||fetch,loadExchangeRates});
+ const loadEconomicPreview=createEconomicPreviewService(options.economicPreviewFetch||fetch);
  const send=(res,status,value)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(value));};
  const body=async(req,limit=32768)=>{let text='';for await(const chunk of req){text+=chunk;if(text.length>limit)throw Error('Solicitud demasiado grande');}return JSON.parse(text||'{}');};
  const records=async kind=>(await db.all('SELECT body FROM records WHERE kind=?',[kind])).map(r=>classifyLand(JSON.parse(r.body)));
@@ -85,6 +87,12 @@ export function portal(database,options={}) {
   if(url.pathname==='/api/market-ticker' && req.method==='GET'){
    if(req.user?.role!=='admin'){send(res,401,{error:'Acceso reservado al administrador'});return true;}
    try{send(res,200,await loadMarketTicker());}catch{send(res,503,{error:'Las cotizaciones no están disponibles temporalmente'});}return true;
+  }
+  if(url.pathname.startsWith('/api/economic-preview/') && req.method==='GET'){
+   if(req.user?.role!=='admin'){send(res,401,{error:'Acceso reservado al administrador'});return true;}
+   const preview=await loadEconomicPreview(decodeURIComponent(url.pathname.slice('/api/economic-preview/'.length)));
+   if(!preview){send(res,404,{error:'Señal no disponible'});return true;}
+   res.writeHead(200,{'Content-Type':preview.contentType,'Cache-Control':'private, max-age=21600','X-Content-Type-Options':'nosniff'});res.end(preview.buffer);return true;
   }
   if(isPublicTicker && req.method==='GET'){
    try{const ticker=await loadMarketTicker();send(res,200,{items:ticker.items,fetchedAt:ticker.fetchedAt,partial:ticker.partial});}catch{send(res,503,{error:'Las cotizaciones no están disponibles temporalmente'});}return true;
