@@ -1,0 +1,130 @@
+.territory-map-popup .leaflet-popup-content-wrapper {
+  overflow: hidden;
+  padding: 0;
+  border-radius: 18px;
+  box-shadow: 0 20px 52px rgba(6, 31, 56, .34);
+}
+
+.territory-map-popup .leaflet-popup-content {
+  width: auto !important;
+  margin: 0;
+}
+
+.territory-popup-card {
+  padding: 18px;
+  background: #fff;
+  color: #102f53;
+}
+
+.territory-popup-eyebrow {
+  margin: 0 0 4px !important;
+  color: #5f7c99 !important;
+  font-size: 9px !important;
+  font-weight: 900;
+  letter-spacing: 1.7px;
+}
+
+.territory-popup-card h2 {
+  margin: 0 0 12px;
+  font-size: 24px;
+}
+
+.territory-popup-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 7px;
+}
+
+.territory-popup-kpis span {
+  display: grid;
+  gap: 2px;
+  padding: 9px 7px;
+  border-radius: 10px;
+  background: #edf3f8;
+  color: #607890;
+  font-size: 9px;
+  text-align: center;
+}
+
+.territory-popup-kpis strong {
+  color: #133f6c;
+  font-size: 17px;
+}
+
+.territory-popup-help {
+  margin: 12px 0 8px !important;
+  color: #667f98 !important;
+  font-size: 10px !important;
+}
+
+.territory-popup-list {
+  display: grid;
+  gap: 6px;
+}
+
+.territory-popup-list button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 10px;
+  border: 1px solid #dbe6ef;
+  border-radius: 9px;
+  background: #fff;
+  color: #173f69;
+  text-align: left;
+  cursor: pointer;
+}
+
+.territory-popup-list button:hover {
+  border-color: #f1c644;
+  background: #fff9e8;
+}
+
+.territory-popup-list button span {
+  overflow: hidden;
+  font-size: 10px;
+  font-weight: 750;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.territory-popup-list button strong {
+  flex: 0 0 auto;
+  font-size: 10px;
+}
+
+.territory-popup-empty {
+  padding: 12px;
+  border-radius: 10px;
+  background: #edf3f8;
+  color: #667f98;
+  font-size: 11px;
+}
+
+html[data-theme="dark"] .territory-popup-card {
+  background: #0c2034;
+  color: #eef6ff;
+}
+
+html[data-theme="dark"] .territory-popup-kpis span,
+html[data-theme="dark"] .territory-popup-empty {
+  background: #142d46;
+  color: #b8cce0;
+}
+
+html[data-theme="dark"] .territory-popup-kpis strong {
+  color: #eef6ff;
+}
+
+html[data-theme="dark"] .territory-popup-list button {
+  border-color: #344c64;
+  background: #102840;
+  color: #e5f0fb;
+}
+
+html[data-theme="dark"] .territory-popup-list button:hover {
+  border-color: #f1c644;
+  background: #17344f;
+}

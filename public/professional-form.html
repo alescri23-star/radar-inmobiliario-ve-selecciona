@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Únete a la red profesional · Radar Venezuela</title>
+  <link rel="stylesheet" href="/style.css?v=crm6">
+  <script defer src="/professional-form.js?v=1"></script>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=1">
+</head>
+<body class="application-page">
+  <header class="application-header">
+    <a href="/" aria-label="Volver al Radar Venezuela"><img src="/logo-radar.svg" alt="Radar Venezuela"></a>
+    <a class="application-back" href="/">Volver al laboratorio</a>
+  </header>
+  <main class="application-main">
+    <section class="application-intro">
+      <p class="eyebrow">RED PROFESIONAL · BARQUISIMETO</p>
+      <h1>Trabaja con Radar Venezuela</h1>
+      <p>Buscamos empresas de reformas, constructoras, arquitectos y profesionales especializados para evaluar futuras colaboraciones en Lara.</p>
+      <div class="application-steps" aria-label="Proceso de evaluación">
+        <span><strong>1</strong> Envía tu perfil</span>
+        <span><strong>2</strong> Revisamos la información</span>
+        <span><strong>3</strong> Contactamos a los candidatos</span>
+      </div>
+      <div class="application-notice"><strong>Solicitud de evaluación</strong><p>Completar este formulario no implica aprobación, contratación ni publicación automática del perfil.</p></div>
+    </section>
+    <section class="application-card">
+      <header><p class="eyebrow">SOLICITUD PROFESIONAL</p><h2>Cuéntanos sobre tu trabajo</h2><p>Los campos marcados con * son obligatorios.</p></header>
+      <form id="professionalApplication">
+        <div class="application-fields">
+          <label>Empresa o nombre profesional *<input name="nombre" maxlength="120" required autocomplete="organization"></label>
+          <label>Persona de contacto *<input name="personaContacto" maxlength="120" required autocomplete="name"></label>
+          <label>Correo electrónico *<input name="email" type="email" maxlength="200" required autocomplete="email"></label>
+          <label>Teléfono con prefijo *<input name="contacto" type="tel" maxlength="80" required autocomplete="tel" placeholder="Ej. +58 412 123 4567"></label>
+          <label>WhatsApp<input name="whatsapp" type="tel" maxlength="80" autocomplete="tel" placeholder="Si es distinto del teléfono"></label>
+          <label>Tipo de profesional *<select name="tipoEmpresa" required><option value="">Selecciona una opción</option><option>Empresa de reformas</option><option>Constructora</option><option>Arquitectura y diseño</option><option>Profesional independiente</option><option>Proveedor especializado</option><option>Otro</option></select></label>
+          <label class="application-wide">Servicios ofrecidos *<textarea name="servicios" maxlength="2000" rows="4" required placeholder="Describe los trabajos que realizas"></textarea></label>
+          <label>Zona de cobertura *<input name="cobertura" maxlength="300" required placeholder="Ej. Barquisimeto y Cabudare"></label>
+          <label>Experiencia declarada<input name="experiencia" maxlength="300" placeholder="Ej. 8 años en reformas residenciales"></label>
+          <label class="application-wide">Sitio web o portafolio<input name="sitioWeb" type="url" maxlength="500" placeholder="https://..."></label>
+          <label class="application-wide">Información adicional<textarea name="observaciones" maxlength="2000" rows="3" placeholder="Especialidades, referencias o disponibilidad"></textarea></label>
+          <label class="application-honeypot" aria-hidden="true">No completar<input name="websiteConfirm" tabindex="-1" autocomplete="off"></label>
+        </div>
+        <label class="application-consent"><input name="consent" type="checkbox" required> <span>Acepto que Radar Venezuela guarde estos datos para evaluar mi solicitud y contactarme. Entiendo que el envío no supone aprobación ni contratación.</span></label>
+        <p class="application-privacy">No envíes documentos de identidad, datos bancarios ni otra información sensible mediante este formulario.</p>
+        <p id="applicationMessage" class="application-message" role="status"></p>
+        <button id="applicationSubmit" type="submit">Enviar solicitud</button>
+      </form>
+      <div id="applicationSuccess" class="application-success" hidden><span>✓</span><h2>Solicitud recibida</h2><p>Tu perfil se ha añadido como candidato para revisión. Nos pondremos en contacto si necesitamos ampliar la información.</p><a href="/">Volver al Radar</a></div>
+    </section>
+  </main>
+</body>
+</html>

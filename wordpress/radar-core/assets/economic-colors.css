@@ -1,0 +1,4 @@
+/* Mantiene la identidad cromática de cada tema con Todo seleccionado. */
+.radar-economic-tabs button{border-color:color-mix(in srgb,var(--topic) 45%,transparent);box-shadow:0 3px 11px color-mix(in srgb,var(--topic) 18%,transparent)}
+.radar-economic-tabs button:not(.topic-todo)::before{width:7px;height:7px;border-radius:50%;background:var(--topic);box-shadow:0 0 8px color-mix(in srgb,var(--topic) 65%,transparent);content:""}
+.radar-economic-card footer span{border-color:color-mix(in srgb,var(--topic) 48%,transparent);box-shadow:0 2px 8px color-mix(in srgb,var(--topic) 15%,transparent)}

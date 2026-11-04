@@ -21,7 +21,8 @@ export function importRah(db,records,metadata={}){
  try{const existing=db.prepare("SELECT body FROM records WHERE kind='inmuebles'").all().map(r=>JSON.parse(r.body));
  for(const input of records){const previous=existing.find(p=>p.sourceId===input.sourceId&&p.sourceCode===input.sourceCode&&p.operacion===input.operacion);const now=new Date().toISOString();const history=previous?.historial||[];if(!previous||previous.precio!==input.precio){history.push({precio:input.precio,moneda:input.moneda,observadoEn:now});if(previous)changes++;}
  const record={...previous,...input,id:previous?.id||randomUUID(),creadoEn:previous?.creadoEn||now,actualizadoEn:now,ultimaDeteccion:now,historial:history};
- for(const key of ['latitud','longitud','direccion','municipio','parroquia','calle','ubicacionPrecision','ubicacionFuente','ubicacionConsultadaEn'])if(previous?.[key])record[key]=previous[key];
+ for(const key of ['latitud','longitud','direccion','municipio','parroquia','calle','ubicacionPrecision','ubicacionFuente','ubicacionConsultadaEn','terrenoClasificacionFuente','terrenoClasificacionEvidencia','terrenoClasificacionConfianza','terrenoClasificacionRevisadaEn'])if(previous?.[key])record[key]=previous[key];
+ if(previous?.terrenoClasificacionRevisadaEn)record.tipo=previous.tipo;
  db.prepare('INSERT OR REPLACE INTO records VALUES(?,?,?)').run(record.id,'inmuebles',JSON.stringify(record));if(previous)updated++;else{added++;existing.push(record);}}
  const run={id:randomUUID(),source:metadata.source||'Rent-A-House',fecha:new Date().toISOString(),added,updated,changes,total:records.length,scope:metadata.scope||'Primera página de apartamentos, Barquisimeto',status:'completada'};db.prepare('INSERT INTO records VALUES(?,?,?)').run(run.id,'runs',JSON.stringify(run));db.exec('COMMIT');return run;
  }catch(e){db.exec('ROLLBACK');throw e;}

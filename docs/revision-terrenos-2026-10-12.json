@@ -1,0 +1,432 @@
+[
+  {
+    "id": "4075a3ec-6e12-40a1-bf85-4cfe2cf04f1b",
+    "sourceCode": "344549",
+    "titulo": "Conjunto Residencial-Comercial-Empresarial. En el triángulo del este de Barquisimeto en venta.",
+    "clasificacion": "Terreno urbano",
+    "confianza": "alta",
+    "evidencia": "Proyecto residencial, comercial y empresarial dentro del este de Barquisimeto.",
+    "fuente": "https://www.remax.com.ve/inmuebles/terreno-y-parcela/venta/conjunto-residencial-comercial-empresarial-en-el-triangulo-del-este-de-barquisimeto-en-venta-344549",
+    "revisadoEn": "2026-10-12T00:00:00.000Z"
+  },
+  {
+    "id": "c66fab4b-b952-4ed2-b014-83df85b5817b",
+    "sourceCode": "332206",
+    "titulo": "EN VENTA TERRENO EN EL MANZANO",
+    "clasificacion": "Terreno urbano",
+    "confianza": "media",
+    "evidencia": "Parcela en conjunto privado de viviendas con servicios y transporte público.",
+    "fuente": "https://www.remax.com.ve/inmuebles/terreno-y-parcela/venta/en-venta-terreno-en-el-manzano-332206",
+    "revisadoEn": "2026-10-12T00:00:00.000Z"
+  },
+  {
+    "id": "ec29d90d-27ef-4692-82a8-c9291cdb0be5",
+    "sourceCode": "341551",
+    "titulo": "EN VENTA TERRENO EN LA AV. 20 DE BARQUISIMETO",
+    "clasificacion": "Terreno urbano",
+    "confianza": "alta",
+    "evidencia": "Zonificación R6CM, servicios urbanos completos y destino comercial en avenida céntrica.",
+    "fuente": "https://www.remax.com.ve/inmuebles/terreno-y-parcela/venta/en-venta-terreno-en-la-av-20-de-barquisimeto-341551",
+    "revisadoEn": "2026-10-12T00:00:00.000Z"
+  },
+  {
+    "id": "7e95d74b-0d61-4c1a-b8ce-22f5fae98c1c",
+    "sourceCode": "340307",
+    "titulo": "EN VENTA TERRENO PRECIO DE OPORTUNIDAD !   TERRENO CON BIENECHURÍA",
+    "clasificacion": "Terreno urbano",
+    "confianza": "media",
+    "evidencia": "Bienhechuría en Brisas del Aeropuerto con servicios públicos y acceso por carreras urbanas.",
+    "fuente": "https://www.remax.com.ve/inmuebles/terreno-y-parcela/venta/en-venta-terreno-precio-de-oportunidad-terreno-con-bienechuria-340307",
+    "revisadoEn": "2026-10-12T00:00:00.000Z"
+  },
+  {
+    "id": "2bc7204e-3aa0-4c83-927f-cb5625a2319e",
+    "sourceCode": "306899",
+    "titulo": "EN VENTA TERRENO PRIME AV. VENEZUELA - 175M2 - PARA DESARROLLO COMERCIAL",
+    "clasificacion": "Terreno urbano",
+    "confianza": "alta",
+    "evidencia": "Avenida Venezuela; desarrollo comercial rodeado de bancos, clínicas, comercios y residencias.",
+    "fuente": "https://www.remax.com.ve/inmuebles/terreno-y-parcela/venta/en-venta-terreno-prime-av-venezuela-175m2-para-desarrollo-comercial-306899",
+    "revisadoEn": "2026-10-12T00:00:00.000Z"
+  },
+  {
+    "id": "a2a24c98-fae0-40f9-909d-1cd5921b10a1",
+    "sourceCode": "328919",
+    "titulo": "En Venta 4 Hectáreas  de terrenos en la zona  Zona Norte de Barquisimeto Vía El Trapiche (Eje Comercial Zona Norte).",
+    "clasificacion": "Terreno urbano",
+    "confianza": "media",
+    "evidencia": "Eje comercial del norte, conectado a la ciudad y promovido para desarrollos residenciales y comerciales; falta confirmar zonificación.",
+    "fuente": "https://www.remax.com.ve/inmuebles/terreno-y-parcela/venta/en-venta-4-hectareas-de-terrenos-en-la-zona-zona-norte-de-barquisimeto-via-el-trapiche-eje-comercial-zona-norte-328919",
+    "revisadoEn": "2026-10-12T00:00:00.000Z"
+  },
+  {
+    "id": "3bc3efc7-4b5c-4241-a479-abfb952722ee",
+    "sourceCode": "341011",
+    "titulo": "En Venta Terreno Zona Industrial III",
+    "clasificacion": "Terreno urbano",
+    "confianza": "alta",
+    "evidencia": "Ubicación declarada en Zona Industrial III y destino para proyectos empresariales.",
+    "fuente": "https://www.remax.com.ve/inmuebles/terreno-y-parcela/venta/en-venta-terreno-zona-industrial-iii-341011",
+    "revisadoEn": "2026-10-12T00:00:00.000Z"
+  },
+  {
+    "id": "0c371644-bed9-4074-8fe2-a1572b546d81",
+    "sourceCode": "327837",
+    "titulo": "En Venta Terreno con Bienhechuría en el Centro cerca de la Av Varga carrera 22",
+    "clasificacion": "Terreno urbano",
+    "confianza": "alta",
+    "evidencia": "Centro de Barquisimeto, cerca de comercios y avenidas, con construcción existente.",
+    "fuente": "https://www.remax.com.ve/inmuebles/terreno-y-parcela/venta/en-venta-terreno-con-bienhechuria-en-el-centro-cerca-de-la-av-varga-carrera-22-327837",
+    "revisadoEn": "2026-10-12T00:00:00.000Z"
+  },
+  {
+    "id": "31c9ff1c-1c4b-48b8-82af-10170e3c6bda",
+    "sourceCode": "328877",
+    "titulo": "En Venta Terreno con bienhechuría para fin Comercial  Residencial en la Zona Centro",
+    "clasificacion": "Terreno urbano",
+    "confianza": "alta",
+    "evidencia": "Centro de Barquisimeto y uso comercial o residencial declarado.",
+    "fuente": "https://www.remax.com.ve/inmuebles/terreno-y-parcela/venta/en-venta-terreno-con-bienhechuria-para-fin-comercial-residencial-en-la-zona-centro-328877",
+    "revisadoEn": "2026-10-12T00:00:00.000Z"
+  },
+  {
+    "id": "808cc2fb-6cfd-482c-bb36-72349bde8afe",
+    "sourceCode": "334818",
+    "titulo": "En Venta de Terreno al Oeste de Barquisimeto",
+    "clasificacion": "Terreno urbano",
+    "confianza": "media",
+    "evidencia": "Parcela cercada dentro de la comunidad San Jacinto, al oeste de la ciudad.",
+    "fuente": "https://www.remax.com.ve/inmuebles/terreno-y-parcela/venta/en-venta-de-terreno-al-oeste-de-barquisimeto-334818",
+    "revisadoEn": "2026-10-12T00:00:00.000Z"
+  },
+  {
+    "id": "de735e42-3d57-4079-817d-fc6c4c0b4d48",
+    "sourceCode": "328984",
+    "titulo": "En alquiler terreno para taller mecánico, autolavado.",
+    "clasificacion": "Terreno urbano",
+    "confianza": "alta",
+    "evidencia": "Calle 14 con carrera 21, oficina, depósito, baño, agua y electricidad.",
+    "fuente": "https://www.remax.com.ve/inmuebles/terreno-y-parcela/alquiler/en-alquiler-terreno-para-taller-mecanico-autolavado-328984",
+    "revisadoEn": "2026-10-12T00:00:00.000Z"
+  },
+  {
+    "id": "354186dc-fd52-4653-aa38-5131d13bf2b8",
+    "sourceCode": "330088",
+    "titulo": "En venta Terreno con Bienhechuría - Sector Las Veritas Zona Norte",
+    "clasificacion": "Terreno rústico",
+    "confianza": "alta",
+    "evidencia": "Uso agropecuario explícito para ganadería y proyectos agrícolas.",
+    "fuente": "https://www.remax.com.ve/inmuebles/terreno-y-parcela/venta/en-venta-terreno-con-bienhechuria-sector-las-veritas-zona-norte-330088",
+    "revisadoEn": "2026-10-12T00:00:00.000Z"
+  },
+  {
+    "id": "e33480ca-0a02-4d66-8f39-2be565d843b8",
+    "sourceCode": "304915",
+    "titulo": "En venta en una de las mejores y más selectas zonas del Este de Barquisimeto, Urb. El Parral.",
+    "clasificacion": "Terreno urbano",
+    "confianza": "media",
+    "evidencia": "El título y la ubicación identifican expresamente la urbanización El Parral.",
+    "fuente": "https://www.remax.com.ve/inmuebles/terreno-y-parcela/venta/en-venta-en-una-de-las-mejores-y-mas-selectas-zonas-del-este-de-barquisimeto-urb-el-parral-304915",
+    "revisadoEn": "2026-10-12T00:00:00.000Z"
+  },
+  {
+    "id": "f9707fb8-d1c3-42f5-9ffe-23b7d75583f9",
+    "sourceCode": "320283",
+    "titulo": "En venta terreno en pleno centro de Barquisimeto",
+    "clasificacion": "Terreno urbano",
+    "confianza": "alta",
+    "evidencia": "Pleno centro de Barquisimeto, junto a comercios, salud y estación de servicio.",
+    "fuente": "https://www.remax.com.ve/inmuebles/terreno-y-parcela/venta/en-venta-terreno-en-pleno-centro-de-barquisimeto-320283",
+    "revisadoEn": "2026-10-12T00:00:00.000Z"
+  },
+  {
+    "id": "ca18807b-c8e8-4de2-ae81-477f6f809fcd",
+    "sourceCode": "335968",
+    "titulo": "En venta terreno ubicado en la Urbanización Monterreal, este de Barquisimeto.",
+    "clasificacion": "Terreno urbano",
+    "confianza": "media",
+    "evidencia": "El título identifica expresamente la urbanización Monterreal, este de Barquisimeto.",
+    "fuente": "https://www.remax.com.ve/inmuebles/terreno-y-parcela/venta/en-venta-terreno-ubicado-en-la-urbanizacion-monterreal-este-de-barquisimeto-335968",
+    "revisadoEn": "2026-10-12T00:00:00.000Z"
+  },
+  {
+    "id": "7fa2fc5b-e171-4b2a-98b6-489ec7cb15c7",
+    "sourceCode": "329698",
+    "titulo": "Exclusivo Terreno en Venta en el conjunto Residencias Alquerías, zona Este de Barquisimeto",
+    "clasificacion": "Terreno urbano",
+    "confianza": "alta",
+    "evidencia": "Parcela dentro de conjunto residencial cerrado con servicios y acceso controlado.",
+    "fuente": "https://www.remax.com.ve/inmuebles/terreno-y-parcela/venta/exclusivo-terreno-en-venta-en-el-conjunto-residencias-alquerias-zona-este-de-barquisimeto-329698",
+    "revisadoEn": "2026-10-12T00:00:00.000Z"
+  },
+  {
+    "id": "e5cf8db4-e9cc-4edd-9748-8d1654a721b8",
+    "sourceCode": "344730",
+    "titulo": "Gran Oportunidad de Inversión! En Venta Terreno y Propiedad Uso Mixto (Comercial  Residencial)",
+    "clasificacion": "Terreno urbano",
+    "confianza": "alta",
+    "evidencia": "Intersección urbana y potencial mixto comercial y residencial.",
+    "fuente": "https://www.remax.com.ve/inmuebles/terreno-y-parcela/venta/gran-oportunidad-de-inversion-en-venta-terreno-y-propiedad-uso-mixto-comercial-residencial-344730",
+    "revisadoEn": "2026-10-12T00:00:00.000Z"
+  },
+  {
+    "id": "b4cf171d-e5b2-4a4a-b697-e5f8345f2442",
+    "sourceCode": "341033",
+    "titulo": "Lleva tu próximo gran proyecto al corazón comercial de la ciudad. Ponemos a tu disposición este terreno estratégico..",
+    "clasificacion": "Terreno urbano",
+    "confianza": "alta",
+    "evidencia": "Corazón comercial de la ciudad, a pie de calle y con servicios esenciales.",
+    "fuente": "https://www.remax.com.ve/inmuebles/terreno-y-parcela/venta/lleva-tu-proximo-gran-proyecto-al-corazon-comercial-de-la-ciudad-ponemos-a-tu-disposicion-este-terreno-estrategico-341033",
+    "revisadoEn": "2026-10-12T00:00:00.000Z"
+  },
+  {
+    "id": "1709b9f9-69b2-4357-9529-32c90831e979",
+    "sourceCode": "341314",
+    "titulo": "OPORTUNIDAD DE INVERSION",
+    "clasificacion": "Terreno urbano",
+    "confianza": "alta",
+    "evidencia": "Centro urbano; inmueble para demoler y nuevo proyecto residencial o comercial.",
+    "fuente": "https://www.remax.com.ve/inmuebles/terreno-y-parcela/venta/oportunidad-de-inversion-341314",
+    "revisadoEn": "2026-10-12T00:00:00.000Z"
+  },
+  {
+    "id": "d2c354e2-d07a-42af-83f6-025debd3211e",
+    "sourceCode": "345996",
+    "titulo": "Parcela",
+    "clasificacion": "Terreno rústico",
+    "confianza": "alta",
+    "evidencia": "Zona rural declarada, con infraestructura porcina y potencial agrícola.",
+    "fuente": "https://www.remax.com.ve/inmuebles/terreno-y-parcela/venta/parcela-345996",
+    "revisadoEn": "2026-10-12T00:00:00.000Z"
+  },
+  {
+    "id": "d8999b7e-7a42-4ead-87c4-4265c64907c7",
+    "sourceCode": "346027",
+    "titulo": "Quieres Invertir en un Terreno? En  Venta Terreno en Zona Centro. Avenida Libertador con Avenida Carabobo Barquisimeto",
+    "clasificacion": "Terreno urbano",
+    "confianza": "alta",
+    "evidencia": "Avenidas Libertador y Carabobo; locales y destino comercial.",
+    "fuente": "https://www.remax.com.ve/inmuebles/terreno-y-parcela/venta/quieres-invertir-en-un-terreno-en-venta-terreno-en-zona-centro-avenida-libertador-con-avenida-carabobo-barquisimeto-346027",
+    "revisadoEn": "2026-10-12T00:00:00.000Z"
+  },
+  {
+    "id": "87183399-e642-4751-86fc-3805c1f5ebd8",
+    "sourceCode": "341015",
+    "titulo": "TERRENO EN VENTA ZONA INDUSTRIAL III",
+    "clasificacion": "Terreno urbano",
+    "confianza": "alta",
+    "evidencia": "Zona Industrial III y destino logístico, productivo o industrial.",
+    "fuente": "https://www.remax.com.ve/inmuebles/terreno-y-parcela/venta/terreno-en-venta-zona-industrial-iii-341015",
+    "revisadoEn": "2026-10-12T00:00:00.000Z"
+  },
+  {
+    "id": "085f9509-23e1-4d70-babb-1edaa2a50d6d",
+    "sourceCode": "341310",
+    "titulo": "Terreno Comercial en Venta Zona Industrial I Zona Oeste-Barquisimeto",
+    "clasificacion": "Terreno urbano",
+    "confianza": "alta",
+    "evidencia": "Zona Industrial I con oficinas, depósitos e instalaciones empresariales.",
+    "fuente": "https://www.remax.com.ve/inmuebles/terreno-y-parcela/venta/terreno-comercial-en-venta-zona-industrial-i-zona-oeste-barquisimeto-341310",
+    "revisadoEn": "2026-10-12T00:00:00.000Z"
+  },
+  {
+    "id": "f510e48b-0173-4ffc-a664-6053b048c9f3",
+    "sourceCode": "337254",
+    "titulo": "Terreno con Bienhechurias en Venta ubicado en la calle Andres verde de los Rastrojos- Cabudare",
+    "clasificacion": "Terreno urbano",
+    "confianza": "media",
+    "evidencia": "Calle de Los Rastrojos, cerca de la Intercomunal y con bienhechurías.",
+    "fuente": "https://www.remax.com.ve/inmuebles/terreno-y-parcela/venta/terreno-con-bienhechurias-en-venta-ubicado-en-la-calle-andres-verde-de-los-rastrojos-cabudare-337254",
+    "revisadoEn": "2026-10-12T00:00:00.000Z"
+  },
+  {
+    "id": "54185f56-3ddc-49d5-9513-4d8eba11585f",
+    "sourceCode": "344498",
+    "titulo": "Terreno en Alquiler en Av Las Industrias Barquisimeto Lara",
+    "clasificacion": "Terreno urbano",
+    "confianza": "alta",
+    "evidencia": "Avenida Las Industrias, a pie de calle y para actividad logística.",
+    "fuente": "https://www.remax.com.ve/inmuebles/terreno-y-parcela/alquiler/terreno-en-alquiler-en-av-las-industrias-barquisimeto-lara-344498",
+    "revisadoEn": "2026-10-12T00:00:00.000Z"
+  },
+  {
+    "id": "ec5fdc63-f0e2-4fbf-87d5-1f5f76841c9a",
+    "sourceCode": "344518",
+    "titulo": "Terreno en Alquiler en la carrera 19 con calle 13 Zona Este-Barquisimeto",
+    "clasificacion": "Terreno urbano",
+    "confianza": "alta",
+    "evidencia": "Carrera 19 con calle 13, aguas servidas y destino comercial o residencial.",
+    "fuente": "https://www.remax.com.ve/inmuebles/terreno-y-parcela/alquiler/terreno-en-alquiler-en-la-carrera-19-con-calle-13-zona-este-barquisimeto-344518",
+    "revisadoEn": "2026-10-12T00:00:00.000Z"
+  },
+  {
+    "id": "7038a0f9-20f8-4364-ad7d-9e7c9bfffffd",
+    "sourceCode": "340100",
+    "titulo": "Terreno en Alquiler, Urbanización Obelisco. Barquisimeto",
+    "clasificacion": "Terreno urbano",
+    "confianza": "media",
+    "evidencia": "El título identifica expresamente la urbanización Obelisco.",
+    "fuente": "https://www.remax.com.ve/inmuebles/terreno-y-parcela/alquiler/terreno-en-alquiler-urbanizacion-obelisco-barquisimeto-340100",
+    "revisadoEn": "2026-10-12T00:00:00.000Z"
+  },
+  {
+    "id": "193c56f8-2cb3-4af0-aa85-8a85fead3c23",
+    "sourceCode": "343081",
+    "titulo": "Terreno en Venta Calle 24 Zona Centro-Barquisimeto",
+    "clasificacion": "Terreno urbano",
+    "confianza": "alta",
+    "evidencia": "Calle 24, zona centro de Barquisimeto.",
+    "fuente": "https://www.remax.com.ve/inmuebles/terreno-y-parcela/venta/terreno-en-venta-calle-24-zona-centro-barquisimeto-343081",
+    "revisadoEn": "2026-10-12T00:00:00.000Z"
+  },
+  {
+    "id": "09a0b795-3212-405e-9432-9b465a26ca12",
+    "sourceCode": "345723",
+    "titulo": "Terreno en Venta Sector la Guardia Campo Lindo-Quibor",
+    "clasificacion": "Terreno rústico",
+    "confianza": "alta",
+    "evidencia": "El anuncio declara finca agropecuaria y ganadera.",
+    "fuente": "https://www.remax.com.ve/inmuebles/terreno-y-parcela/venta/terreno-en-venta-sector-la-guardia-campo-lindo-quibor-345723",
+    "revisadoEn": "2026-10-12T00:00:00.000Z"
+  },
+  {
+    "id": "80ae5d25-036b-4dca-90d4-5320361f7238",
+    "sourceCode": "335604",
+    "titulo": "Terreno en Venta Urbanizacion la Mata- Cabudare",
+    "clasificacion": "Terreno urbano",
+    "confianza": "alta",
+    "evidencia": "Urbanización La Mata, avenida principal, agua, electricidad y alcantarillado.",
+    "fuente": "https://www.remax.com.ve/inmuebles/terreno-y-parcela/venta/terreno-en-venta-urbanizacion-la-mata-cabudare-335604",
+    "revisadoEn": "2026-10-12T00:00:00.000Z"
+  },
+  {
+    "id": "052ea00b-1884-4054-aa58-098e444177db",
+    "sourceCode": "344522",
+    "titulo": "Terreno en Venta carrera 19 con calle 13 Zona Este-Barquisimeto",
+    "clasificacion": "Terreno urbano",
+    "confianza": "alta",
+    "evidencia": "Carrera 19 con calle 13, aguas servidas y destino comercial.",
+    "fuente": "https://www.remax.com.ve/inmuebles/terreno-y-parcela/venta/terreno-en-venta-carrera-19-con-calle-13-zona-este-barquisimeto-344522",
+    "revisadoEn": "2026-10-12T00:00:00.000Z"
+  },
+  {
+    "id": "ce5dc200-e3a2-4173-88d9-7e1280841260",
+    "sourceCode": "331238",
+    "titulo": "Terreno en Venta cerca del Hospital Barquisimeto",
+    "clasificacion": "Terreno urbano",
+    "confianza": "alta",
+    "evidencia": "Zona centro, cerca del Hospital de Barquisimeto y con servicio eléctrico.",
+    "fuente": "https://www.remax.com.ve/inmuebles/terreno-y-parcela/venta/terreno-en-venta-cerca-del-hospital-barquisimeto-331238",
+    "revisadoEn": "2026-10-12T00:00:00.000Z"
+  },
+  {
+    "id": "84865968-b58d-48cd-ac29-b6c65edf7d9f",
+    "sourceCode": "342785",
+    "titulo": "Terreno en Venta en el Corazón Comercial del Este de Barquisimeto en Urbanización Nueva Segovia cerca del C.C. Churún Merú",
+    "clasificacion": "Terreno urbano",
+    "confianza": "alta",
+    "evidencia": "Urbanización Nueva Segovia y destino comercial, asistencial o de servicios.",
+    "fuente": "https://www.remax.com.ve/inmuebles/terreno-y-parcela/venta/terreno-en-venta-en-el-corazon-comercial-del-este-de-barquisimeto-en-urbanizacion-nueva-segovia-cerca-del-cc-churun-meru-342785",
+    "revisadoEn": "2026-10-12T00:00:00.000Z"
+  },
+  {
+    "id": "3b8413dd-8694-41d6-9903-386cdba206b8",
+    "sourceCode": "336802",
+    "titulo": "Terreno en Venta en la Concordia Zona Oeste- Barquisimeto",
+    "clasificacion": "Terreno urbano",
+    "confianza": "alta",
+    "evidencia": "Barrio La Concordia, cerca de avenida y con agua y electricidad.",
+    "fuente": "https://www.remax.com.ve/inmuebles/terreno-y-parcela/venta/terreno-en-venta-en-la-concordia-zona-oeste-barquisimeto-336802",
+    "revisadoEn": "2026-10-12T00:00:00.000Z"
+  },
+  {
+    "id": "f7f5cf29-8dad-4b8e-8b6f-a0c6ab6a75cc",
+    "sourceCode": "331180",
+    "titulo": "Terreno en alquiler de oportunidad",
+    "clasificacion": "Terreno urbano",
+    "confianza": "media",
+    "evidencia": "Avenida Florencio Jiménez y destino para estacionamiento o depósito.",
+    "fuente": "https://www.remax.com.ve/inmuebles/terreno-y-parcela/alquiler/terreno-en-alquiler-de-oportunidad-331180",
+    "revisadoEn": "2026-10-12T00:00:00.000Z"
+  },
+  {
+    "id": "6c76627b-91e6-46d6-a6e7-71858d7611f2",
+    "sourceCode": "341683",
+    "titulo": "Terreno en venta El Cuji Sector el Jayo",
+    "clasificacion": "Terreno urbano",
+    "confianza": "media",
+    "evidencia": "Uso propuesto para vivienda o negocio de eventos y suministro urbano de agua.",
+    "fuente": "https://www.remax.com.ve/inmuebles/terreno-y-parcela/venta/terreno-en-venta-el-cuji-sector-el-jayo-341683",
+    "revisadoEn": "2026-10-12T00:00:00.000Z"
+  },
+  {
+    "id": "55bafa58-b17f-40fb-9fe9-373edabf0ca6",
+    "sourceCode": "329194",
+    "titulo": "Terreno en venta oportunidad de inversion",
+    "clasificacion": "Terreno sin clasificar",
+    "confianza": "baja",
+    "evidencia": "La ficha sólo indica 3.000 m² y Barquisimeto; no aporta uso, servicios ni zonificación.",
+    "fuente": "https://www.remax.com.ve/inmuebles/terreno-y-parcela/venta/terreno-en-venta-oportunidad-de-inversion-329194",
+    "revisadoEn": "2026-10-12T00:00:00.000Z"
+  },
+  {
+    "id": "c3408147-7eca-46e7-8779-aadfea4741f7",
+    "sourceCode": "344115",
+    "titulo": "VENDO TERRENO EN AV RIBEREÑA EN BARQUISIMETO",
+    "clasificacion": "Terreno rústico",
+    "confianza": "alta",
+    "evidencia": "El anuncio declara zona agrícola, pecuaria, agroforestal y recreacional.",
+    "fuente": "https://www.remax.com.ve/inmuebles/terreno-y-parcela/venta/vendo-terreno-en-av-riberena-en-barquisimeto-344115",
+    "revisadoEn": "2026-10-12T00:00:00.000Z"
+  },
+  {
+    "id": "b5a65409-dcb4-4a88-8ed5-137ff81ccec0",
+    "sourceCode": "331938",
+    "titulo": "VENTA EN EXCLUSIVA DE TERRENO ZONA CENTRO  Plena, CALLE 22  carreras 24 y 25 Intersección Av Andrés Bello",
+    "clasificacion": "Terreno urbano",
+    "confianza": "alta",
+    "evidencia": "Zona centro, cruce de calles y aptitud comercial declarada.",
+    "fuente": "https://www.remax.com.ve/inmuebles/terreno-y-parcela/venta/venta-en-exclusiva-de-terreno-zona-centro-plena-calle-22-carreras-24-y-25-interseccion-av-andres-bello-331938",
+    "revisadoEn": "2026-10-12T00:00:00.000Z"
+  },
+  {
+    "id": "8245310e-19a6-465e-b457-82cb0b0e1f84",
+    "sourceCode": "336313",
+    "titulo": "VENTA QUINTA COMERCIAL NUEVA SEGOVIA",
+    "clasificacion": "Terreno urbano",
+    "confianza": "alta",
+    "evidencia": "Quinta comercial en Nueva Segovia con construcción existente.",
+    "fuente": "https://www.remax.com.ve/inmuebles/terreno-y-parcela/venta/venta-quinta-comercial-nueva-segovia-336313",
+    "revisadoEn": "2026-10-12T00:00:00.000Z"
+  },
+  {
+    "id": "a651928a-da23-4346-bbd4-499bf71e043a",
+    "sourceCode": "332496",
+    "titulo": "Venta de terreno en Via alto trafico",
+    "clasificacion": "Terreno urbano",
+    "confianza": "alta",
+    "evidencia": "Calle 51, Obelisco, alto tráfico y destino comercial o industrial.",
+    "fuente": "https://www.remax.com.ve/inmuebles/terreno-y-parcela/venta/venta-de-terreno-en-via-alto-trafico-332496",
+    "revisadoEn": "2026-10-12T00:00:00.000Z"
+  },
+  {
+    "id": "4b5e6402-da77-4b54-baf4-4ff26e437eac",
+    "sourceCode": "329769",
+    "titulo": "Venta de terreno en el este de Barquisimeto",
+    "clasificacion": "Terreno urbano",
+    "confianza": "media",
+    "evidencia": "Carrera 23, este de Barquisimeto, parcela de escala urbana.",
+    "fuente": "https://www.remax.com.ve/inmuebles/terreno-y-parcela/venta/venta-de-terreno-en-el-este-de-barquisimeto-329769",
+    "revisadoEn": "2026-10-12T00:00:00.000Z"
+  },
+  {
+    "id": "e0462ea3-b2fc-49ea-9ffd-dde2fefc473e",
+    "sourceCode": "344744",
+    "titulo": "Venta de terreno propio avenida Florencio Jiménez Barquisimeto",
+    "clasificacion": "Terreno urbano",
+    "confianza": "baja",
+    "evidencia": "Ubicación declarada sobre la avenida Florencio Jiménez; conviene confirmar zonificación.",
+    "fuente": "https://www.remax.com.ve/inmuebles/terreno-y-parcela/venta/venta-de-terreno-propio-avenida-florencio-jimenez-barquisimeto-344744",
+    "revisadoEn": "2026-10-12T00:00:00.000Z"
+  }
+]
