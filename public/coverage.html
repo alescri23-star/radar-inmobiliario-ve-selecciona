@@ -16,7 +16,7 @@
         <div class="coverage-sidebar-body">
           <div class="map-summary-stats"><span><i class="sale-dot"></i><b id="saleCount">—</b> venta</span><span><i class="rent-dot"></i><b id="rentCount">—</b> alquiler</span></div>
           <form class="coverage-filters" id="coverageFilters">
-            <label class="coverage-search">Buscar zona o anuncio<input id="coverageSearch" type="search" placeholder="Estado, ciudad, sector…" autocomplete="off"></label>
+            <label class="coverage-search">Estado, municipio o zona<select id="coverageSearch" aria-label="Seleccionar estado, municipio o zona"><option value="">Toda Venezuela</option></select></label>
             <div class="coverage-operation" role="group" aria-label="Operación"><button type="button" class="is-active" data-operation="all">Todos</button><button type="button" data-operation="venta">Venta</button><button type="button" data-operation="alquiler">Alquiler</button></div>
             <label>Tipo<select id="coverageType"><option value="all">Todos los tipos</option></select></label>
             <div class="coverage-price"><label>Precio mínimo<input id="coverageMin" type="number" min="0" step="100" placeholder="Sin mínimo"></label><label>Precio máximo<input id="coverageMax" type="number" min="0" step="100" placeholder="Sin límite"></label></div>
