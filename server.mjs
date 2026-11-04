@@ -115,7 +115,7 @@ export function createApp(directory = path.join(root, 'data'), options = {}) {
       if(['portal.html','index.html','coverage.html'].includes(file))content=content.toString().replace('<script src="/theme-init.js?v=1"></script>','<script src="/theme-init.js?v=1"></script><script defer src="/map-tools.js?v=maps2"></script>');
       if(file==='portal.html')content=content.toString().replace('style.css?v=radar-workbench10','style.css?v=radar-market2').replace('portal.js?v=lab-capture10','portal.js?v=lab-national1');
       if(file==='index.html')content=content.toString().replace(/style\.css\?v=[^"']+/,'style.css?v=economic-topics1').replace(/app\.js\?v=[^"']+/,'app.js?v=economic-topics1').replace('</head>','<link rel="stylesheet" href="/topic-colors.css?v=1"></head>');
-      if(file==='coverage.html')content=content.toString().replace('style.css?v=coverage1','style.css?v=coverage-map4').replace('coverage.css?v=coverage2','coverage.css?v=coverage-map4').replace('coverage-sidebar.css?v=1','coverage-sidebar.css?v=control1').replace('coverage-control.js?v=1','coverage-control.js?v=control2');
+      if(file==='coverage.html')content=content.toString().replace('style.css?v=coverage1','style.css?v=coverage-map4').replace('coverage.css?v=coverage2','coverage.css?v=coverage-map4').replace('coverage-sidebar.css?v=1','coverage-sidebar.css?v=control2').replace('coverage-control.js?v=1','coverage-control.js?v=control3');
       res.end(content);
     } catch (err) { console.error(err); send(res, 500, { error: 'No se pudo completar la operación' }); }
   });
