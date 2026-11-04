@@ -3,15 +3,31 @@
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Mapa territorial · Radar Venezuela</title><script src="/theme-init.js?v=1"></script>
-  <link rel="stylesheet" href="/style.css?v=coverage1"><link rel="stylesheet" href="/coverage.css?v=coverage2"><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
-  <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script><script defer src="/coverage.js?v=coverage1"></script><link rel="icon" type="image/svg+xml" href="/favicon.svg?v=1">
+  <link rel="stylesheet" href="/style.css?v=coverage1"><link rel="stylesheet" href="/coverage.css?v=coverage2"><link rel="stylesheet" href="/coverage-sidebar.css?v=1"><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+  <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script><script defer src="/coverage-control.js?v=1"></script><link rel="icon" type="image/svg+xml" href="/favicon.svg?v=1">
 </head>
 <body class="portal coverage-page">
   <header class="public-header"><a href="/" class="public-brand coverage-brand"><img src="/logo-radar.svg" alt="Radar Venezuela"><span class="public-space-label">Cobertura territorial</span></a><nav class="public-menu" aria-label="Navegación privada"><a class="coverage-nav-link" href="/">Laboratorio</a><a class="coverage-nav-link" href="/admin">Ir a gestión</a><button id="themeToggle" type="button" aria-pressed="false">Modo oscuro</button><button id="account" type="button">Cerrar sesión</button></nav></header>
   <main class="coverage-map-main">
     <section class="national-map-shell" aria-label="Cobertura inmobiliaria de Venezuela">
       <div id="coverageMap" aria-label="Mapa interactivo de Venezuela con estados y anuncios"></div>
-      <aside class="map-summary" aria-live="polite"><p class="eyebrow">COBERTURA TERRITORIAL</p><h1>Venezuela</h1><p id="coverageMessage">Cargando estados y anuncios…</p><div class="map-summary-stats"><span><i class="sale-dot"></i><b id="saleCount">—</b> venta</span><span><i class="rent-dot"></i><b id="rentCount">—</b> alquiler</span></div><small>Pasa el cursor por un estado. Pulsa un anuncio para abrir su ficha.</small></aside>
+      <aside class="map-summary coverage-sidebar" aria-live="polite">
+        <header class="coverage-sidebar-header"><div><p class="eyebrow">COBERTURA TERRITORIAL</p><h1 id="territoryTitle">Venezuela</h1><p id="coverageMessage">Cargando estados y anuncios…</p></div><button id="sidebarToggle" type="button" aria-expanded="true" aria-label="Ocultar panel territorial">⌃</button></header>
+        <div class="coverage-sidebar-body">
+          <div class="map-summary-stats"><span><i class="sale-dot"></i><b id="saleCount">—</b> venta</span><span><i class="rent-dot"></i><b id="rentCount">—</b> alquiler</span></div>
+          <form class="coverage-filters" id="coverageFilters">
+            <label class="coverage-search">Buscar zona o anuncio<input id="coverageSearch" type="search" placeholder="Estado, ciudad, sector…" autocomplete="off"></label>
+            <div class="coverage-operation" role="group" aria-label="Operación"><button type="button" class="is-active" data-operation="all">Todos</button><button type="button" data-operation="venta">Venta</button><button type="button" data-operation="alquiler">Alquiler</button></div>
+            <label>Tipo<select id="coverageType"><option value="all">Todos los tipos</option></select></label>
+            <div class="coverage-price"><label>Precio mínimo<input id="coverageMin" type="number" min="0" step="100" placeholder="Sin mínimo"></label><label>Precio máximo<input id="coverageMax" type="number" min="0" step="100" placeholder="Sin límite"></label></div>
+            <button id="clearCoverageFilters" class="coverage-clear" type="button">Limpiar filtros</button>
+          </form>
+          <section class="territory-selection" id="territorySelection"><div class="territory-selection-heading"><div><span>ÁREA SELECCIONADA</span><strong id="selectedTerritory">Toda Venezuela</strong></div><button id="resetTerritory" type="button" hidden>Ver país</button></div><div class="territory-kpis" id="territoryKpis"></div></section>
+          <section class="coverage-results"><div class="coverage-section-heading"><strong>Anuncios en el mapa</strong><span id="filteredCount">—</span></div><div id="coverageListings" class="coverage-listings"></div></section>
+          <section class="coverage-ranking"><div class="coverage-section-heading"><strong>Estados por inventario</strong><span>Selecciona para acercar</span></div><div id="coverageStateList" class="coverage-state-list"></div></section>
+          <section class="coverage-quality"><div><span>Inventario localizado</span><strong id="qualityPercent">—</strong></div><div class="coverage-progress"><i id="qualityBar"></i></div><p id="qualityText">Calculando calidad de datos…</p><a href="/admin" id="reviewMissing">Revisar registros sin coordenadas →</a></section>
+        </div>
+      </aside>
       <div class="map-status"><strong id="locatedCount">—</strong><span>anuncios visibles</span><small id="missingCount">— sin coordenadas</small></div>
       <div class="coverage-legend" aria-label="Leyenda"><span><i class="state-swatch"></i>Estado</span><span><i class="sale-dot"></i>Venta</span><span><i class="rent-dot"></i>Alquiler</span></div>
     </section>
