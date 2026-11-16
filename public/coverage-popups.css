@@ -133,9 +133,9 @@ html[data-theme="dark"] .territory-popup-list button:hover {
   display: inline-block;
   width: 10px;
   height: 10px;
-  border: 2px dashed #fff;
+  border: 2px solid #fff;
   border-radius: 3px;
-  background: #1d78a8;
+  background: conic-gradient(#1479a8 0 25%, #36a36a 0 50%, #e9823e 0 75%, #8f65c9 0);
   box-shadow: 0 0 0 1px rgba(17, 49, 83, .22);
 }
 
