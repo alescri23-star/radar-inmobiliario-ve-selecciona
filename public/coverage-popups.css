@@ -128,3 +128,13 @@ html[data-theme="dark"] .territory-popup-list button:hover {
   border-color: #f1c644;
   background: #17344f;
 }
+
+.parish-swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border: 2px dashed #fff;
+  border-radius: 3px;
+  background: #1d78a8;
+  box-shadow: 0 0 0 1px rgba(17, 49, 83, .22);
+}
