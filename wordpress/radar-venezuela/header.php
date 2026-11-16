@@ -20,7 +20,7 @@
 	<nav class="site-nav" aria-label="<?php esc_attr_e( 'Navegación principal', 'radar-venezuela' ); ?>">
 		<?php wp_nav_menu( array( 'theme_location' => 'primary', 'container' => false, 'menu_class' => 'radar-menu', 'fallback_cb' => 'radar_venezuela_menu_fallback' ) ); ?>
 	</nav>
-	<a class="button button-small" href="<?php echo esc_url( home_url( '/#contacto' ) ); ?>"><?php esc_html_e( 'Hablar con Radar', 'radar-venezuela' ); ?></a>
+	<a class="button button-small" href="<?php echo esc_url( home_url( '/#radar-ia' ) ); ?>"><?php esc_html_e( 'Preguntar a Radar IA', 'radar-venezuela' ); ?></a>
 </header>
 <main id="contenido" class="site-main">
 

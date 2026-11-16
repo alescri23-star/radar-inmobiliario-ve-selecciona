@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Radar Venezuela Core
  * Description: Inmuebles publicados y solicitudes privadas para Radar Venezuela.
- * Version: 0.2.0
+ * Version: 0.3.0
  * Requires at least: 6.5
  * Requires PHP: 8.1
  * Author: Radar Venezuela
@@ -175,6 +175,93 @@ function radar_core_properties_shortcode( $attributes ) {
 	return ob_get_clean();
 }
 add_shortcode( 'radar_inmuebles', 'radar_core_properties_shortcode' );
+
+function radar_core_normalize_search( $value ) {
+	return trim( preg_replace( '/[^a-z0-9]+/', ' ', strtolower( remove_accents( (string) $value ) ) ) );
+}
+
+function radar_core_public_assistant_search( WP_REST_Request $request ) {
+	$question = sanitize_text_field( (string) $request->get_param( 'question' ) );
+	if ( ! $question || mb_strlen( $question ) > 240 ) {
+		return new WP_Error( 'radar_invalid_question', __( 'Escribe una búsqueda de hasta 240 caracteres.', 'radar-core' ), array( 'status' => 400 ) );
+	}
+	$q = radar_core_normalize_search( $question );
+	$operation = str_contains( $q, 'alquiler' ) || str_contains( $q, 'alquilar' ) ? 'alquiler' : ( str_contains( $q, 'venta' ) || str_contains( $q, 'comprar' ) ? 'venta' : '' );
+	$bedrooms = preg_match( '/(\d+)\s*(?:habitacion|habitaciones|hab\b)/', $q, $room_match ) ? absint( $room_match[1] ) : 0;
+	$max_price = preg_match( '/(?:menos de|hasta|maximo(?: de)?)\s*(?:usd|\$)?\s*([\d.,]+)/', $q, $price_match ) ? (float) preg_replace( '/[^\d]/', '', $price_match[1] ) : 0;
+	$opportunity = str_contains( $q, 'oportunidad' ) || str_contains( $q, 'metro cuadrado' ) || str_contains( $q, 'm2' );
+	$cheap = str_contains( $q, 'barato' ) || str_contains( $q, 'economico' ) || str_contains( $q, 'menor precio' );
+	$stop = array( 'quiero','busco','buscar','muestrame','inmueble','inmuebles','propiedad','propiedades','con','para','por','una','uno','unos','unas','que','del','las','los','mas','menos','venta','comprar','alquiler','alquilar','habitacion','habitaciones','hasta','maximo','usd' );
+	$tokens = array_values( array_filter( array_unique( explode( ' ', $q ) ), function( $token ) use ( $stop ) { return strlen( $token ) > 2 && ! in_array( $token, $stop, true ) && ! is_numeric( $token ); } ) );
+	$post_ids = get_posts( array( 'post_type' => 'radar_inmueble', 'post_status' => 'publish', 'posts_per_page' => 120, 'fields' => 'ids', 'no_found_rows' => true, 'orderby' => 'date', 'order' => 'DESC' ) );
+	$rows = array();
+	foreach ( $post_ids as $post_id ) {
+		$row_operation = get_post_meta( $post_id, 'radar_operacion', true );
+		$price = (float) get_post_meta( $post_id, 'radar_precio', true );
+		$row_bedrooms = absint( get_post_meta( $post_id, 'radar_habitaciones', true ) );
+		if ( $operation && $row_operation !== $operation ) { continue; }
+		if ( $bedrooms && $row_bedrooms < $bedrooms ) { continue; }
+		if ( $max_price && ( ! $price || $price > $max_price ) ) { continue; }
+		$type = get_post_meta( $post_id, 'radar_tipo', true );
+		$zone = get_post_meta( $post_id, 'radar_zona', true );
+		$area = (float) get_post_meta( $post_id, 'radar_superficie', true );
+		$haystack = radar_core_normalize_search( get_the_title( $post_id ) . ' ' . $type . ' ' . $zone );
+		$score = 0;
+		foreach ( $tokens as $token ) { if ( str_contains( $haystack, $token ) ) { $score++; } }
+		$unit_price = $price && $area ? round( $price / $area ) : 0;
+		$rows[] = array(
+			'id' => $post_id, 'title' => get_the_title( $post_id ), 'url' => get_permalink( $post_id ),
+			'image' => get_the_post_thumbnail_url( $post_id, 'medium_large' ) ?: '', 'operation' => $row_operation,
+			'type' => $type, 'price' => $price, 'currency' => get_post_meta( $post_id, 'radar_moneda', true ) ?: 'USD',
+			'zone' => $zone, 'area' => $area, 'bedrooms' => $row_bedrooms,
+			'bathrooms' => absint( get_post_meta( $post_id, 'radar_banos', true ) ), 'unitPrice' => $unit_price, 'score' => $score,
+		);
+	}
+	usort( $rows, function( $a, $b ) use ( $opportunity, $cheap ) {
+		if ( $opportunity ) {
+			$a_unit = $a['unitPrice'] ?: PHP_INT_MAX; $b_unit = $b['unitPrice'] ?: PHP_INT_MAX;
+			return $a_unit <=> $b_unit ?: $b['score'] <=> $a['score'];
+		}
+		if ( $cheap ) {
+			$a_price = $a['price'] ?: PHP_INT_MAX; $b_price = $b['price'] ?: PHP_INT_MAX;
+			return $a_price <=> $b_price ?: $b['score'] <=> $a['score'];
+		}
+		return $b['score'] <=> $a['score'] ?: $b['id'] <=> $a['id'];
+	} );
+	$results = array_slice( $rows, 0, 6 );
+	if ( empty( $results ) ) {
+		$answer = __( 'No encontramos inmuebles publicados con todos esos criterios. Prueba ampliando el precio, la zona o el número de habitaciones.', 'radar-core' );
+	} elseif ( $opportunity ) {
+		$answer = sprintf( __( 'Encontramos %d opciones comparables. Primero aparecen las que tienen menor precio por metro cuadrado.', 'radar-core' ), count( $rows ) );
+	} elseif ( $cheap ) {
+		$answer = sprintf( __( 'Encontramos %d opciones. Primero aparecen las de menor precio publicado.', 'radar-core' ), count( $rows ) );
+	} else {
+		$answer = sprintf( __( 'Encontramos %d inmuebles publicados relacionados con tu búsqueda.', 'radar-core' ), count( $rows ) );
+	}
+	$response = rest_ensure_response( array( 'answer' => $answer, 'count' => count( $rows ), 'results' => $results ) );
+	$response->header( 'Cache-Control', 'no-store, max-age=0' );
+	return $response;
+}
+
+function radar_core_register_public_assistant_route() {
+	register_rest_route( 'radar/v1', '/assistant', array( 'methods' => WP_REST_Server::CREATABLE, 'callback' => 'radar_core_public_assistant_search', 'permission_callback' => '__return_true' ) );
+}
+add_action( 'rest_api_init', 'radar_core_register_public_assistant_route' );
+
+function radar_core_public_assistant_shortcode() {
+	wp_enqueue_style( 'radar-public-assistant', plugin_dir_url( __FILE__ ) . 'assets/public-assistant.css', array(), '0.3.0' );
+	wp_enqueue_script( 'radar-public-assistant', plugin_dir_url( __FILE__ ) . 'assets/public-assistant.js', array(), '0.3.0', true );
+	wp_localize_script( 'radar-public-assistant', 'RadarPublicAssistant', array( 'restUrl' => esc_url_raw( rest_url( 'radar/v1/assistant' ) ), 'contactUrl' => esc_url_raw( home_url( '/#contacto' ) ) ) );
+	ob_start(); ?>
+	<section id="radar-ia" class="radar-public-assistant" aria-labelledby="radar-public-title">
+		<div class="radar-public-heading"><span>✦</span><div><strong id="radar-public-title"><?php esc_html_e( 'Pregúntale a Radar IA', 'radar-core' ); ?></strong><small><?php esc_html_e( 'Busca entre los inmuebles publicados', 'radar-core' ); ?></small></div></div>
+		<form class="radar-public-search"><label class="screen-reader-text" for="radar-public-question"><?php esc_html_e( 'Describe el inmueble que buscas', 'radar-core' ); ?></label><input id="radar-public-question" maxlength="240" placeholder="Ej.: apartamento de 3 habitaciones por menos de 70.000 USD" required><button type="submit"><?php esc_html_e( 'Buscar', 'radar-core' ); ?></button></form>
+		<div class="radar-public-examples"><button type="button" data-radar-example="Apartamentos en venta por menos de 70000 USD"><?php esc_html_e( 'Hasta 70.000 USD', 'radar-core' ); ?></button><button type="button" data-radar-example="Inmuebles de 3 habitaciones"><?php esc_html_e( '3 habitaciones', 'radar-core' ); ?></button><button type="button" data-radar-example="Oportunidades por precio por metro cuadrado"><?php esc_html_e( 'Oportunidades', 'radar-core' ); ?></button></div>
+		<div class="radar-public-response" hidden aria-live="polite"><p></p><div class="radar-public-results"></div><a class="radar-public-contact" href="<?php echo esc_url( home_url( '/#contacto' ) ); ?>"><?php esc_html_e( 'Solicitar una búsqueda personalizada', 'radar-core' ); ?> →</a></div>
+	</section>
+	<?php return ob_get_clean();
+}
+add_shortcode( 'radar_ia', 'radar_core_public_assistant_shortcode' );
 
 function radar_core_contact_shortcode() {
 	$sent = isset( $_GET['radar_sent'] ) && '1' === $_GET['radar_sent'];

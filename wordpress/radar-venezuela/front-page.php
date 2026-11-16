@@ -7,6 +7,7 @@ get_header();
 		<p class="eyebrow"><?php esc_html_e( 'RADAR INMOBILIARIO · BARQUISIMETO', 'radar-venezuela' ); ?></p>
 		<h1><?php esc_html_e( 'Encuentra oportunidades con una visión más completa.', 'radar-venezuela' ); ?></h1>
 		<p class="hero-lead"><?php esc_html_e( 'Explora inmuebles publicados, compara sus datos y solicita orientación para estimar compra y reforma.', 'radar-venezuela' ); ?></p>
+		<?php echo do_shortcode( '[radar_ia]' ); ?>
 		<div class="hero-actions">
 			<a class="button" href="#inmuebles"><?php esc_html_e( 'Explorar inmuebles', 'radar-venezuela' ); ?></a>
 			<a class="text-link" href="#como-funciona"><?php esc_html_e( 'Conocer el proceso', 'radar-venezuela' ); ?> →</a>
