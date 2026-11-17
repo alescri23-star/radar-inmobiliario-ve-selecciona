@@ -3,7 +3,7 @@ Theme Name: Radar Venezuela
 Theme URI: https://github.com/alescri23-star/radar-inmobiliario-ve-selecciona
 Author: Radar Venezuela
 Description: Tema público responsive para el piloto inmobiliario de Barquisimeto.
-Version: 0.4.1
+Version: 0.4.2
 Requires at least: 6.5
 Requires PHP: 8.1
 Text Domain: radar-venezuela
@@ -66,5 +66,6 @@ Text Domain: radar-venezuela
 .hero-place-dots button{width:10px;height:10px;background:rgba(255,255,255,.7)}
 .hero-place-dots button[aria-current="true"]{width:34px;background:var(--yellow)}
 .hero-places-radar{right:4vw;top:5vh;width:300px;height:300px;opacity:.72}
+@media(min-width:761px){.hero-place-copy{top:calc(100svh - 440px);bottom:auto}.hero-places-controls{top:calc(100svh - 175px);bottom:auto}}
 @media(max-width:1120px){.hero{display:block;min-height:calc(100svh - 72px)}.hero-copy{max-width:720px}.hero-place-copy,.hero-places-controls{width:min(52vw,620px)}}
 @media(max-width:760px){.hero{min-height:1120px;padding:48px 18px 90px}.hero::before{background:linear-gradient(180deg,rgba(4,20,37,.96) 0%,rgba(7,31,56,.88) 48%,rgba(7,31,56,.32) 72%,rgba(3,17,31,.82) 100%)}.hero-copy{max-width:none;padding-bottom:440px}.hero h1{font-size:clamp(43px,13vw,62px)}.hero-places{height:100%;border-radius:0}.hero-place-copy{left:18px;right:18px;bottom:102px;width:auto;padding:15px 16px}.hero-place-copy strong{font-size:31px}.hero-place-copy small{font-size:13px}.hero-place-credit{right:14px;top:auto;bottom:275px}.hero-places-controls{left:18px;right:18px;bottom:28px;width:auto}.hero-place-arrow,.hero-place-toggle{width:42px;height:42px}.hero-places-radar{right:-70px;top:52%;width:230px;height:230px;opacity:.5}}
