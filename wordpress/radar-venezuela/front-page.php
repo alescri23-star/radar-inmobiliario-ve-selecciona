@@ -66,8 +66,8 @@ get_header();
 </section>
 
 <section id="inmuebles" class="section section-soft">
-	<header class="section-heading"><div><p class="eyebrow">03 · <?php esc_html_e( 'INMUEBLES', 'radar-venezuela' ); ?></p><h2><?php esc_html_e( 'Oportunidades publicadas', 'radar-venezuela' ); ?></h2></div><a href="<?php echo esc_url( get_post_type_archive_link( 'radar_inmueble' ) ?: '#inmuebles' ); ?>"><?php esc_html_e( 'Ver todos', 'radar-venezuela' ); ?> →</a></header>
-	<?php echo do_shortcode( '[radar_inmuebles limite="6"]' ); ?>
+	<header class="section-heading"><div><p class="eyebrow">03 · <?php esc_html_e( 'PORTAL INMOBILIARIO', 'radar-venezuela' ); ?></p><h2><?php esc_html_e( 'Explora el mercado en un solo mapa', 'radar-venezuela' ); ?></h2><p><?php esc_html_e( 'Busca, filtra y compara los inmuebles rastreados por Radar Venezuela.', 'radar-venezuela' ); ?></p></div></header>
+	<?php echo do_shortcode( '[radar_portal]' ); ?>
 </section>
 
 <section id="como-funciona" class="section process">

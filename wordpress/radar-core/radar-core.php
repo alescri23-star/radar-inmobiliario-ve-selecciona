@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Radar Venezuela Core
  * Description: Inmuebles publicados y solicitudes privadas para Radar Venezuela.
- * Version: 0.3.1
+ * Version: 0.4.0
  * Requires at least: 6.5
  * Requires PHP: 8.1
  * Author: Radar Venezuela
@@ -181,17 +181,48 @@ function radar_core_normalize_search( $value ) {
 }
 
 function radar_core_public_inventory() {
-	$cached = get_transient( 'radar_core_public_inventory' );
+	$cached = get_transient( 'radar_core_public_inventory_v2' );
 	$api_base = untrailingslashit( apply_filters( 'radar_core_api_base', 'https://white-shrew-789999.hostingersite.com' ) );
 	$response = wp_remote_get( $api_base . '/api/public/properties', array( 'timeout' => 8, 'redirection' => 2, 'headers' => array( 'Accept' => 'application/json' ) ) );
 	if ( ! is_wp_error( $response ) && 200 === wp_remote_retrieve_response_code( $response ) ) {
 		$payload = json_decode( wp_remote_retrieve_body( $response ), true );
 		if ( is_array( $payload ) && isset( $payload['properties'] ) && is_array( $payload['properties'] ) ) {
-			set_transient( 'radar_core_public_inventory', $payload['properties'], HOUR_IN_SECONDS );
+			set_transient( 'radar_core_public_inventory_v2', $payload['properties'], 15 * MINUTE_IN_SECONDS );
 			return $payload['properties'];
 		}
 	}
 	return is_array( $cached ) ? $cached : array();
+}
+
+function radar_core_public_properties() {
+	$properties = array();
+	foreach ( radar_core_public_inventory() as $item ) {
+		$latitude = isset( $item['latitude'] ) && is_numeric( $item['latitude'] ) ? (float) $item['latitude'] : null;
+		$longitude = isset( $item['longitude'] ) && is_numeric( $item['longitude'] ) ? (float) $item['longitude'] : null;
+		if ( null !== $latitude && ( $latitude < 0 || $latitude > 16 ) ) { $latitude = null; }
+		if ( null !== $longitude && ( $longitude < -75 || $longitude > -57 ) ) { $longitude = null; }
+		$properties[] = array(
+			'id' => sanitize_text_field( (string) ( $item['id'] ?? '' ) ),
+			'title' => sanitize_text_field( (string) ( $item['title'] ?? __( 'Inmueble', 'radar-core' ) ) ),
+			'photo' => esc_url_raw( (string) ( $item['photo'] ?? '' ) ),
+			'zone' => sanitize_text_field( (string) ( $item['zone'] ?? '' ) ),
+			'municipality' => sanitize_text_field( (string) ( $item['municipality'] ?? '' ) ),
+			'parish' => sanitize_text_field( (string) ( $item['parish'] ?? '' ) ),
+			'operation' => sanitize_key( (string) ( $item['operation'] ?? '' ) ),
+			'price' => isset( $item['price'] ) && is_numeric( $item['price'] ) ? (float) $item['price'] : 0,
+			'currency' => sanitize_text_field( (string) ( $item['currency'] ?? 'USD' ) ),
+			'type' => sanitize_text_field( (string) ( $item['type'] ?? '' ) ),
+			'bedrooms' => absint( $item['bedrooms'] ?? 0 ),
+			'bathrooms' => absint( $item['bathrooms'] ?? 0 ),
+			'area' => isset( $item['area'] ) && is_numeric( $item['area'] ) ? (float) $item['area'] : 0,
+			'latitude' => $latitude,
+			'longitude' => $longitude,
+			'source' => esc_url_raw( (string) ( $item['source'] ?? '' ) ),
+		);
+	}
+	$response = rest_ensure_response( array( 'properties' => $properties, 'count' => count( $properties ) ) );
+	$response->header( 'Cache-Control', 'public, max-age=300' );
+	return $response;
 }
 
 function radar_core_public_assistant_search( WP_REST_Request $request ) {
@@ -284,8 +315,41 @@ function radar_core_public_assistant_search( WP_REST_Request $request ) {
 
 function radar_core_register_public_assistant_route() {
 	register_rest_route( 'radar/v1', '/assistant', array( 'methods' => WP_REST_Server::CREATABLE, 'callback' => 'radar_core_public_assistant_search', 'permission_callback' => '__return_true' ) );
+	register_rest_route( 'radar/v1', '/properties', array( 'methods' => WP_REST_Server::READABLE, 'callback' => 'radar_core_public_properties', 'permission_callback' => '__return_true' ) );
 }
 add_action( 'rest_api_init', 'radar_core_register_public_assistant_route' );
+
+function radar_core_public_portal_shortcode() {
+	wp_enqueue_style( 'radar-leaflet', plugin_dir_url( __FILE__ ) . 'assets/vendor/leaflet/leaflet.css', array(), '1.9.4' );
+	wp_enqueue_style( 'radar-public-portal', plugin_dir_url( __FILE__ ) . 'assets/public-portal.css', array( 'radar-leaflet' ), '0.4.0' );
+	wp_enqueue_script( 'radar-leaflet', plugin_dir_url( __FILE__ ) . 'assets/vendor/leaflet/leaflet.js', array(), '1.9.4', true );
+	wp_enqueue_script( 'radar-public-portal', plugin_dir_url( __FILE__ ) . 'assets/public-portal.js', array( 'radar-leaflet' ), '0.4.0', true );
+	wp_localize_script( 'radar-public-portal', 'RadarPublicPortal', array( 'restUrl' => esc_url_raw( rest_url( 'radar/v1/properties' ) ), 'contactUrl' => esc_url_raw( home_url( '/#contacto' ) ) ) );
+	ob_start(); ?>
+	<div class="radar-portal" data-radar-portal>
+		<div class="radar-portal-bar">
+			<div class="radar-portal-searchbox"><span aria-hidden="true">⌕</span><label class="screen-reader-text" for="radar-portal-search"><?php esc_html_e( 'Buscar por zona, tipo o palabra clave', 'radar-core' ); ?></label><input id="radar-portal-search" data-search placeholder="Busca por zona, urbanización o tipo de inmueble"></div>
+			<div class="radar-portal-operations" aria-label="<?php esc_attr_e( 'Operación', 'radar-core' ); ?>"><button class="is-active" type="button" data-operation=""><?php esc_html_e( 'Todos', 'radar-core' ); ?></button><button type="button" data-operation="venta"><?php esc_html_e( 'Comprar', 'radar-core' ); ?></button><button type="button" data-operation="alquiler"><?php esc_html_e( 'Alquilar', 'radar-core' ); ?></button></div>
+			<button class="radar-portal-filter-toggle" type="button" data-filter-toggle aria-expanded="true">⚙ <?php esc_html_e( 'Filtros', 'radar-core' ); ?></button>
+		</div>
+		<div class="radar-portal-filters" data-filters>
+			<label><?php esc_html_e( 'Tipo de inmueble', 'radar-core' ); ?><select data-type><option value=""><?php esc_html_e( 'Todos los tipos', 'radar-core' ); ?></option></select></label>
+			<label><?php esc_html_e( 'Zona', 'radar-core' ); ?><select data-zone><option value=""><?php esc_html_e( 'Todas las zonas', 'radar-core' ); ?></option></select></label>
+			<label><?php esc_html_e( 'Habitaciones', 'radar-core' ); ?><select data-bedrooms><option value="0"><?php esc_html_e( 'Cualquiera', 'radar-core' ); ?></option><option value="1">1+</option><option value="2">2+</option><option value="3">3+</option><option value="4">4+</option></select></label>
+			<label><?php esc_html_e( 'Precio mínimo', 'radar-core' ); ?><input type="number" min="0" step="1000" data-min-price placeholder="Sin mínimo"></label>
+			<label><?php esc_html_e( 'Precio máximo', 'radar-core' ); ?><input type="number" min="0" step="1000" data-max-price placeholder="Sin límite"></label>
+			<label><?php esc_html_e( 'Ordenar', 'radar-core' ); ?><select data-sort><option value="recent"><?php esc_html_e( 'Relevancia', 'radar-core' ); ?></option><option value="price-asc"><?php esc_html_e( 'Precio más bajo', 'radar-core' ); ?></option><option value="price-desc"><?php esc_html_e( 'Precio más alto', 'radar-core' ); ?></option><option value="area-desc"><?php esc_html_e( 'Mayor superficie', 'radar-core' ); ?></option></select></label>
+			<button class="radar-portal-reset" type="button" data-reset><?php esc_html_e( 'Limpiar filtros', 'radar-core' ); ?></button>
+		</div>
+		<div class="radar-portal-summary"><div><strong data-count>0</strong> <?php esc_html_e( 'inmuebles encontrados', 'radar-core' ); ?><span data-map-count></span></div><div class="radar-portal-view-tabs"><button class="is-active" type="button" data-view="list">☷ <?php esc_html_e( 'Lista', 'radar-core' ); ?></button><button type="button" data-view="map">⌖ <?php esc_html_e( 'Mapa', 'radar-core' ); ?></button></div></div>
+		<div class="radar-portal-layout">
+			<div class="radar-portal-list" data-list><div class="radar-portal-loading"><?php esc_html_e( 'Cargando inmuebles…', 'radar-core' ); ?></div></div>
+			<div class="radar-portal-map-panel" data-map-panel><div class="radar-portal-map" data-map aria-label="<?php esc_attr_e( 'Mapa de inmuebles', 'radar-core' ); ?>"></div><div class="radar-portal-legend"><span><i class="sale"></i><?php esc_html_e( 'Venta', 'radar-core' ); ?></span><span><i class="rent"></i><?php esc_html_e( 'Alquiler', 'radar-core' ); ?></span></div></div>
+		</div>
+	</div>
+	<?php return ob_get_clean();
+}
+add_shortcode( 'radar_portal', 'radar_core_public_portal_shortcode' );
 
 function radar_core_public_assistant_shortcode() {
 	wp_enqueue_style( 'radar-public-assistant', plugin_dir_url( __FILE__ ) . 'assets/public-assistant.css', array(), '0.3.1' );
