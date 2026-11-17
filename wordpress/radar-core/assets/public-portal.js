@@ -10,6 +10,26 @@
     return Number.isFinite(parsed) ? parsed : 0;
   };
   const operation = value => normalize(value).includes('alquil') ? 'alquiler' : (normalize(value).includes('vent') ? 'venta' : normalize(value));
+  const propertyType = item => {
+    const raw = normalize(item.type);
+    const title = normalize(item.title);
+    const combined = `${raw} ${title}`;
+    if (raw.includes('apart') || raw === 'apto' || raw.includes('penthouse')) return 'Apartamento';
+    if (raw.includes('galpon')) return 'Galpón';
+    if (raw.includes('local') || raw.includes('oficina')) return 'Local comercial';
+    if (raw.includes('casa') || raw.includes('quinta') || raw.includes('townhouse') || raw.includes('villa')) return 'Casa';
+    if (raw.includes('terreno') || raw.includes('parcela') || raw.includes('lote') || raw.includes('finca') || raw.includes('hacienda')) {
+      return /rustic|rural|agricol|finca|hacienda|campo/.test(combined) ? 'Terreno rústico' : 'Terreno urbano';
+    }
+    if (/galpon/.test(title)) return 'Galpón';
+    if (/apartamento|\bapto\b|penthouse/.test(title)) return 'Apartamento';
+    if (/\blocal\b|\boficina\b/.test(title)) return 'Local comercial';
+    if (/\bcasa\b|\bquinta\b|townhouse|\bvilla\b|chalet/.test(title)) return 'Casa';
+    if (/terreno|parcela|\blote\b|finca|hacienda/.test(title)) {
+      return /rustic|rural|agricol|finca|hacienda|campo/.test(title) ? 'Terreno rústico' : 'Terreno urbano';
+    }
+    return item.type || '';
+  };
   const location = item => [...new Set([item.zone, item.parish, item.municipality].filter(Boolean))].join(', ');
   const money = item => item.price ? `${number(item.price).toLocaleString('es-ES', { maximumFractionDigits: 0 })} ${escapeHtml(item.currency || 'USD')}` : 'Consultar precio';
   const detailUrl = item => item.source || config.contactUrl || '#contacto';
@@ -76,7 +96,7 @@
       const min = number(elements.minPrice.value);
       const max = number(elements.maxPrice.value);
       filtered = all.filter(item => {
-        const haystack = normalize([item.title, item.type, item.zone, item.parish, item.municipality].join(' '));
+        const haystack = normalize([item.title, item.type, item.originalType, item.zone, item.parish, item.municipality].join(' '));
         return (!query || haystack.includes(query)) && (!activeOperation || item.operation === activeOperation) && (!type || normalize(item.type) === type) && (!zone || normalize(item.location).includes(zone)) && (!bedrooms || item.bedrooms >= bedrooms) && (!min || item.price >= min) && (!max || (item.price > 0 && item.price <= max));
       });
       const sort = elements.sort.value;
@@ -152,10 +172,9 @@
       return response.json();
     }).then(payload => {
       all = (Array.isArray(payload.properties) ? payload.properties : []).map((item, index) => ({
-        ...item, id: String(item.id || index), price: number(item.price), area: number(item.area), bedrooms: number(item.bedrooms), bathrooms: number(item.bathrooms),
+        ...item, id: String(item.id || index), originalType: item.type, type: propertyType(item), price: number(item.price), area: number(item.area), bedrooms: number(item.bedrooms), bathrooms: number(item.bathrooms),
         latitude: number(item.latitude), longitude: number(item.longitude), operation: operation(item.operation), location: location(item)
       }));
-      fillOptions(elements.type, all.map(item => item.type));
       fillOptions(elements.zone, all.flatMap(item => [item.municipality, item.parish, item.zone]));
       filtered = [...all];
       render();

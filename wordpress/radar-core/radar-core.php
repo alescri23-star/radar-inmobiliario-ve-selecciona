@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Radar Venezuela Core
  * Description: Inmuebles publicados y solicitudes privadas para Radar Venezuela.
- * Version: 0.4.0
+ * Version: 0.4.1
  * Requires at least: 6.5
  * Requires PHP: 8.1
  * Author: Radar Venezuela
@@ -321,9 +321,9 @@ add_action( 'rest_api_init', 'radar_core_register_public_assistant_route' );
 
 function radar_core_public_portal_shortcode() {
 	wp_enqueue_style( 'radar-leaflet', plugin_dir_url( __FILE__ ) . 'assets/vendor/leaflet/leaflet.css', array(), '1.9.4' );
-	wp_enqueue_style( 'radar-public-portal', plugin_dir_url( __FILE__ ) . 'assets/public-portal.css', array( 'radar-leaflet' ), '0.4.0' );
+	wp_enqueue_style( 'radar-public-portal', plugin_dir_url( __FILE__ ) . 'assets/public-portal.css', array( 'radar-leaflet' ), '0.4.1' );
 	wp_enqueue_script( 'radar-leaflet', plugin_dir_url( __FILE__ ) . 'assets/vendor/leaflet/leaflet.js', array(), '1.9.4', true );
-	wp_enqueue_script( 'radar-public-portal', plugin_dir_url( __FILE__ ) . 'assets/public-portal.js', array( 'radar-leaflet' ), '0.4.0', true );
+	wp_enqueue_script( 'radar-public-portal', plugin_dir_url( __FILE__ ) . 'assets/public-portal.js', array( 'radar-leaflet' ), '0.4.1', true );
 	wp_localize_script( 'radar-public-portal', 'RadarPublicPortal', array( 'restUrl' => esc_url_raw( rest_url( 'radar/v1/properties' ) ), 'contactUrl' => esc_url_raw( home_url( '/#contacto' ) ) ) );
 	ob_start(); ?>
 	<div class="radar-portal" data-radar-portal>
@@ -333,7 +333,7 @@ function radar_core_public_portal_shortcode() {
 			<button class="radar-portal-filter-toggle" type="button" data-filter-toggle aria-expanded="true">⚙ <?php esc_html_e( 'Filtros', 'radar-core' ); ?></button>
 		</div>
 		<div class="radar-portal-filters" data-filters>
-			<label><?php esc_html_e( 'Tipo de inmueble', 'radar-core' ); ?><select data-type><option value=""><?php esc_html_e( 'Todos los tipos', 'radar-core' ); ?></option></select></label>
+			<label><?php esc_html_e( 'Tipo de inmueble', 'radar-core' ); ?><select data-type><option value=""><?php esc_html_e( 'Todos los tipos', 'radar-core' ); ?></option><option value="Casa"><?php esc_html_e( 'Casa', 'radar-core' ); ?></option><option value="Apartamento"><?php esc_html_e( 'Apartamento', 'radar-core' ); ?></option><option value="Local comercial"><?php esc_html_e( 'Local comercial', 'radar-core' ); ?></option><option value="Terreno urbano"><?php esc_html_e( 'Terreno urbano', 'radar-core' ); ?></option><option value="Terreno rústico"><?php esc_html_e( 'Terreno rústico', 'radar-core' ); ?></option><option value="Galpón"><?php esc_html_e( 'Galpón', 'radar-core' ); ?></option></select></label>
 			<label><?php esc_html_e( 'Zona', 'radar-core' ); ?><select data-zone><option value=""><?php esc_html_e( 'Todas las zonas', 'radar-core' ); ?></option></select></label>
 			<label><?php esc_html_e( 'Habitaciones', 'radar-core' ); ?><select data-bedrooms><option value="0"><?php esc_html_e( 'Cualquiera', 'radar-core' ); ?></option><option value="1">1+</option><option value="2">2+</option><option value="3">3+</option><option value="4">4+</option></select></label>
 			<label><?php esc_html_e( 'Precio mínimo', 'radar-core' ); ?><input type="number" min="0" step="1000" data-min-price placeholder="Sin mínimo"></label>
