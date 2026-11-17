@@ -2,7 +2,7 @@
  const root=document.querySelector('[data-hero-places]');
  if(!root)return;
  const slides=[...root.querySelectorAll('[data-place-slide]')],dots=[...root.querySelectorAll('[data-place-dot]')],status=root.querySelector('[data-place-status]'),toggle=root.querySelector('[data-place-toggle]');
- const labels=['Salto Ángel, Canaima','Archipiélago Los Roques','Pico Bolívar, Mérida','Parque Nacional Morrocoy','La Gran Sabana'];
+ const labels=slides.map(slide=>slide.dataset.placeLabel||'Paisaje de Venezuela');
  let active=0,timer=null,paused=false;
  const show=index=>{
   active=(index+slides.length)%slides.length;
