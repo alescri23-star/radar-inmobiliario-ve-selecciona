@@ -14,7 +14,45 @@ get_header();
 		</div>
 		<ul class="trust-list"><li><?php esc_html_e( 'Datos identificados por fuente', 'radar-venezuela' ); ?></li><li><?php esc_html_e( 'Estimaciones con supuestos visibles', 'radar-venezuela' ); ?></li><li><?php esc_html_e( 'Privacidad desde el diseño', 'radar-venezuela' ); ?></li></ul>
 	</div>
-	<div class="hero-radar" aria-hidden="true"><span></span><span></span><span></span><i></i><b>Barquisimeto</b></div>
+	<div class="hero-places" role="region" aria-roledescription="carrusel" aria-label="Paisajes de Venezuela" data-hero-places>
+		<div class="hero-places-track">
+			<article class="hero-place is-active" data-place-slide aria-hidden="false">
+				<img src="<?php echo esc_url( get_template_directory_uri() . '/assets/places/salto-angel.jpg' ); ?>" alt="Salto Ángel descendiendo desde el Auyán-tepui en Canaima" width="1440" height="957" fetchpriority="high">
+				<div class="hero-place-shade"></div><div class="hero-place-copy"><span>01 · ESTADO BOLÍVAR</span><strong>Salto Ángel · Canaima</strong><small><?php esc_html_e( 'La caída de agua más alta del mundo.', 'radar-venezuela' ); ?></small></div>
+				<a class="hero-place-credit" href="https://commons.wikimedia.org/wiki/File:Angel_Falls_in_Venezuela.jpg" target="_blank" rel="noopener">Luis Carillo · CC BY 3.0</a>
+			</article>
+			<article class="hero-place" data-place-slide aria-hidden="true">
+				<img src="<?php echo esc_url( get_template_directory_uri() . '/assets/places/los-roques.jpg' ); ?>" alt="Aguas turquesas y cayos del archipiélago Los Roques" width="1440" height="1080" loading="lazy">
+				<div class="hero-place-shade"></div><div class="hero-place-copy"><span>02 · DEPENDENCIAS FEDERALES</span><strong>Archipiélago Los Roques</strong><small><?php esc_html_e( 'Un mosaico caribeño de luz y aguas turquesas.', 'radar-venezuela' ); ?></small></div>
+				<a class="hero-place-credit" href="https://commons.wikimedia.org/wiki/File:Los_Roques_Venezuela.jpg" target="_blank" rel="noopener">Rodrigo Accurcio · CC BY 2.0</a>
+			</article>
+			<article class="hero-place" data-place-slide aria-hidden="true">
+				<img src="<?php echo esc_url( get_template_directory_uri() . '/assets/places/pico-bolivar.jpg' ); ?>" alt="Paisaje de alta montaña en el Pico Bolívar de Mérida" width="1440" height="1081" loading="lazy">
+				<div class="hero-place-shade"></div><div class="hero-place-copy"><span>03 · ESTADO MÉRIDA</span><strong>Pico Bolívar · Los Andes</strong><small><?php esc_html_e( 'La Venezuela de cumbres, páramos y horizontes infinitos.', 'radar-venezuela' ); ?></small></div>
+				<a class="hero-place-credit" href="https://commons.wikimedia.org/wiki/File:Pico_Bol%C3%ACvar,_Venezuela_(12679701683).jpg" target="_blank" rel="noopener">M M · CC BY-SA 2.0</a>
+			</article>
+			<article class="hero-place" data-place-slide aria-hidden="true">
+				<img src="<?php echo esc_url( get_template_directory_uri() . '/assets/places/morrocoy.jpg' ); ?>" alt="Playa de aguas transparentes en el Parque Nacional Morrocoy" width="1280" height="960" loading="lazy">
+				<div class="hero-place-shade"></div><div class="hero-place-copy"><span>04 · ESTADO FALCÓN</span><strong>Parque Nacional Morrocoy</strong><small><?php esc_html_e( 'Cayos, manglares y refugios frente al Caribe.', 'radar-venezuela' ); ?></small></div>
+				<a class="hero-place-credit" href="https://commons.wikimedia.org/wiki/File:BeachMorrocoy.jpg" target="_blank" rel="noopener">José I. Spinola · CC BY 2.0</a>
+			</article>
+			<article class="hero-place" data-place-slide aria-hidden="true">
+				<img src="<?php echo esc_url( get_template_directory_uri() . '/assets/places/gran-sabana.jpg' ); ?>" alt="Camino entre la sabana y los tepuyes de la Gran Sabana" width="1440" height="1080" loading="lazy">
+				<div class="hero-place-shade"></div><div class="hero-place-copy"><span>05 · ESTADO BOLÍVAR</span><strong>La Gran Sabana</strong><small><?php esc_html_e( 'Tepuyes milenarios sobre una tierra sin fronteras.', 'radar-venezuela' ); ?></small></div>
+				<a class="hero-place-credit" href="https://commons.wikimedia.org/wiki/File:Gran_Sabana.jpg" target="_blank" rel="noopener">portodaspartes · CC BY 2.0</a>
+			</article>
+		</div>
+		<div class="hero-places-radar" aria-hidden="true"><span></span><span></span><span></span><i></i></div>
+		<div class="hero-places-controls">
+			<button type="button" class="hero-place-arrow" data-place-prev aria-label="Paisaje anterior">←</button>
+			<div class="hero-place-dots" aria-label="Elegir paisaje">
+				<?php for ( $place_index = 0; $place_index < 5; $place_index++ ) : ?><button type="button" data-place-dot="<?php echo esc_attr( $place_index ); ?>" aria-label="Ver paisaje <?php echo esc_attr( $place_index + 1 ); ?>" <?php echo 0 === $place_index ? 'aria-current="true"' : ''; ?>></button><?php endfor; ?>
+			</div>
+			<button type="button" class="hero-place-toggle" data-place-toggle aria-label="Pausar carrusel">Ⅱ</button>
+			<button type="button" class="hero-place-arrow" data-place-next aria-label="Paisaje siguiente">→</button>
+		</div>
+		<p class="screen-reader-text" aria-live="polite" data-place-status>1 de 5: Salto Ángel, Canaima</p>
+	</div>
 </section>
 
 <section class="section intro-grid">

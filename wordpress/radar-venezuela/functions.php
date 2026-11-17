@@ -22,6 +22,9 @@ add_action( 'after_setup_theme', 'radar_venezuela_setup' );
 function radar_venezuela_assets() {
 	$theme = wp_get_theme();
 	wp_enqueue_style( 'radar-venezuela', get_stylesheet_uri(), array(), $theme->get( 'Version' ) );
+	if ( is_front_page() ) {
+		wp_enqueue_script( 'radar-venezuela-hero', get_template_directory_uri() . '/assets/hero-slider.js', array(), $theme->get( 'Version' ), true );
+	}
 }
 add_action( 'wp_enqueue_scripts', 'radar_venezuela_assets' );
 
