@@ -3,7 +3,7 @@ Theme Name: Radar Venezuela
 Theme URI: https://github.com/alescri23-star/radar-inmobiliario-ve-selecciona
 Author: Radar Venezuela
 Description: Tema público responsive para el piloto inmobiliario de Barquisimeto.
-Version: 0.4.0
+Version: 0.4.1
 Requires at least: 6.5
 Requires PHP: 8.1
 Text Domain: radar-venezuela
@@ -44,3 +44,27 @@ Text Domain: radar-venezuela
 @media(max-width:1120px){.hero{grid-template-columns:1fr;min-height:650px}.hero-places{width:100%;height:590px}}
 @media(max-width:640px){.hero{min-height:620px;padding:52px 18px 28px}.hero h1{font-size:44px}.hero-places{height:480px;min-height:0;border-radius:23px}.hero-place-copy{left:22px;right:20px;bottom:72px}.hero-place-copy strong{font-size:28px}.hero-place-credit{right:12px;top:12px}.hero-places-controls{left:16px;right:16px;bottom:16px}.hero-place-arrow,.hero-place-toggle{width:34px;height:34px}}
 @media(prefers-reduced-motion:reduce){.hero-place,.hero-place-dots button{transition:none}}
+
+/* Portada cinematográfica: paisaje a pantalla completa */
+.hero{display:block;min-height:calc(100svh - 86px);padding:clamp(68px,9vh,110px) max(6vw,32px) 105px;background:#071a2d}
+.hero::before{z-index:1;background:linear-gradient(90deg,rgba(4,20,37,.96) 0%,rgba(7,31,56,.88) 36%,rgba(7,31,56,.34) 70%,rgba(4,20,37,.16) 100%),linear-gradient(0deg,rgba(3,17,31,.78) 0%,transparent 42%);pointer-events:none}
+.hero-copy{z-index:3;max-width:min(760px,55vw)}
+.hero h1{font-size:clamp(54px,5.7vw,94px);text-shadow:0 3px 25px rgba(0,0,0,.28)}
+.hero-lead{color:#eef5fb;text-shadow:0 2px 12px rgba(0,0,0,.35)}
+.hero-places{position:absolute;z-index:0;inset:0;width:100%;height:100%;min-height:0;border:0;border-radius:0;box-shadow:none}
+.hero-places::before{border:0;border-radius:0}
+.hero-place-shade{background:linear-gradient(0deg,rgba(2,13,25,.72) 0%,transparent 48%)}
+.hero-place img{filter:saturate(1.08) contrast(1.04)}
+.hero-place-copy{left:auto;right:max(6vw,32px);bottom:100px;width:min(42vw,720px);padding:20px 24px;border-left:3px solid var(--yellow);border-radius:0 18px 18px 0;background:linear-gradient(90deg,rgba(4,22,40,.78),rgba(4,22,40,.2));backdrop-filter:blur(5px)}
+.hero-place-copy strong{font-size:clamp(34px,3vw,54px)}
+.hero-place-copy small{font-size:15px}
+.hero-place-credit{right:max(6vw,32px);top:28px;border:1px solid rgba(255,255,255,.25);background:rgba(3,19,34,.7);font-size:9px}
+.hero-places-controls{left:auto;right:max(6vw,32px);bottom:32px;width:min(42vw,720px)}
+.hero-place-arrow,.hero-place-toggle{width:46px;height:46px;border:2px solid rgba(255,255,255,.78);background:rgba(3,19,34,.72);font-size:18px;box-shadow:0 8px 25px rgba(0,0,0,.25)}
+.hero-place-arrow:hover,.hero-place-toggle:hover,.hero-place-arrow:focus-visible,.hero-place-toggle:focus-visible{border-color:var(--yellow);background:var(--yellow);color:var(--navy);outline:3px solid rgba(255,255,255,.85);outline-offset:3px}
+.hero-place-dots{padding:10px 15px;border:1px solid rgba(255,255,255,.2);border-radius:999px;background:rgba(3,19,34,.62);backdrop-filter:blur(10px)}
+.hero-place-dots button{width:10px;height:10px;background:rgba(255,255,255,.7)}
+.hero-place-dots button[aria-current="true"]{width:34px;background:var(--yellow)}
+.hero-places-radar{right:4vw;top:5vh;width:300px;height:300px;opacity:.72}
+@media(max-width:1120px){.hero{display:block;min-height:calc(100svh - 72px)}.hero-copy{max-width:720px}.hero-place-copy,.hero-places-controls{width:min(52vw,620px)}}
+@media(max-width:760px){.hero{min-height:1120px;padding:48px 18px 90px}.hero::before{background:linear-gradient(180deg,rgba(4,20,37,.96) 0%,rgba(7,31,56,.88) 48%,rgba(7,31,56,.32) 72%,rgba(3,17,31,.82) 100%)}.hero-copy{max-width:none;padding-bottom:440px}.hero h1{font-size:clamp(43px,13vw,62px)}.hero-places{height:100%;border-radius:0}.hero-place-copy{left:18px;right:18px;bottom:102px;width:auto;padding:15px 16px}.hero-place-copy strong{font-size:31px}.hero-place-copy small{font-size:13px}.hero-place-credit{right:14px;top:auto;bottom:275px}.hero-places-controls{left:18px;right:18px;bottom:28px;width:auto}.hero-place-arrow,.hero-place-toggle{width:42px;height:42px}.hero-places-radar{right:-70px;top:52%;width:230px;height:230px;opacity:.5}}
