@@ -47,7 +47,8 @@ export function portal(database,options={}) {
   const isProfessionalForm=url.pathname==='/api/professional-applications';
   const isPublicTicker=url.pathname==='/api/public/market-ticker';
   const isPublicEconomic=url.pathname==='/api/public/economic-signals'||url.pathname.startsWith('/api/public/economic-preview/');
-  const isPublicRead=isPublicTicker||isPublicEconomic;
+  const isPublicProperties=url.pathname==='/api/public/properties';
+  const isPublicRead=isPublicTicker||isPublicEconomic||isPublicProperties;
   const externalForm=isProfessionalForm&&['POST','OPTIONS'].includes(req.method)&&policy.applyFormCors(req,res);
   const externalPublicRead=isPublicRead&&['GET','OPTIONS'].includes(req.method)&&policy.applyPublicReadCors(req,res);
   if(isProfessionalForm&&req.method==='OPTIONS'){
@@ -84,6 +85,10 @@ export function portal(database,options={}) {
    if(req.user?.role!=='admin'){send(res,401,{error:'Acceso reservado al administrador'});return true;}
    const active=(await records('inmuebles')).filter(r=>r.estado==='activo'),references=marketReferences(active);
    send(res,200,active.map(r=>({...Object.fromEntries(['id','titulo','foto','zona','operacion','precio','moneda','latitud','longitud','municipio','parroquia','calle','tipo','habitaciones','banos','superficie','descripcion','fuente','actualizadoEn','ubicacionPrecision','ubicacionFuente','ubicacionConsultadaEn'].map(k=>[k,r[k]??''])),marketReference:references[r.id]||null})));return true;
+  }
+  if(url.pathname==='/api/public/properties' && req.method==='GET'){
+   const properties=(await records('inmuebles')).filter(record=>record.estado==='activo').map(record=>({id:record.id||'',title:record.titulo||'Inmueble',photo:record.foto||record.fotos?.[0]||'',zone:record.zona||record.municipio||'',municipality:record.municipio||'',parish:record.parroquia||'',operation:record.operacion||'',price:record.precio||'',currency:record.moneda||'USD',type:record.tipo||'',bedrooms:record.habitaciones||'',bathrooms:record.banos||'',area:record.superficie||'',source:/^https:\/\//i.test(String(record.fuente||''))?record.fuente:''}));
+   send(res,200,{properties,updatedAt:new Date().toISOString()});return true;
   }
   if(url.pathname==='/api/exchange-rates' && req.method==='GET'){
    if(req.user?.role!=='admin'){send(res,401,{error:'Acceso reservado al administrador'});return true;}

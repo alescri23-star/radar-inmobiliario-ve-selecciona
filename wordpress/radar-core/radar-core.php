@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Radar Venezuela Core
  * Description: Inmuebles publicados y solicitudes privadas para Radar Venezuela.
- * Version: 0.3.0
+ * Version: 0.3.1
  * Requires at least: 6.5
  * Requires PHP: 8.1
  * Author: Radar Venezuela
@@ -180,6 +180,20 @@ function radar_core_normalize_search( $value ) {
 	return trim( preg_replace( '/[^a-z0-9]+/', ' ', strtolower( remove_accents( (string) $value ) ) ) );
 }
 
+function radar_core_public_inventory() {
+	$cached = get_transient( 'radar_core_public_inventory' );
+	$api_base = untrailingslashit( apply_filters( 'radar_core_api_base', 'https://white-shrew-789999.hostingersite.com' ) );
+	$response = wp_remote_get( $api_base . '/api/public/properties', array( 'timeout' => 8, 'redirection' => 2, 'headers' => array( 'Accept' => 'application/json' ) ) );
+	if ( ! is_wp_error( $response ) && 200 === wp_remote_retrieve_response_code( $response ) ) {
+		$payload = json_decode( wp_remote_retrieve_body( $response ), true );
+		if ( is_array( $payload ) && isset( $payload['properties'] ) && is_array( $payload['properties'] ) ) {
+			set_transient( 'radar_core_public_inventory', $payload['properties'], HOUR_IN_SECONDS );
+			return $payload['properties'];
+		}
+	}
+	return is_array( $cached ) ? $cached : array();
+}
+
 function radar_core_public_assistant_search( WP_REST_Request $request ) {
 	$question = sanitize_text_field( (string) $request->get_param( 'question' ) );
 	if ( ! $question || mb_strlen( $question ) > 240 ) {
@@ -193,29 +207,54 @@ function radar_core_public_assistant_search( WP_REST_Request $request ) {
 	$cheap = str_contains( $q, 'barato' ) || str_contains( $q, 'economico' ) || str_contains( $q, 'menor precio' );
 	$stop = array( 'quiero','busco','buscar','muestrame','inmueble','inmuebles','propiedad','propiedades','con','para','por','una','uno','unos','unas','que','del','las','los','mas','menos','venta','comprar','alquiler','alquilar','habitacion','habitaciones','hasta','maximo','usd' );
 	$tokens = array_values( array_filter( array_unique( explode( ' ', $q ) ), function( $token ) use ( $stop ) { return strlen( $token ) > 2 && ! in_array( $token, $stop, true ) && ! is_numeric( $token ); } ) );
-	$post_ids = get_posts( array( 'post_type' => 'radar_inmueble', 'post_status' => 'publish', 'posts_per_page' => 120, 'fields' => 'ids', 'no_found_rows' => true, 'orderby' => 'date', 'order' => 'DESC' ) );
+	$candidates = array();
+	$remote_inventory = radar_core_public_inventory();
+	if ( $remote_inventory ) {
+		foreach ( $remote_inventory as $item ) {
+			$candidates[] = array(
+				'id' => sanitize_text_field( (string) ( $item['id'] ?? '' ) ),
+				'title' => sanitize_text_field( (string) ( $item['title'] ?? __( 'Inmueble', 'radar-core' ) ) ),
+				'url' => esc_url_raw( (string) ( $item['source'] ?? '' ) ) ?: home_url( '/#contacto' ),
+				'image' => esc_url_raw( (string) ( $item['photo'] ?? '' ) ),
+				'operation' => sanitize_key( (string) ( $item['operation'] ?? '' ) ),
+				'type' => sanitize_text_field( (string) ( $item['type'] ?? '' ) ),
+				'price' => (float) ( $item['price'] ?? 0 ),
+				'currency' => sanitize_text_field( (string) ( $item['currency'] ?? 'USD' ) ),
+				'zone' => sanitize_text_field( trim( implode( ', ', array_filter( array( $item['zone'] ?? '', $item['parish'] ?? '', $item['municipality'] ?? '' ) ) ) ) ),
+				'area' => (float) ( $item['area'] ?? 0 ),
+				'bedrooms' => absint( $item['bedrooms'] ?? 0 ),
+				'bathrooms' => absint( $item['bathrooms'] ?? 0 ),
+			);
+		}
+	} else {
+		$post_ids = get_posts( array( 'post_type' => 'radar_inmueble', 'post_status' => 'publish', 'posts_per_page' => 120, 'fields' => 'ids', 'no_found_rows' => true, 'orderby' => 'date', 'order' => 'DESC' ) );
+		foreach ( $post_ids as $post_id ) {
+			$candidates[] = array(
+				'id' => $post_id, 'title' => get_the_title( $post_id ), 'url' => get_permalink( $post_id ),
+				'image' => get_the_post_thumbnail_url( $post_id, 'medium_large' ) ?: '',
+				'operation' => get_post_meta( $post_id, 'radar_operacion', true ), 'type' => get_post_meta( $post_id, 'radar_tipo', true ),
+				'price' => (float) get_post_meta( $post_id, 'radar_precio', true ), 'currency' => get_post_meta( $post_id, 'radar_moneda', true ) ?: 'USD',
+				'zone' => get_post_meta( $post_id, 'radar_zona', true ), 'area' => (float) get_post_meta( $post_id, 'radar_superficie', true ),
+				'bedrooms' => absint( get_post_meta( $post_id, 'radar_habitaciones', true ) ), 'bathrooms' => absint( get_post_meta( $post_id, 'radar_banos', true ) ),
+			);
+		}
+	}
 	$rows = array();
-	foreach ( $post_ids as $post_id ) {
-		$row_operation = get_post_meta( $post_id, 'radar_operacion', true );
-		$price = (float) get_post_meta( $post_id, 'radar_precio', true );
-		$row_bedrooms = absint( get_post_meta( $post_id, 'radar_habitaciones', true ) );
+	foreach ( $candidates as $candidate ) {
+		$row_operation = $candidate['operation'];
+		$price = $candidate['price'];
+		$row_bedrooms = $candidate['bedrooms'];
 		if ( $operation && $row_operation !== $operation ) { continue; }
 		if ( $bedrooms && $row_bedrooms < $bedrooms ) { continue; }
 		if ( $max_price && ( ! $price || $price > $max_price ) ) { continue; }
-		$type = get_post_meta( $post_id, 'radar_tipo', true );
-		$zone = get_post_meta( $post_id, 'radar_zona', true );
-		$area = (float) get_post_meta( $post_id, 'radar_superficie', true );
-		$haystack = radar_core_normalize_search( get_the_title( $post_id ) . ' ' . $type . ' ' . $zone );
+		$type = $candidate['type'];
+		$zone = $candidate['zone'];
+		$area = $candidate['area'];
+		$haystack = radar_core_normalize_search( $candidate['title'] . ' ' . $type . ' ' . $zone );
 		$score = 0;
 		foreach ( $tokens as $token ) { if ( str_contains( $haystack, $token ) ) { $score++; } }
 		$unit_price = $price && $area ? round( $price / $area ) : 0;
-		$rows[] = array(
-			'id' => $post_id, 'title' => get_the_title( $post_id ), 'url' => get_permalink( $post_id ),
-			'image' => get_the_post_thumbnail_url( $post_id, 'medium_large' ) ?: '', 'operation' => $row_operation,
-			'type' => $type, 'price' => $price, 'currency' => get_post_meta( $post_id, 'radar_moneda', true ) ?: 'USD',
-			'zone' => $zone, 'area' => $area, 'bedrooms' => $row_bedrooms,
-			'bathrooms' => absint( get_post_meta( $post_id, 'radar_banos', true ) ), 'unitPrice' => $unit_price, 'score' => $score,
-		);
+		$rows[] = array_merge( $candidate, array( 'unitPrice' => $unit_price, 'score' => $score ) );
 	}
 	usort( $rows, function( $a, $b ) use ( $opportunity, $cheap ) {
 		if ( $opportunity ) {
@@ -249,8 +288,8 @@ function radar_core_register_public_assistant_route() {
 add_action( 'rest_api_init', 'radar_core_register_public_assistant_route' );
 
 function radar_core_public_assistant_shortcode() {
-	wp_enqueue_style( 'radar-public-assistant', plugin_dir_url( __FILE__ ) . 'assets/public-assistant.css', array(), '0.3.0' );
-	wp_enqueue_script( 'radar-public-assistant', plugin_dir_url( __FILE__ ) . 'assets/public-assistant.js', array(), '0.3.0', true );
+	wp_enqueue_style( 'radar-public-assistant', plugin_dir_url( __FILE__ ) . 'assets/public-assistant.css', array(), '0.3.1' );
+	wp_enqueue_script( 'radar-public-assistant', plugin_dir_url( __FILE__ ) . 'assets/public-assistant.js', array(), '0.3.1', true );
 	wp_localize_script( 'radar-public-assistant', 'RadarPublicAssistant', array( 'restUrl' => esc_url_raw( rest_url( 'radar/v1/assistant' ) ), 'contactUrl' => esc_url_raw( home_url( '/#contacto' ) ) ) );
 	ob_start(); ?>
 	<section id="radar-ia" class="radar-public-assistant" aria-labelledby="radar-public-title">
