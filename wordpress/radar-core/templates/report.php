@@ -8,6 +8,8 @@ if ( ! $signal ) {
 	get_footer(); return;
 }
 wp_enqueue_style( 'radar-report', RADAR_CORE_URL . 'assets/report.css', array(), RADAR_CORE_VERSION );
+wp_enqueue_style( 'radar-report-count', RADAR_CORE_URL . 'assets/report-count.css', array( 'radar-report' ), RADAR_CORE_VERSION );
+wp_enqueue_script( 'radar-report', RADAR_CORE_URL . 'assets/report.js', array(), RADAR_CORE_VERSION, true );
 $figures = is_array( $signal['reportFigures'] ?? null ) ? $signal['reportFigures'] : array();
 $timeline = is_array( $signal['reportTimeline'] ?? null ) ? $signal['reportTimeline'] : array();
 $topics = is_array( $signal['topics'] ?? null ) ? $signal['topics'] : array();
@@ -30,7 +32,7 @@ get_header();
 			<figcaption>Visualización conceptual de las categorías analizadas; no atribuye responsabilidad penal.</figcaption>
 		</figure>
 	</section>
-	<section id="hallazgos" class="radar-report-stats" aria-label="Cifras clave del informe"><?php foreach ( $figures as $figure ) : ?><article><strong><?php echo esc_html( $figure['value'] ?? '' ); ?></strong><p><?php echo esc_html( $figure['label'] ?? '' ); ?></p></article><?php endforeach; ?></section>
+	<section id="hallazgos" class="radar-report-stats" aria-label="Cifras clave del informe"><?php foreach ( $figures as $figure ) : ?><article><strong class="radar-report-count" data-report-value="<?php echo esc_attr( $figure['value'] ?? '' ); ?>" aria-label="<?php echo esc_attr( $figure['value'] ?? '' ); ?>"><?php echo esc_html( $figure['value'] ?? '' ); ?></strong><p><?php echo esc_html( $figure['label'] ?? '' ); ?></p></article><?php endforeach; ?></section>
 	<section class="radar-report-section radar-report-evidence">
 		<header><p>QUÉ ANALIZA</p><h2>De la evidencia documental a una red de relaciones</h2><span>El estudio organiza fuentes primarias en tres bases de datos para observar conexiones, mecanismos y patrones. Una relación en la base no equivale por sí sola a responsabilidad penal.</span></header>
 		<div class="radar-report-evidence-grid"><article><span>01</span><h3>Fuentes primarias</h3><p>Gacetas oficiales, sentencias, nombramientos, registros mercantiles y vínculos familiares.</p></article><article><span>02</span><h3>Súper red</h3><p>30.467 relaciones entre 13.521 actores identificados durante el periodo analizado.</p></article><article><span>03</span><h3>Empresas</h3><p>865 empresas incorporadas a la base analítica presentada por la organización.</p></article><article><span>04</span><h3>Casos</h3><p>154 casos documentados, de los cuales el informe señala 110 en tribunales.</p></article></div>

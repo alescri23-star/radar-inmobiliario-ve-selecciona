@@ -71,23 +71,24 @@ $radar_places = array(
 			<div class="radar-investigation-actions">
 				<a class="button" href="<?php echo esc_url( home_url( '/informes/expediente-maduro/' ) ); ?>"><?php esc_html_e( 'Explorar el expediente', 'radar-venezuela' ); ?> <span aria-hidden="true">→</span></a>
 				<a class="radar-investigation-source" href="https://expedientemaduro.transparenciave.org/es" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Ver investigación original', 'radar-venezuela' ); ?> ↗</a>
+				<a class="radar-investigation-context" href="https://transparenciave.org/wp-content/uploads/2025/09/21-de-septiembre-ALEJANDRO-BETANCOURT.pdf" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Contexto documental: Alejandro Betancourt y los “bolichicos”', 'radar-venezuela' ); ?> ↗</a>
 			</div>
 			<small><?php esc_html_e( 'Fuente: Transparencia Venezuela. La responsabilidad penal solo puede ser determinada por los tribunales competentes.', 'radar-venezuela' ); ?></small>
 			<small class="radar-investigation-credits">
 				<?php esc_html_e( 'Retratos:', 'radar-venezuela' ); ?>
 				<a href="https://commons.wikimedia.org/wiki/File:Hugo_Ch%C3%A1vez_in_Bras%C3%ADlia_2011_(3x4_cropped)_(2).jpg" target="_blank" rel="noopener noreferrer">Hugo Chávez · Roberto Stuckert Filho · CC BY-SA 2.0</a>;
-				<a href="https://commons.wikimedia.org/wiki/File:Nicol%C3%A1s_Maduro_official_portrait_(cropped_2).png" target="_blank" rel="noopener noreferrer">Nicolás Maduro</a>,
+				<a href="https://commons.wikimedia.org/wiki/File:Nicolas_Maduro_(04-11-2025)_(cropped).jpg" target="_blank" rel="noopener noreferrer">Nicolás Maduro · Presidencia de Venezuela · 2025</a>,
 				<a href="https://commons.wikimedia.org/wiki/File:Diosdado_Cabello_2025.jpg" target="_blank" rel="noopener noreferrer">Diosdado Cabello</a> <?php esc_html_e( 'y', 'radar-venezuela' ); ?>
 				<a href="https://commons.wikimedia.org/wiki/File:Delcy_Rodr%C3%ADguez_-_02_(19-01-2026)_(cropped_2)_(b).jpg" target="_blank" rel="noopener noreferrer">Delcy Rodríguez</a> · <?php esc_html_e( 'dominio público vía Wikimedia Commons. Recortes y tratamiento visual.', 'radar-venezuela' ); ?>
 			</small>
 		</div>
 		<div class="radar-investigation-visual" aria-hidden="true">
 			<div class="radar-investigation-portraits">
-				<img src="<?php echo esc_url( get_template_directory_uri() . '/assets/investigation/political-montage-v2.jpg' ); ?>" alt="" loading="lazy" decoding="async">
+				<img src="<?php echo esc_url( get_template_directory_uri() . '/assets/investigation/political-montage-v3.jpg' ); ?>" alt="" loading="lazy" decoding="async">
 			</div>
 			<span></span><span></span><span></span><i></i>
 			<strong><?php esc_html_e( 'EXPEDIENTE', 'radar-venezuela' ); ?></strong>
-			<b><?php esc_html_e( 'Corrupción · Justicia · Política', 'radar-venezuela' ); ?></b>
+			<b><?php esc_html_e( 'Poder · Petróleo · Electricidad', 'radar-venezuela' ); ?></b>
 		</div>
 	</article>
 	<div class="radar-economic-preview"><?php echo do_shortcode( '[radar_economico limit="3"]' ); ?></div>

@@ -3,7 +3,7 @@ Theme Name: Radar Venezuela
 Theme URI: https://github.com/alescri23-star/radar-inmobiliario-ve-selecciona
 Author: Radar Venezuela
 Description: Tema público responsive para el piloto inmobiliario de Barquisimeto.
-Version: 0.6.5
+Version: 0.6.6
 Requires at least: 6.5
 Requires PHP: 8.1
 Text Domain: radar-venezuela
@@ -117,3 +117,4 @@ Text Domain: radar-venezuela
 	.radar-economic-more-wrap{margin-top:22px}.radar-economic-more{width:100%;font-size:13px}
 	.radar-news-hero{padding:54px 20px 42px}.radar-news-hero h1{font-size:43px;letter-spacing:-2px}.radar-news-hero p:last-child{font-size:16px}.radar-news-list{padding:28px 16px 65px}.radar-news-list .radar-economic-grid{grid-template-columns:1fr}
 }
+.radar-investigation-context{display:inline-flex;padding:7px 10px;border:1px solid rgba(241,198,68,.45);border-radius:999px;background:rgba(241,198,68,.08);color:#f7d66b;font-size:10px;font-weight:850}.radar-investigation-context:hover{background:rgba(241,198,68,.16);color:#fff;text-decoration:none}
