@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Radar Venezuela Core
  * Description: Inmuebles publicados y solicitudes privadas para Radar Venezuela.
- * Version: 0.5.0
+ * Version: 0.5.1
  * Requires at least: 6.5
  * Requires PHP: 8.1
  * Author: Radar Venezuela
@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'RADAR_CORE_VERSION', '0.5.0' );
+define( 'RADAR_CORE_VERSION', '0.5.1' );
 define( 'RADAR_CORE_URL', plugin_dir_url( __FILE__ ) );
 
 function radar_core_register_content() {
@@ -64,11 +64,13 @@ add_action( 'init', 'radar_core_register_content' );
 
 function radar_core_report_routes() {
 	add_rewrite_rule( '^informes/([^/]+)/?$', 'index.php?radar_report=$matches[1]', 'top' );
+	add_rewrite_rule( '^actualidad/?$', 'index.php?radar_economic_archive=1', 'top' );
 }
 add_action( 'init', 'radar_core_report_routes' );
 
 function radar_core_report_query_vars( $vars ) {
 	$vars[] = 'radar_report';
+	$vars[] = 'radar_economic_archive';
 	return $vars;
 }
 add_filter( 'query_vars', 'radar_core_report_query_vars' );
@@ -434,7 +436,7 @@ add_action( 'admin_post_radar_contact', 'radar_core_handle_contact' );
  */
 function radar_core_economic_signals( $attributes = array() ) {
 	$api_base = untrailingslashit( apply_filters( 'radar_core_api_base', 'https://white-shrew-789999.hostingersite.com' ) );
-	$query = array( 'limit' => 24 );
+	$query = array( 'limit' => min( 60, max( 1, absint( $attributes['limit'] ?? 24 ) ) ) );
 	if ( ! empty( $attributes['topic'] ) ) { $query['topic'] = sanitize_text_field( $attributes['topic'] ); }
 	if ( ! empty( $attributes['featured'] ) && 'true' === $attributes['featured'] ) { $query['featured'] = 'true'; }
 	$url = add_query_arg( $query, $api_base . '/api/public/economic-signals' );
@@ -496,14 +498,29 @@ function radar_core_report_signal( $path ) {
 
 function radar_core_report_template( $template ) {
 	$path = get_query_var( 'radar_report' );
-	if ( ! $path ) { return $template; }
-	$report_template = plugin_dir_path( __FILE__ ) . 'templates/report.php';
-	return file_exists( $report_template ) ? $report_template : $template;
+	if ( $path ) {
+		$report_template = plugin_dir_path( __FILE__ ) . 'templates/report.php';
+		return file_exists( $report_template ) ? $report_template : $template;
+	}
+	if ( get_query_var( 'radar_economic_archive' ) ) {
+		$archive_template = plugin_dir_path( __FILE__ ) . 'templates/economic-archive.php';
+		return file_exists( $archive_template ) ? $archive_template : $template;
+	}
+	return $template;
 }
 add_filter( 'template_include', 'radar_core_report_template', 99 );
 
+function radar_core_public_page_title( $parts ) {
+	if ( get_query_var( 'radar_economic_archive' ) ) {
+		$parts['title'] = __( 'Actualidad económica', 'radar-core' );
+	}
+	return $parts;
+}
+add_filter( 'document_title_parts', 'radar_core_public_page_title' );
+
 function radar_core_economic_shortcode( $attributes ) {
 	$attributes = shortcode_atts( array( 'topic' => '', 'featured' => 'false', 'limit' => 6 ), $attributes, 'radar_economico' );
+	$attributes['limit'] = min( 60, max( 1, absint( $attributes['limit'] ) ) );
 	$payload = radar_core_economic_signals( $attributes );
 	$signals = $payload['signals'];
 	wp_enqueue_style( 'radar-economic', plugin_dir_url( __FILE__ ) . 'assets/economic.css', array(), RADAR_CORE_VERSION );

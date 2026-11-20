@@ -3,7 +3,7 @@ Theme Name: Radar Venezuela
 Theme URI: https://github.com/alescri23-star/radar-inmobiliario-ve-selecciona
 Author: Radar Venezuela
 Description: Tema público responsive para el piloto inmobiliario de Barquisimeto.
-Version: 0.6.1
+Version: 0.6.2
 Requires at least: 6.5
 Requires PHP: 8.1
 Text Domain: radar-venezuela
@@ -93,3 +93,21 @@ Text Domain: radar-venezuela
 }
 @media(max-width:640px){.site-brand{width:158px;max-width:55vw}.menu-toggle-label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}.menu-toggle{width:44px;justify-content:center;padding:8px}}
 @media(prefers-reduced-motion:reduce){.menu-toggle-icon i,.site-nav{transition:none}}
+
+/* Resumen de actualidad y archivo completo. */
+.radar-economic-more-wrap{display:flex;justify-content:center;margin-top:34px}.radar-economic-more{gap:10px;padding-inline:24px}.radar-news-page{min-height:70vh;background:linear-gradient(180deg,#eef4fa,#fff)}.radar-news-hero{padding:80px max(7vw,32px) 58px;background:linear-gradient(135deg,#08223e,#174f82);color:#fff}.radar-news-hero>div{max-width:950px}.radar-news-back{display:inline-flex;margin-bottom:38px;color:#c8d9e8;font-size:12px;font-weight:800}.radar-news-hero .eyebrow{color:var(--yellow)}.radar-news-hero h1{max-width:900px;margin:0;font-size:clamp(42px,6vw,76px);letter-spacing:-3px}.radar-news-hero p:last-child{max-width:760px;margin:22px 0 0;color:#c6d8e8;font-size:18px}.radar-news-list{padding:55px max(7vw,32px) 90px}.radar-news-list .radar-economic-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media(max-width:1000px){.radar-news-list .radar-economic-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:640px){
+	.radar-economic-preview .radar-economic-tabs,.radar-economic-preview .radar-economic-updated{display:none}
+	.radar-economic-preview .radar-economic-grid{display:block;overflow:hidden;border:1px solid #dce6f0;border-radius:18px;background:#fff;box-shadow:0 14px 38px rgba(12,41,74,.08)}
+	.radar-economic-preview .radar-economic-card,.radar-economic-preview .radar-economic-card.is-featured{display:grid;grid-template-columns:92px minmax(0,1fr);min-height:116px;border:0;border-radius:0;box-shadow:none}
+	.radar-economic-preview .radar-economic-card+.radar-economic-card{border-top:1px solid #e3ebf3}
+	.radar-economic-preview .radar-economic-card:hover{transform:none;box-shadow:none}
+	.radar-economic-preview .radar-economic-image,.radar-economic-preview .radar-economic-card.is-featured .radar-economic-image{height:100%;min-height:116px;border-radius:0}
+	.radar-economic-preview .radar-economic-image>span{display:none}
+	.radar-economic-preview .radar-economic-copy{align-self:center;padding:13px 14px}
+	.radar-economic-preview .radar-economic-card h3{margin:8px 0 0;font-size:15px;line-height:1.25}
+	.radar-economic-preview .radar-economic-copy>p,.radar-economic-preview .radar-economic-opportunity,.radar-economic-preview .radar-report-mini-stats,.radar-economic-preview .radar-economic-card footer{display:none}
+	.radar-economic-more-wrap{margin-top:22px}.radar-economic-more{width:100%;font-size:13px}
+	.radar-news-hero{padding:54px 20px 42px}.radar-news-hero h1{font-size:43px;letter-spacing:-2px}.radar-news-hero p:last-child{font-size:16px}.radar-news-list{padding:28px 16px 65px}.radar-news-list .radar-economic-grid{grid-template-columns:1fr}
+}

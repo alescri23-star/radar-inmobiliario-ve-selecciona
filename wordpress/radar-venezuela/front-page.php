@@ -63,7 +63,8 @@ $radar_places = array(
 
 <section id="radar-economico" class="section economic-public-section">
 	<header class="section-heading"><div><p class="eyebrow">03 · <?php esc_html_e( 'RADAR ECONÓMICO', 'radar-venezuela' ); ?></p><h2><?php esc_html_e( 'Las señales que están moviendo Venezuela', 'radar-venezuela' ); ?></h2><p><?php esc_html_e( 'Noticias, iniciativas empresariales y cambios de entorno convertidos en pistas verificables para seguir nuevas oportunidades.', 'radar-venezuela' ); ?></p></div></header>
-	<?php echo do_shortcode( '[radar_economico limit="6"]' ); ?>
+	<div class="radar-economic-preview"><?php echo do_shortcode( '[radar_economico limit="3"]' ); ?></div>
+	<div class="radar-economic-more-wrap"><a class="button radar-economic-more" href="<?php echo esc_url( home_url( '/actualidad/' ) ); ?>"><?php esc_html_e( 'Ver todas las noticias económicas', 'radar-venezuela' ); ?> <span aria-hidden="true">→</span></a></div>
 </section>
 
 <section id="como-funciona" class="section process">
