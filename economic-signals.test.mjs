@@ -20,9 +20,10 @@ test('siembra señales económicas una sola vez y conserva ediciones',async()=>{
 });
 
 test('la respuesta pública excluye notas internas y crea una imagen segura',()=>{
- const signal=normalizeEconomicSignal({title:'Nueva oportunidad económica',summary:'Resumen público',sector:'Infraestructura',topics:['Empresas'],source:'Fuente verificada',url:'https://example.com/noticia',date:'2026-11-02',internalNotes:'No publicar esta nota'},null,'economic-1');
+ const signal=normalizeEconomicSignal({title:'Nueva oportunidad económica',summary:'Resumen público',sector:'Infraestructura',topics:['Empresas'],source:'Fuente verificada',url:'https://example.com/noticia',date:'2026-11-02',internalNotes:'No publicar esta nota',reportPath:'informe-prueba',reportFigures:'154 | casos documentados\n26 | países',reportTimeline:'2026 | Publicación | Se publica el informe.'},null,'economic-1');
  const published=publicEconomicSignal(signal,'https://radar.example');
  assert.equal(published.internalNotes,undefined);assert.equal(published.imageUrl,'https://radar.example/api/public/economic-preview/economic-1');assert.equal(published.title,signal.title);
+ assert.equal(published.reportPath,'informe-prueba');assert.equal(published.reportFigures.length,2);assert.equal(published.reportTimeline[0].title,'Publicación');
 });
 
 test('guardar en el Radar actualiza inmediatamente la API pública',async()=>{

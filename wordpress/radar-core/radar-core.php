@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Radar Venezuela Core
  * Description: Inmuebles publicados y solicitudes privadas para Radar Venezuela.
- * Version: 0.4.1
+ * Version: 0.5.0
  * Requires at least: 6.5
  * Requires PHP: 8.1
  * Author: Radar Venezuela
@@ -12,6 +12,9 @@
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
+
+define( 'RADAR_CORE_VERSION', '0.5.0' );
+define( 'RADAR_CORE_URL', plugin_dir_url( __FILE__ ) );
 
 function radar_core_register_content() {
 	register_post_type( 'radar_inmueble', array(
@@ -59,8 +62,28 @@ function radar_core_register_content() {
 }
 add_action( 'init', 'radar_core_register_content' );
 
+function radar_core_report_routes() {
+	add_rewrite_rule( '^informes/([^/]+)/?$', 'index.php?radar_report=$matches[1]', 'top' );
+}
+add_action( 'init', 'radar_core_report_routes' );
+
+function radar_core_report_query_vars( $vars ) {
+	$vars[] = 'radar_report';
+	return $vars;
+}
+add_filter( 'query_vars', 'radar_core_report_query_vars' );
+
+function radar_core_refresh_routes() {
+	if ( RADAR_CORE_VERSION !== get_option( 'radar_core_rewrite_version' ) ) {
+		flush_rewrite_rules( false );
+		update_option( 'radar_core_rewrite_version', RADAR_CORE_VERSION, false );
+	}
+}
+add_action( 'init', 'radar_core_refresh_routes', 99 );
+
 function radar_core_activate() {
 	radar_core_register_content();
+	radar_core_report_routes();
 	flush_rewrite_rules();
 }
 register_activation_hook( __FILE__, 'radar_core_activate' );
@@ -433,19 +456,66 @@ function radar_core_topic_slug( $topic ) {
 	return sanitize_html_class( remove_accents( strtolower( (string) $topic ) ) );
 }
 
+function radar_core_report_fallback( $path ) {
+	if ( 'expediente-maduro' !== $path ) { return null; }
+	return array(
+		'title' => 'Un informe reconstruye la súper red de corrupción y captura del Estado en Venezuela',
+		'summary' => 'Diez años de fuentes primarias conectan casos, empresas, instituciones y economías ilícitas para analizar la posición de Nicolás Maduro en una red transnacional.',
+		'source' => 'Transparencia Venezuela', 'sector' => 'Riesgo institucional', 'impact' => 'alto',
+		'topics' => array( 'Corrupción', 'Política', 'Justicia', 'Riesgo país' ),
+		'url' => 'https://expedientemaduro.transparenciave.org/es',
+		'reportPath' => 'expediente-maduro', 'reportKicker' => 'RIESGO INSTITUCIONAL · INVESTIGACIÓN',
+		'reportPeriod' => '2013–2026 · Datos con corte a agosto de 2026',
+		'reportPdfUrl' => 'https://expedientemaduro.transparenciave.org/documents/informe-maduro-red-de-corrupcion-es.pdf',
+		'reportDisclaimer' => 'Informe de apoyo analítico elaborado por Transparencia Venezuela. No constituye una determinación de responsabilidad penal, que corresponde exclusivamente a los tribunales competentes.',
+		'opportunity' => 'La investigación aporta contexto para evaluar seguridad jurídica, sanciones, recuperación de activos y exposición institucional antes de analizar inversiones o proyectos inmobiliarios.',
+		'risk' => 'El estudio es un análisis documental. No constituye una determinación de responsabilidad penal, que corresponde exclusivamente a los tribunales competentes.',
+		'reportFigures' => array(
+			array( 'value' => '154', 'label' => 'casos de corrupción documentados desde 2013' ),
+			array( 'value' => 'USD 36.115 M', 'label' => 'en fondos públicos comprometidos en 96 casos con cifras' ),
+			array( 'value' => '26', 'label' => 'países donde existen casos en tribunales' ),
+			array( 'value' => '13.521', 'label' => 'actores analizados dentro de la red' ),
+		),
+		'reportTimeline' => array(
+			array( 'date' => '2013', 'title' => 'Inicio del periodo principal', 'body' => 'La investigación concentra el análisis en el periodo 2013–enero de 2026, incorporando antecedentes desde 1999.' ),
+			array( 'date' => '10 años', 'title' => 'Construcción de la evidencia', 'body' => 'Gacetas oficiales, sentencias, nombramientos, registros mercantiles y vínculos familiares se ordenaron en tres bases de datos.' ),
+			array( 'date' => '110 casos', 'title' => 'Procesos en tribunales', 'body' => 'De los 154 casos documentados, el estudio identifica 110 con actuaciones en instancias judiciales.' ),
+			array( 'date' => '2026', 'title' => 'Publicación del informe', 'body' => 'Transparencia Venezuela presenta el análisis de 30.467 relaciones y 13.521 actores, con datos actualizados hasta agosto de 2026.' ),
+		),
+	);
+}
+
+function radar_core_report_signal( $path ) {
+	$path = sanitize_title( $path );
+	$payload = radar_core_economic_signals( array() );
+	foreach ( $payload['signals'] as $signal ) {
+		if ( $path === sanitize_title( $signal['reportPath'] ?? '' ) ) { return $signal; }
+	}
+	return radar_core_report_fallback( $path );
+}
+
+function radar_core_report_template( $template ) {
+	$path = get_query_var( 'radar_report' );
+	if ( ! $path ) { return $template; }
+	$report_template = plugin_dir_path( __FILE__ ) . 'templates/report.php';
+	return file_exists( $report_template ) ? $report_template : $template;
+}
+add_filter( 'template_include', 'radar_core_report_template', 99 );
+
 function radar_core_economic_shortcode( $attributes ) {
 	$attributes = shortcode_atts( array( 'topic' => '', 'featured' => 'false', 'limit' => 6 ), $attributes, 'radar_economico' );
 	$payload = radar_core_economic_signals( $attributes );
 	$signals = $payload['signals'];
-	wp_enqueue_style( 'radar-economic', plugin_dir_url( __FILE__ ) . 'assets/economic.css', array(), '0.3.1' );
+	wp_enqueue_style( 'radar-economic', plugin_dir_url( __FILE__ ) . 'assets/economic.css', array(), RADAR_CORE_VERSION );
+	wp_enqueue_style( 'radar-economic-report-card', plugin_dir_url( __FILE__ ) . 'assets/economic-report.css', array( 'radar-economic' ), RADAR_CORE_VERSION );
 	wp_enqueue_style( 'radar-economic-colors', plugin_dir_url( __FILE__ ) . 'assets/economic-colors.css', array( 'radar-economic' ), '0.3.2' );
-	wp_enqueue_script( 'radar-economic', plugin_dir_url( __FILE__ ) . 'assets/economic.js', array(), '0.3.1', true );
+	wp_enqueue_script( 'radar-economic', plugin_dir_url( __FILE__ ) . 'assets/economic.js', array(), RADAR_CORE_VERSION, true );
 	ob_start();
 	if ( empty( $signals ) ) {
 		echo '<p class="radar-economic-empty">' . esc_html__( 'El Radar económico se está actualizando. Vuelve a intentarlo en unos minutos.', 'radar-core' ) . '</p>';
 		return ob_get_clean();
 	}
-	$preferred_topics = array( 'Empresas', 'LinkedIn', 'Petróleo', 'Electricidad', 'Política', 'Inversión', 'Tecnología' );
+	$preferred_topics = array( 'Corrupción', 'Política', 'Justicia', 'Riesgo país', 'Empresas', 'LinkedIn', 'Petróleo', 'Electricidad', 'Inversión', 'Tecnología' );
 	$topic_counts = array();
 	foreach ( $signals as $signal ) {
 		foreach ( is_array( $signal['topics'] ?? null ) ? $signal['topics'] : array() as $topic ) {
@@ -464,12 +534,16 @@ function radar_core_economic_shortcode( $attributes ) {
 		$title = sanitize_text_field( $signal['title'] ?? '' );
 		$topics = array_map( 'sanitize_text_field', is_array( $signal['topics'] ?? null ) ? $signal['topics'] : array() );
 		$topic_slugs = array_map( 'radar_core_topic_slug', $topics );
+		$is_report = ! empty( $signal['reportPath'] );
+		$card_url = $is_report ? home_url( '/informes/' . sanitize_title( $signal['reportPath'] ) . '/' ) : ( $signal['url'] ?? '' );
+		$link_target = $is_report ? '' : ' target="_blank" rel="noopener noreferrer"';
 		?>
-		<article class="radar-economic-card<?php echo ! empty( $signal['featured'] ) ? ' is-featured' : ''; ?>" data-radar-economic-topics="<?php echo esc_attr( implode( ' ', $topic_slugs ) ); ?>">
-			<a class="radar-economic-image" href="<?php echo esc_url( $signal['url'] ?? '' ); ?>" target="_blank" rel="noopener noreferrer"><img src="<?php echo esc_url( $signal['imageUrl'] ?? '' ); ?>" alt="<?php echo esc_attr( $title ); ?>" loading="lazy" decoding="async"><span><?php echo esc_html( $signal['source'] ?? '' ); ?></span></a>
-			<div class="radar-economic-copy"><div class="radar-economic-meta"><span><?php echo esc_html( $signal['sector'] ?? '' ); ?></span><time datetime="<?php echo esc_attr( $signal['date'] ?? '' ); ?>"><?php echo esc_html( $signal['date'] ?? '' ); ?></time></div><h3><a href="<?php echo esc_url( $signal['url'] ?? '' ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $title ); ?></a></h3><p><?php echo esc_html( $signal['summary'] ?? '' ); ?></p>
+		<article class="radar-economic-card<?php echo ! empty( $signal['featured'] ) ? ' is-featured' : ''; ?><?php echo $is_report ? ' is-report' : ''; ?>" data-radar-economic-topics="<?php echo esc_attr( implode( ' ', $topic_slugs ) ); ?>">
+			<a class="radar-economic-image" href="<?php echo esc_url( $card_url ); ?>"<?php echo $link_target; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>><img src="<?php echo esc_url( $signal['imageUrl'] ?? '' ); ?>" alt="<?php echo esc_attr( $title ); ?>" loading="lazy" decoding="async"><span><?php echo esc_html( $signal['source'] ?? '' ); ?></span></a>
+			<div class="radar-economic-copy"><div class="radar-economic-meta"><span><?php echo esc_html( $signal['sector'] ?? '' ); ?></span><time datetime="<?php echo esc_attr( $signal['date'] ?? '' ); ?>"><?php echo esc_html( $signal['date'] ?? '' ); ?></time></div><h3><a href="<?php echo esc_url( $card_url ); ?>"<?php echo $link_target; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>><?php echo esc_html( $title ); ?></a></h3><p><?php echo esc_html( $signal['summary'] ?? '' ); ?></p>
+			<?php if ( $is_report && ! empty( $signal['reportFigures'] ) ) : ?><div class="radar-report-mini-stats"><?php foreach ( array_slice( $signal['reportFigures'], 0, 4 ) as $figure ) : ?><span><strong><?php echo esc_html( $figure['value'] ?? '' ); ?></strong><small><?php echo esc_html( $figure['label'] ?? '' ); ?></small></span><?php endforeach; ?></div><?php endif; ?>
 			<?php if ( ! empty( $signal['opportunity'] ) ) : ?><div class="radar-economic-opportunity"><strong><?php esc_html_e( 'Por qué importa', 'radar-core' ); ?></strong><p><?php echo esc_html( $signal['opportunity'] ); ?></p></div><?php endif; ?>
-			<footer><div><?php foreach ( array_slice( $topics, 0, 3 ) as $topic ) { echo '<span class="topic-' . esc_attr( radar_core_topic_slug( $topic ) ) . '">' . esc_html( $topic ) . '</span>'; } ?></div><a href="<?php echo esc_url( $signal['url'] ?? '' ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Leer fuente', 'radar-core' ); ?> ↗</a></footer></div>
+			<footer><div><?php foreach ( array_slice( $topics, 0, 3 ) as $topic ) { echo '<span class="topic-' . esc_attr( radar_core_topic_slug( $topic ) ) . '">' . esc_html( $topic ) . '</span>'; } ?></div><a href="<?php echo esc_url( $card_url ); ?>"<?php echo $link_target; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>><?php echo $is_report ? esc_html__( 'Explorar informe', 'radar-core' ) : esc_html__( 'Leer fuente', 'radar-core' ); ?> →</a></footer></div>
 		</article>
 		<?php
 	}
