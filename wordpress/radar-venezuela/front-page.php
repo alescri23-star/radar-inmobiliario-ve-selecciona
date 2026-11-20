@@ -63,6 +63,23 @@ $radar_places = array(
 
 <section id="radar-economico" class="section economic-public-section">
 	<header class="section-heading"><div><p class="eyebrow">03 · <?php esc_html_e( 'RADAR ECONÓMICO', 'radar-venezuela' ); ?></p><h2><?php esc_html_e( 'Las señales que están moviendo Venezuela', 'radar-venezuela' ); ?></h2><p><?php esc_html_e( 'Noticias, iniciativas empresariales y cambios de entorno convertidos en pistas verificables para seguir nuevas oportunidades.', 'radar-venezuela' ); ?></p></div></header>
+	<article class="radar-investigation-highlight" aria-labelledby="radar-investigation-title">
+		<div class="radar-investigation-copy">
+			<p class="radar-investigation-kicker"><?php esc_html_e( 'INVESTIGACIÓN DESTACADA · RIESGO PAÍS', 'radar-venezuela' ); ?></p>
+			<h3 id="radar-investigation-title"><?php esc_html_e( 'Maduro, chavismo y riesgo institucional', 'radar-venezuela' ); ?></h3>
+			<p><?php esc_html_e( 'Una investigación documental reconstruye vínculos, casos de corrupción y estructuras de poder para entender su impacto en la seguridad jurídica y la inversión en Venezuela.', 'radar-venezuela' ); ?></p>
+			<div class="radar-investigation-actions">
+				<a class="button" href="<?php echo esc_url( home_url( '/informes/expediente-maduro/' ) ); ?>"><?php esc_html_e( 'Explorar el expediente', 'radar-venezuela' ); ?> <span aria-hidden="true">→</span></a>
+				<a class="radar-investigation-source" href="https://expedientemaduro.transparenciave.org/es" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Ver investigación original', 'radar-venezuela' ); ?> ↗</a>
+			</div>
+			<small><?php esc_html_e( 'Fuente: Transparencia Venezuela. La responsabilidad penal solo puede ser determinada por los tribunales competentes.', 'radar-venezuela' ); ?></small>
+		</div>
+		<div class="radar-investigation-visual" aria-hidden="true">
+			<span></span><span></span><span></span><i></i>
+			<strong><?php esc_html_e( 'EXPEDIENTE', 'radar-venezuela' ); ?></strong>
+			<b><?php esc_html_e( 'Corrupción · Justicia · Política', 'radar-venezuela' ); ?></b>
+		</div>
+	</article>
 	<div class="radar-economic-preview"><?php echo do_shortcode( '[radar_economico limit="3"]' ); ?></div>
 	<div class="radar-economic-more-wrap"><a class="button radar-economic-more" href="<?php echo esc_url( home_url( '/actualidad/' ) ); ?>"><?php esc_html_e( 'Ver todas las noticias económicas', 'radar-venezuela' ); ?> <span aria-hidden="true">→</span></a></div>
 </section>
