@@ -73,8 +73,21 @@ $radar_places = array(
 				<a class="radar-investigation-source" href="https://expedientemaduro.transparenciave.org/es" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Ver investigación original', 'radar-venezuela' ); ?> ↗</a>
 			</div>
 			<small><?php esc_html_e( 'Fuente: Transparencia Venezuela. La responsabilidad penal solo puede ser determinada por los tribunales competentes.', 'radar-venezuela' ); ?></small>
+			<small class="radar-investigation-credits">
+				<?php esc_html_e( 'Retratos:', 'radar-venezuela' ); ?>
+				<a href="https://commons.wikimedia.org/wiki/File:Hugo_Ch%C3%A1vez_in_Bras%C3%ADlia_2011_(3x4_cropped)_(2).jpg" target="_blank" rel="noopener noreferrer">Hugo Chávez · Roberto Stuckert Filho · CC BY-SA 2.0</a>;
+				<a href="https://commons.wikimedia.org/wiki/File:Nicol%C3%A1s_Maduro_official_portrait_(cropped_2).png" target="_blank" rel="noopener noreferrer">Nicolás Maduro</a>,
+				<a href="https://commons.wikimedia.org/wiki/File:Diosdado_Cabello_2025.jpg" target="_blank" rel="noopener noreferrer">Diosdado Cabello</a> <?php esc_html_e( 'y', 'radar-venezuela' ); ?>
+				<a href="https://commons.wikimedia.org/wiki/File:Delcy_Rodr%C3%ADguez_-_02_(19-01-2026)_(cropped_2)_(b).jpg" target="_blank" rel="noopener noreferrer">Delcy Rodríguez</a> · <?php esc_html_e( 'dominio público vía Wikimedia Commons. Recortes y tratamiento visual.', 'radar-venezuela' ); ?>
+			</small>
 		</div>
 		<div class="radar-investigation-visual" aria-hidden="true">
+			<div class="radar-investigation-portraits">
+				<img src="<?php echo esc_url( get_template_directory_uri() . '/assets/investigation/hugo-chavez.jpg' ); ?>" alt="" loading="lazy" decoding="async">
+				<img src="<?php echo esc_url( get_template_directory_uri() . '/assets/investigation/nicolas-maduro.png' ); ?>" alt="" loading="lazy" decoding="async">
+				<img src="<?php echo esc_url( get_template_directory_uri() . '/assets/investigation/diosdado-cabello.jpg' ); ?>" alt="" loading="lazy" decoding="async">
+				<img src="<?php echo esc_url( get_template_directory_uri() . '/assets/investigation/delcy-rodriguez.jpg' ); ?>" alt="" loading="lazy" decoding="async">
+			</div>
 			<span></span><span></span><span></span><i></i>
 			<strong><?php esc_html_e( 'EXPEDIENTE', 'radar-venezuela' ); ?></strong>
 			<b><?php esc_html_e( 'Corrupción · Justicia · Política', 'radar-venezuela' ); ?></b>
