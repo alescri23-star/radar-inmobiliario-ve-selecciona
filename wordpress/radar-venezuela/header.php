@@ -17,8 +17,13 @@
 			<img src="<?php echo esc_url( get_template_directory_uri() . '/assets/logo-radar.svg' ); ?>" alt="Radar Venezuela" width="310" height="92">
 		<?php endif; ?>
 	</a>
-	<nav class="site-nav" aria-label="<?php esc_attr_e( 'Navegación principal', 'radar-venezuela' ); ?>">
+	<button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-navigation">
+		<span class="menu-toggle-label"><?php esc_html_e( 'Menú', 'radar-venezuela' ); ?></span>
+		<span class="menu-toggle-icon" aria-hidden="true"><i></i><i></i><i></i></span>
+	</button>
+	<nav id="site-navigation" class="site-nav" aria-label="<?php esc_attr_e( 'Navegación principal', 'radar-venezuela' ); ?>">
 		<?php wp_nav_menu( array( 'theme_location' => 'primary', 'container' => false, 'menu_class' => 'radar-menu', 'fallback_cb' => 'radar_venezuela_menu_fallback' ) ); ?>
+		<a class="mobile-menu-cta" href="<?php echo esc_url( home_url( '/#radar-ia' ) ); ?>"><?php esc_html_e( 'Preguntar a Radar IA', 'radar-venezuela' ); ?></a>
 	</nav>
 	<a class="button button-small" href="<?php echo esc_url( home_url( '/#radar-ia' ) ); ?>"><?php esc_html_e( 'Preguntar a Radar IA', 'radar-venezuela' ); ?></a>
 </header>
