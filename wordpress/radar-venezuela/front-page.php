@@ -91,7 +91,7 @@ $radar_places = array(
 			<b><?php esc_html_e( 'Poder · Petróleo · Electricidad', 'radar-venezuela' ); ?></b>
 		</div>
 	</article>
-	<div class="radar-economic-preview"><?php echo do_shortcode( '[radar_economico limit="12" carousel="true"]' ); ?></div>
+	<div class="radar-economic-preview"><?php echo do_shortcode( '[radar_economico limit="60" carousel="true"]' ); ?></div>
 	<div class="radar-economic-more-wrap"><a class="button radar-economic-more" href="<?php echo esc_url( home_url( '/actualidad/' ) ); ?>"><?php esc_html_e( 'Ver todas las noticias económicas', 'radar-venezuela' ); ?> <span aria-hidden="true">→</span></a></div>
 </section>
 

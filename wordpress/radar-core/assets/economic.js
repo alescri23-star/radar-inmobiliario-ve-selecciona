@@ -13,30 +13,39 @@ document.addEventListener('DOMContentLoaded',()=>{
   const carousels=[...document.querySelectorAll('[data-radar-economic-carousel]')];
   carousels.forEach(carousel=>{
     const grid=carousel.querySelector('.radar-economic-grid');
-    const dots=carousel.querySelector('[data-carousel-dots]');
+    const cards=[...grid.querySelectorAll('.radar-economic-card')];
+    const status=carousel.querySelector('[data-carousel-status]');
     const toggle=carousel.querySelector('[data-carousel-toggle]');
     const interval=Math.max(1500,Number(carousel.dataset.interval)||2000);
-    let page=0,timer,paused=false;
-    const perPage=()=>matchMedia('(max-width:640px)').matches?2:(matchMedia('(max-width:1000px)').matches?4:6);
-    const visible=()=>[...grid.querySelectorAll('.radar-economic-card:not([hidden])')];
-    const pages=()=>Math.max(1,Math.ceil(visible().length/perPage()));
-    const draw=()=>{
-      page=(page+pages())%pages();
-      const distance=carousel.clientWidth+20;
-      grid.style.transform=`translateX(${-page*distance}px)`;
-      dots.replaceChildren(...Array.from({length:pages()},(_,index)=>{
-        const dot=document.createElement('button');dot.type='button';dot.ariaLabel=`Página ${index+1}`;dot.classList.toggle('is-active',index===page);dot.addEventListener('click',()=>{page=index;draw();restart()});return dot;
-      }));
+    let timer,paused=false,cursor=0,slot=0,active=[];
+    const slotCount=()=>matchMedia('(max-width:640px)').matches?2:(matchMedia('(max-width:1000px)').matches?4:6);
+    const pool=()=>cards.filter(card=>card.dataset.filterMatch!=='false');
+    const area=index=>{const columns=slotCount()===6?3:(slotCount()===4?2:1);return `${Math.floor(index/columns)+1} / ${index%columns+1}`};
+    const updateStatus=()=>{const count=pool().length;status.textContent=count?`${Math.min(cursor||count,count)} de ${count} noticias`:''};
+    const reveal=(card,index)=>{
+      card.hidden=false;card.style.gridArea=area(index);card.classList.remove('is-switching');
+      requestAnimationFrame(()=>card.classList.add('is-switching'));
+    };
+    const reset=()=>{
+      const available=pool();cards.forEach(card=>{card.hidden=true;card.style.gridArea=''});
+      active=available.slice(0,slotCount());active.forEach(reveal);cursor=active.length%Math.max(1,available.length);slot=0;updateStatus();
+    };
+    const advance=(direction=1)=>{
+      const available=pool();if(available.length<=slotCount())return;
+      if(direction<0)cursor=(cursor-2+available.length)%available.length;
+      const incoming=available[cursor%available.length];const position=slot%slotCount();const outgoing=active[position];
+      if(outgoing&&outgoing!==incoming)outgoing.hidden=true;
+      active[position]=incoming;reveal(incoming,position);cursor=(cursor+1)%available.length;slot=(slot+1)%slotCount();updateStatus();
     };
     const stop=()=>{clearInterval(timer);timer=undefined};
-    const start=()=>{stop();if(!paused&&!matchMedia('(prefers-reduced-motion: reduce)').matches&&pages()>1)timer=setInterval(()=>{page++;draw()},interval)};
-    const restart=()=>{draw();start()};
-    carousel.querySelector('[data-carousel-prev]').addEventListener('click',()=>{page--;restart()});
-    carousel.querySelector('[data-carousel-next]').addEventListener('click',()=>{page++;restart()});
+    const start=()=>{stop();if(!paused&&!matchMedia('(prefers-reduced-motion: reduce)').matches&&pool().length>slotCount())timer=setInterval(advance,interval)};
+    const restart=()=>{reset();start()};
+    carousel.querySelector('[data-carousel-prev]').addEventListener('click',()=>{advance(-1);start()});
+    carousel.querySelector('[data-carousel-next]').addEventListener('click',()=>{advance(1);start()});
     toggle.addEventListener('click',()=>{paused=!paused;toggle.textContent=paused?'▶':'Ⅱ';toggle.ariaLabel=paused?'Reanudar carrusel':'Pausar carrusel';paused?stop():start()});
     carousel.addEventListener('focusin',stop);carousel.addEventListener('focusout',start);
-    addEventListener('resize',()=>{page=0;restart()},{passive:true});
-    carousel.radarRefresh=()=>{page=0;restart()};
+    addEventListener('resize',restart,{passive:true});
+    carousel.radarRefresh=restart;
     restart();
   });
   document.querySelectorAll('.radar-economic-tabs').forEach(tabs=>{
@@ -49,7 +58,7 @@ document.addEventListener('DOMContentLoaded',()=>{
       tabs.querySelectorAll('button').forEach(item=>item.classList.toggle('is-active',item===button));
       cards.forEach(card=>{
         const visible=topic==='todo'||card.dataset.radarEconomicTopics.split(' ').includes(topic);
-        card.hidden=!visible;
+        card.dataset.filterMatch=visible?'true':'false';
         card.className=card.className.replace(/\sactive-topic-\S+/g,'');
         if(visible&&topic!=='todo')card.classList.add(`active-topic-${topic}`);
 		if(visible)card.classList.add('is-visible');

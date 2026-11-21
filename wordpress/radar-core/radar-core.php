@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'RADAR_CORE_VERSION', '0.6.2' );
+define( 'RADAR_CORE_VERSION', '0.6.3' );
 define( 'RADAR_CORE_URL', plugin_dir_url( __FILE__ ) );
 
 function radar_core_register_content() {
@@ -587,7 +587,7 @@ function radar_core_economic_shortcode( $attributes ) {
 		<?php
 	}
 	echo '</div>';
-	if ( $is_carousel ) { echo '<div class="radar-economic-carousel-controls"><button type="button" data-carousel-prev aria-label="' . esc_attr__( 'Noticias anteriores', 'radar-core' ) . '">←</button><div data-carousel-dots aria-label="' . esc_attr__( 'Páginas de noticias', 'radar-core' ) . '"></div><button type="button" data-carousel-toggle aria-label="' . esc_attr__( 'Pausar carrusel', 'radar-core' ) . '">Ⅱ</button><button type="button" data-carousel-next aria-label="' . esc_attr__( 'Noticias siguientes', 'radar-core' ) . '">→</button></div></div>'; }
+	if ( $is_carousel ) { echo '<div class="radar-economic-carousel-controls"><button type="button" data-carousel-prev aria-label="' . esc_attr__( 'Noticia anterior', 'radar-core' ) . '">←</button><div class="radar-economic-carousel-status" data-carousel-status aria-live="polite"></div><button type="button" data-carousel-toggle aria-label="' . esc_attr__( 'Pausar carrusel', 'radar-core' ) . '">Ⅱ</button><button type="button" data-carousel-next aria-label="' . esc_attr__( 'Noticia siguiente', 'radar-core' ) . '">→</button></div></div>'; }
 	if ( ! empty( $payload['updatedAt'] ) ) { echo '<p class="radar-economic-updated">' . esc_html__( 'Última edición del Radar:', 'radar-core' ) . ' ' . esc_html( wp_date( 'd/m/Y H:i', strtotime( $payload['updatedAt'] ) ) ) . '</p>'; }
 	return ob_get_clean();
 }
