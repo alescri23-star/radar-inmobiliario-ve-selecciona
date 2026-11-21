@@ -1,0 +1,117 @@
+.radar-report-editorial {
+	position: relative;
+	isolation: isolate;
+	min-height: 520px;
+	overflow: hidden;
+	border: 1px solid rgba(255, 255, 255, 0.2);
+	border-radius: 30px;
+	background: #06182b;
+	box-shadow: 0 30px 70px rgba(0, 0, 0, 0.34);
+}
+
+.radar-report-editorial::before {
+	display: block;
+	z-index: 1;
+	inset: 0;
+	background:
+		linear-gradient(180deg, rgba(4, 18, 34, 0.08) 45%, rgba(4, 18, 34, 0.9) 100%),
+		linear-gradient(90deg, rgba(4, 18, 34, 0.18), transparent 38%);
+	animation: none;
+	clip-path: none;
+}
+
+.radar-report-editorial img {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	object-position: center;
+	filter: saturate(0.92) contrast(1.04);
+	transform: scale(1.01);
+}
+
+.radar-report-editorial-label,
+.radar-report-editorial-stat {
+	position: absolute;
+	z-index: 2;
+	left: 24px;
+	border: 1px solid rgba(255, 255, 255, 0.25);
+	background: rgba(5, 25, 45, 0.78);
+	box-shadow: 0 10px 28px rgba(0, 0, 0, 0.2);
+	backdrop-filter: blur(10px);
+}
+
+.radar-report-editorial-label {
+	top: 24px;
+	padding: 9px 12px;
+	border-radius: 999px;
+	color: #f6c63d;
+	font-size: 9px;
+	font-weight: 900;
+	letter-spacing: 1.6px;
+}
+
+.radar-report-editorial-stat {
+	bottom: 48px;
+	padding: 12px 15px;
+	border-radius: 14px;
+	color: #d6e3ef;
+	font-size: 10px;
+	font-weight: 750;
+}
+
+.radar-report-editorial-stat strong {
+	display: block;
+	color: #fff;
+	font-size: 25px;
+	line-height: 1;
+}
+
+.radar-report-editorial figcaption {
+	z-index: 2;
+	right: 24px;
+	bottom: 18px;
+	left: 24px;
+	color: #a9bed0;
+	font-size: 8px;
+	text-align: right;
+}
+
+.radar-report-editorial figcaption a {
+	color: #fff;
+	font-weight: 800;
+	text-decoration: underline;
+	text-decoration-color: rgba(255, 255, 255, 0.4);
+}
+
+@media (max-width: 900px) {
+	.radar-report-editorial {
+		min-height: 580px;
+		max-width: 680px;
+	}
+}
+
+@media (max-width: 600px) {
+	.radar-report-editorial {
+		min-height: 390px;
+		border-radius: 22px;
+	}
+
+	.radar-report-editorial-label {
+		top: 16px;
+		left: 16px;
+	}
+
+	.radar-report-editorial-stat {
+		bottom: 42px;
+		left: 16px;
+	}
+
+	.radar-report-editorial figcaption {
+		right: 16px;
+		bottom: 14px;
+		left: 16px;
+		text-align: left;
+	}
+}
