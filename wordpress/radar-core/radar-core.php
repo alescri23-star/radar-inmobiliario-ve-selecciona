@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Radar Venezuela Core
  * Description: Inmuebles publicados y solicitudes privadas para Radar Venezuela.
- * Version: 0.5.3
+ * Version: 0.5.4
  * Requires at least: 6.5
  * Requires PHP: 8.1
  * Author: Radar Venezuela
@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'RADAR_CORE_VERSION', '0.5.3' );
+define( 'RADAR_CORE_VERSION', '0.5.4' );
 define( 'RADAR_CORE_URL', plugin_dir_url( __FILE__ ) );
 
 function radar_core_register_content() {
@@ -346,9 +346,9 @@ add_action( 'rest_api_init', 'radar_core_register_public_assistant_route' );
 
 function radar_core_public_portal_shortcode() {
 	wp_enqueue_style( 'radar-leaflet', plugin_dir_url( __FILE__ ) . 'assets/vendor/leaflet/leaflet.css', array(), '1.9.4' );
-	wp_enqueue_style( 'radar-public-portal', plugin_dir_url( __FILE__ ) . 'assets/public-portal.css', array( 'radar-leaflet' ), '0.4.1' );
+	wp_enqueue_style( 'radar-public-portal', plugin_dir_url( __FILE__ ) . 'assets/public-portal.css', array( 'radar-leaflet' ), RADAR_CORE_VERSION );
 	wp_enqueue_script( 'radar-leaflet', plugin_dir_url( __FILE__ ) . 'assets/vendor/leaflet/leaflet.js', array(), '1.9.4', true );
-	wp_enqueue_script( 'radar-public-portal', plugin_dir_url( __FILE__ ) . 'assets/public-portal.js', array( 'radar-leaflet' ), '0.4.1', true );
+	wp_enqueue_script( 'radar-public-portal', plugin_dir_url( __FILE__ ) . 'assets/public-portal.js', array( 'radar-leaflet' ), RADAR_CORE_VERSION, true );
 	wp_localize_script( 'radar-public-portal', 'RadarPublicPortal', array( 'restUrl' => esc_url_raw( rest_url( 'radar/v1/properties' ) ), 'contactUrl' => esc_url_raw( home_url( '/#contacto' ) ) ) );
 	ob_start(); ?>
 	<div class="radar-portal" data-radar-portal>
@@ -497,6 +497,10 @@ function radar_core_report_signal( $path ) {
 }
 
 function radar_core_report_template( $template ) {
+	if ( is_post_type_archive( 'radar_inmueble' ) ) {
+		$property_archive_template = plugin_dir_path( __FILE__ ) . 'templates/property-archive.php';
+		return file_exists( $property_archive_template ) ? $property_archive_template : $template;
+	}
 	$path = get_query_var( 'radar_report' );
 	if ( $path ) {
 		$report_template = plugin_dir_path( __FILE__ ) . 'templates/report.php';
@@ -511,6 +515,9 @@ function radar_core_report_template( $template ) {
 add_filter( 'template_include', 'radar_core_report_template', 99 );
 
 function radar_core_public_page_title( $parts ) {
+	if ( is_post_type_archive( 'radar_inmueble' ) ) {
+		$parts['title'] = __( 'Inmuebles', 'radar-core' );
+	}
 	if ( get_query_var( 'radar_economic_archive' ) ) {
 		$parts['title'] = __( 'Actualidad económica', 'radar-core' );
 	}

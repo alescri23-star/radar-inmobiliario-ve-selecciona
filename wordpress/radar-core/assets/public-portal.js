@@ -110,7 +110,7 @@
       elements.count.textContent = filtered.length.toLocaleString('es-ES');
       const mapped = filtered.filter(validCoordinates).length;
       elements.mapCount.textContent = mapped ? ` · ${mapped.toLocaleString('es-ES')} ubicados en el mapa` : ' · sin coordenadas disponibles';
-      elements.list.innerHTML = filtered.length ? filtered.slice(0, 100).map(card).join('') + (filtered.length > 100 ? '<p class="radar-portal-limit">Mostrando los primeros 100 resultados. Usa los filtros para precisar la búsqueda.</p>' : '') : '<div class="radar-portal-empty"><strong>No encontramos inmuebles con esos filtros.</strong><span>Prueba ampliando la zona o el precio.</span></div>';
+      elements.list.innerHTML = filtered.length ? filtered.map(card).join('') : '<div class="radar-portal-empty"><strong>No encontramos inmuebles con esos filtros.</strong><span>Prueba ampliando la zona o el precio.</span></div>';
       renderMap();
     }
 
