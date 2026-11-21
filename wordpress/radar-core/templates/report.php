@@ -8,6 +8,7 @@ if ( ! $signal ) {
 	get_footer(); return;
 }
 wp_enqueue_style( 'radar-report', RADAR_CORE_URL . 'assets/report.css', array(), RADAR_CORE_VERSION );
+wp_enqueue_style( 'radar-report-editorial', RADAR_CORE_URL . 'assets/report-editorial.css', array( 'radar-report' ), RADAR_CORE_VERSION );
 wp_enqueue_style( 'radar-report-count', RADAR_CORE_URL . 'assets/report-count.css', array( 'radar-report' ), RADAR_CORE_VERSION );
 wp_enqueue_script( 'radar-report', RADAR_CORE_URL . 'assets/report.js', array(), RADAR_CORE_VERSION, true );
 $figures = is_array( $signal['reportFigures'] ?? null ) ? $signal['reportFigures'] : array();
@@ -25,11 +26,10 @@ get_header();
 			<div class="radar-report-meta"><span><?php echo esc_html( $signal['source'] ?? '' ); ?></span><span><?php echo esc_html( $signal['reportPeriod'] ?? '' ); ?></span></div>
 			<div class="radar-report-actions"><a class="radar-report-primary" href="#hallazgos"><?php esc_html_e( 'Explorar los datos', 'radar-core' ); ?></a><a href="<?php echo esc_url( $signal['reportPdfUrl'] ?? '' ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Descargar informe original', 'radar-core' ); ?> ↗</a></div>
 		</div>
-		<figure class="radar-report-network" aria-label="Representación conceptual de las relaciones estudiadas en el informe">
-			<div class="network-orbit orbit-one"></div><div class="network-orbit orbit-two"></div><div class="network-orbit orbit-three"></div>
-			<span class="network-core">Súper red<small>30.467 relaciones</small></span>
-			<span class="network-node node-state">Estado</span><span class="network-node node-pdvsa">PDVSA</span><span class="network-node node-business">Empresas</span><span class="network-node node-family">Vínculos familiares</span><span class="network-node node-illicit">Economías ilícitas</span>
-			<figcaption>Visualización conceptual de las categorías analizadas; no atribuye responsabilidad penal.</figcaption>
+		<figure class="radar-report-network radar-report-editorial radar-report-documentary" aria-label="Fotografía documental de Nicolás Maduro bajo custodia a bordo del USS Iwo Jima">
+			<img src="<?php echo esc_url( RADAR_CORE_URL . 'assets/maduro-uss-iwo-jima-2026.jpg' ); ?>" alt="Nicolás Maduro bajo custodia a bordo del USS Iwo Jima el 3 de enero de 2026" decoding="async" fetchpriority="high">
+			<span class="radar-report-editorial-label">FOTOGRAFÍA DOCUMENTAL · 3 ENE 2026</span>
+			<figcaption>Nicolás Maduro a bordo del USS Iwo Jima tras su captura. <a href="https://commons.wikimedia.org/wiki/File:Nicolas_Maduro_on_board_the_USS_Iwo_Jima.jpg" target="_blank" rel="noopener noreferrer">Fuerzas Armadas de EE. UU. · Dominio público ↗</a></figcaption>
 		</figure>
 	</section>
 	<section id="hallazgos" class="radar-report-stats" aria-label="Cifras clave del informe"><?php foreach ( $figures as $figure ) : ?><article><strong class="radar-report-count" data-report-value="<?php echo esc_attr( $figure['value'] ?? '' ); ?>" aria-label="<?php echo esc_attr( $figure['value'] ?? '' ); ?>"><?php echo esc_html( $figure['value'] ?? '' ); ?></strong><p><?php echo esc_html( $figure['label'] ?? '' ); ?></p></article><?php endforeach; ?></section>
