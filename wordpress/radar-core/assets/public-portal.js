@@ -181,7 +181,6 @@
       smartFilter = smartFilter === button.dataset.marketFilter ? '' : button.dataset.marketFilter;
       elements.intelligence.querySelectorAll('[data-market-filter]').forEach(candidate => candidate.classList.toggle('is-active', candidate.dataset.marketFilter === smartFilter));
       applyFilters();
-      root.closest('.radar-property-archive-catalog')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
 
     root.addEventListener('error', event => {
