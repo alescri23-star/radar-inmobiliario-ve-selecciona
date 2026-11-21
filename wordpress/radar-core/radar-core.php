@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Radar Venezuela Core
  * Description: Inmuebles publicados y solicitudes privadas para Radar Venezuela.
- * Version: 0.6.0
+ * Version: 0.6.1
  * Requires at least: 6.5
  * Requires PHP: 8.1
  * Author: Radar Venezuela
@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'RADAR_CORE_VERSION', '0.6.0' );
+define( 'RADAR_CORE_VERSION', '0.6.1' );
 define( 'RADAR_CORE_URL', plugin_dir_url( __FILE__ ) );
 
 function radar_core_register_content() {
@@ -535,6 +535,7 @@ function radar_core_economic_shortcode( $attributes ) {
 	$payload = radar_core_economic_signals( $attributes );
 	$signals = $payload['signals'];
 	wp_enqueue_style( 'radar-economic', plugin_dir_url( __FILE__ ) . 'assets/economic.css', array(), RADAR_CORE_VERSION );
+	wp_enqueue_style( 'radar-economic-dynamic', plugin_dir_url( __FILE__ ) . 'assets/economic-dynamic.css', array( 'radar-economic' ), RADAR_CORE_VERSION );
 	wp_enqueue_style( 'radar-economic-report-card', plugin_dir_url( __FILE__ ) . 'assets/economic-report.css', array( 'radar-economic' ), RADAR_CORE_VERSION );
 	wp_enqueue_style( 'radar-economic-colors', plugin_dir_url( __FILE__ ) . 'assets/economic-colors.css', array( 'radar-economic' ), '0.3.2' );
 	wp_enqueue_script( 'radar-economic', plugin_dir_url( __FILE__ ) . 'assets/economic.js', array(), RADAR_CORE_VERSION, true );
@@ -560,6 +561,8 @@ function radar_core_economic_shortcode( $attributes ) {
 	echo '</div><div class="radar-economic-grid">';
 	foreach ( $signals as $signal ) {
 		$title = sanitize_text_field( $signal['title'] ?? '' );
+		$source = sanitize_text_field( $signal['source'] ?? 'Radar Venezuela' );
+		$sector = sanitize_text_field( $signal['sector'] ?? 'Actualidad' );
 		$topics = array_map( 'sanitize_text_field', is_array( $signal['topics'] ?? null ) ? $signal['topics'] : array() );
 		$topic_slugs = array_map( 'radar_core_topic_slug', $topics );
 		$is_report = ! empty( $signal['reportPath'] );
@@ -567,8 +570,12 @@ function radar_core_economic_shortcode( $attributes ) {
 		$link_target = $is_report ? '' : ' target="_blank" rel="noopener noreferrer"';
 		?>
 		<article class="radar-economic-card<?php echo ! empty( $signal['featured'] ) ? ' is-featured' : ''; ?><?php echo $is_report ? ' is-report' : ''; ?>" data-radar-economic-topics="<?php echo esc_attr( implode( ' ', $topic_slugs ) ); ?>">
-			<a class="radar-economic-image" href="<?php echo esc_url( $card_url ); ?>"<?php echo $link_target; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>><img src="<?php echo esc_url( $signal['imageUrl'] ?? '' ); ?>" alt="<?php echo esc_attr( $title ); ?>" loading="lazy" decoding="async"><span><?php echo esc_html( $signal['source'] ?? '' ); ?></span></a>
-			<div class="radar-economic-copy"><div class="radar-economic-meta"><span><?php echo esc_html( $signal['sector'] ?? '' ); ?></span><time datetime="<?php echo esc_attr( $signal['date'] ?? '' ); ?>"><?php echo esc_html( $signal['date'] ?? '' ); ?></time></div><h3><a href="<?php echo esc_url( $card_url ); ?>"<?php echo $link_target; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>><?php echo esc_html( $title ); ?></a></h3><p><?php echo esc_html( $signal['summary'] ?? '' ); ?></p>
+			<a class="radar-economic-image is-loading" href="<?php echo esc_url( $card_url ); ?>"<?php echo $link_target; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
+				<span class="radar-economic-fallback" aria-hidden="true"><b><?php echo esc_html( strtoupper( mb_substr( $source, 0, 1 ) ) ); ?></b><small><?php echo esc_html( $sector ); ?></small><em><?php echo esc_html( $source ); ?></em></span>
+				<img src="<?php echo esc_url( $signal['imageUrl'] ?? '' ); ?>" alt="<?php echo esc_attr( $title ); ?>" loading="lazy" decoding="async">
+				<span class="radar-economic-source"><?php echo esc_html( $source ); ?></span>
+			</a>
+			<div class="radar-economic-copy"><div class="radar-economic-meta"><span><?php echo esc_html( $sector ); ?></span><time datetime="<?php echo esc_attr( $signal['date'] ?? '' ); ?>"><?php echo esc_html( $signal['date'] ?? '' ); ?></time></div><h3><a href="<?php echo esc_url( $card_url ); ?>"<?php echo $link_target; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>><?php echo esc_html( $title ); ?></a></h3><p><?php echo esc_html( $signal['summary'] ?? '' ); ?></p>
 			<?php if ( $is_report && ! empty( $signal['reportFigures'] ) ) : ?><div class="radar-report-mini-stats"><?php foreach ( array_slice( $signal['reportFigures'], 0, 4 ) as $figure ) : ?><span><strong><?php echo esc_html( $figure['value'] ?? '' ); ?></strong><small><?php echo esc_html( $figure['label'] ?? '' ); ?></small></span><?php endforeach; ?></div><?php endif; ?>
 			<?php if ( ! empty( $signal['opportunity'] ) ) : ?><div class="radar-economic-opportunity"><strong><?php esc_html_e( 'Por qué importa', 'radar-core' ); ?></strong><p><?php echo esc_html( $signal['opportunity'] ); ?></p></div><?php endif; ?>
 			<footer><div><?php foreach ( array_slice( $topics, 0, 3 ) as $topic ) { echo '<span class="topic-' . esc_attr( radar_core_topic_slug( $topic ) ) . '">' . esc_html( $topic ) . '</span>'; } ?></div><a href="<?php echo esc_url( $card_url ); ?>"<?php echo $link_target; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>><?php echo $is_report ? esc_html__( 'Explorar informe', 'radar-core' ) : esc_html__( 'Leer fuente', 'radar-core' ); ?> →</a></footer></div>

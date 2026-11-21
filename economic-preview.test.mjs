@@ -13,3 +13,10 @@ test('genera una portada segura cuando la fuente de miniaturas falla',async()=>{
  const load=createEconomicPreviewService(async()=>{throw Error('sin conexión');});const result=await load('conapri-sectors');
  assert.equal(result.contentType,'image/svg+xml');assert.equal(result.fallback,true);assert.match(result.buffer.toString(),/CONAPRI/);
 });
+
+test('reintenta pronto una captura fallida sin perder la portada de respaldo',async()=>{
+ let calls=0;
+ const load=createEconomicPreviewService(async()=>{calls++;throw Error('sin conexión');},60_000,100);
+ const first=await load('conapri-sectors',0),cached=await load('conapri-sectors',50),retried=await load('conapri-sectors',101);
+ assert.equal(first.fallback,true);assert.equal(cached,first);assert.equal(retried.fallback,true);assert.equal(calls,2);
+});

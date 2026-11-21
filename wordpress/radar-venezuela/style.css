@@ -118,3 +118,16 @@ Text Domain: radar-venezuela
 	.radar-news-hero{padding:54px 20px 42px}.radar-news-hero h1{font-size:43px;letter-spacing:-2px}.radar-news-hero p:last-child{font-size:16px}.radar-news-list{padding:28px 16px 65px}.radar-news-list .radar-economic-grid{grid-template-columns:1fr}
 }
 .radar-investigation-context{display:inline-flex;padding:7px 10px;border:1px solid rgba(241,198,68,.45);border-radius:999px;background:rgba(241,198,68,.08);color:#f7d66b;font-size:10px;font-weight:850}.radar-investigation-context:hover{background:rgba(241,198,68,.16);color:#fff;text-decoration:none}
+
+/* Portada de actualidad: composición editorial dinámica sin alargar el móvil. */
+@media(min-width:1001px){
+	.radar-economic-preview .radar-economic-grid{grid-template-columns:minmax(0,1.35fr) minmax(300px,.65fr);grid-template-rows:repeat(2,minmax(235px,auto));gap:18px}
+	.radar-economic-preview .radar-economic-card{display:grid;grid-template-columns:minmax(210px,.72fr) minmax(0,1fr)}
+	.radar-economic-preview .radar-economic-card:first-child{grid-row:1/3;display:flex;flex-direction:column}
+	.radar-economic-preview .radar-economic-card:first-child .radar-economic-image{height:330px}
+	.radar-economic-preview .radar-economic-card:first-child .radar-economic-copy{padding:25px}
+	.radar-economic-preview .radar-economic-card:not(:first-child) .radar-economic-image{height:100%;min-height:235px}
+	.radar-economic-preview .radar-economic-card:not(:first-child) .radar-economic-copy{align-self:center;padding:18px}
+	.radar-economic-preview .radar-economic-card:not(:first-child) .radar-economic-copy>p{display:-webkit-box;overflow:hidden;-webkit-box-orient:vertical;-webkit-line-clamp:2}
+	.radar-economic-preview .radar-economic-card:not(:first-child) .radar-economic-opportunity,.radar-economic-preview .radar-economic-card:not(:first-child) .radar-report-mini-stats{display:none}
+}

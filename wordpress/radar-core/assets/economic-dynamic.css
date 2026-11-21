@@ -1,0 +1,15 @@
+.radar-economic-image{isolation:isolate}
+.radar-economic-image img{position:relative;z-index:1;opacity:0}
+.radar-economic-image.is-loaded img{opacity:1;transition:opacity .45s ease,transform .4s ease}
+.radar-economic-image.is-loading:before{position:absolute;z-index:2;inset:0;background:linear-gradient(105deg,transparent 25%,rgba(255,255,255,.16) 42%,transparent 58%);content:"";transform:translateX(-100%);animation:radar-news-loading 1.35s infinite}
+.radar-economic-fallback{position:absolute!important;z-index:0!important;inset:0!important;display:flex!important;flex-direction:column;align-items:flex-start;justify-content:flex-end;padding:24px!important;border:0!important;border-radius:0!important;background:radial-gradient(circle at 78% 20%,rgba(242,197,61,.34),transparent 24%),repeating-radial-gradient(circle at 78% 20%,transparent 0 42px,rgba(255,255,255,.1) 43px 44px),linear-gradient(135deg,#071f39,#17658d)!important;color:#fff!important}
+.radar-economic-fallback b{position:absolute;top:21px;right:22px;display:grid;place-items:center;width:58px;height:58px;border:1px solid rgba(255,255,255,.28);border-radius:50%;background:rgba(4,28,51,.42);color:#f2c53d;font-size:25px;font-style:normal}
+.radar-economic-fallback small{color:#f2c53d;font-size:10px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase}
+.radar-economic-fallback em{margin-top:7px;color:#fff;font-size:18px;font-style:normal;font-weight:850;line-height:1.15}
+.radar-economic-source{position:absolute!important;z-index:3!important;left:15px!important;bottom:13px!important}
+.radar-news-enhanced .radar-economic-card{opacity:0;transform:translateY(14px)}
+.radar-news-enhanced .radar-economic-card.is-visible{opacity:1;transform:translateY(0);transition:opacity .48s ease var(--radar-delay,0s),transform .48s ease var(--radar-delay,0s),box-shadow .25s ease,border-color .25s ease}
+.radar-economic-card:nth-child(2){--radar-delay:.07s}.radar-economic-card:nth-child(3){--radar-delay:.14s}
+.radar-news-enhanced .radar-economic-card.is-visible:hover{transform:translateY(-4px)}
+@keyframes radar-news-loading{to{transform:translateX(100%)}}
+@media(prefers-reduced-motion:reduce){.radar-economic-image.is-loading:before{animation:none}.radar-economic-card,.radar-economic-card.is-visible{transition:none}}
