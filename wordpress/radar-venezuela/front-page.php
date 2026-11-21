@@ -84,7 +84,7 @@ $radar_places = array(
 		</div>
 		<div class="radar-investigation-visual" aria-hidden="true">
 			<div class="radar-investigation-portraits">
-				<img src="<?php echo esc_url( get_template_directory_uri() . '/assets/investigation/political-montage-v3.jpg' ); ?>" alt="" loading="lazy" decoding="async">
+				<img src="<?php echo esc_url( get_template_directory_uri() . '/assets/investigation/political-montage-v4.jpg' ); ?>" alt="" loading="lazy" decoding="async">
 			</div>
 			<span></span><span></span><span></span><i></i>
 			<strong><?php esc_html_e( 'EXPEDIENTE', 'radar-venezuela' ); ?></strong>
