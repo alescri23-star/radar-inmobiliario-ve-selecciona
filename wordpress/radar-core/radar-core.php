@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Radar Venezuela Core
  * Description: Inmuebles publicados y solicitudes privadas para Radar Venezuela.
- * Version: 0.6.1
+ * Version: 0.6.2
  * Requires at least: 6.5
  * Requires PHP: 8.1
  * Author: Radar Venezuela
@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'RADAR_CORE_VERSION', '0.6.1' );
+define( 'RADAR_CORE_VERSION', '0.6.2' );
 define( 'RADAR_CORE_URL', plugin_dir_url( __FILE__ ) );
 
 function radar_core_register_content() {
@@ -530,8 +530,9 @@ function radar_core_public_page_title( $parts ) {
 add_filter( 'document_title_parts', 'radar_core_public_page_title' );
 
 function radar_core_economic_shortcode( $attributes ) {
-	$attributes = shortcode_atts( array( 'topic' => '', 'featured' => 'false', 'limit' => 6 ), $attributes, 'radar_economico' );
+	$attributes = shortcode_atts( array( 'topic' => '', 'featured' => 'false', 'limit' => 6, 'carousel' => 'false' ), $attributes, 'radar_economico' );
 	$attributes['limit'] = min( 60, max( 1, absint( $attributes['limit'] ) ) );
+	$is_carousel = 'true' === $attributes['carousel'];
 	$payload = radar_core_economic_signals( $attributes );
 	$signals = $payload['signals'];
 	wp_enqueue_style( 'radar-economic', plugin_dir_url( __FILE__ ) . 'assets/economic.css', array(), RADAR_CORE_VERSION );
@@ -558,7 +559,9 @@ function radar_core_economic_shortcode( $attributes ) {
 		if ( empty( $topic_counts[ $topic ] ) ) { continue; }
 		echo '<button type="button" class="topic-' . esc_attr( radar_core_topic_slug( $topic ) ) . '" data-radar-economic-topic="' . esc_attr( radar_core_topic_slug( $topic ) ) . '">' . esc_html( $topic ) . '<span>' . absint( $topic_counts[ $topic ] ) . '</span></button>';
 	}
-	echo '</div><div class="radar-economic-grid">';
+	echo '</div>';
+	if ( $is_carousel ) { echo '<div class="radar-economic-carousel" data-radar-economic-carousel data-interval="2000">'; }
+	echo '<div class="radar-economic-grid' . ( $is_carousel ? ' is-carousel' : '' ) . '">';
 	foreach ( $signals as $signal ) {
 		$title = sanitize_text_field( $signal['title'] ?? '' );
 		$source = sanitize_text_field( $signal['source'] ?? 'Radar Venezuela' );
@@ -569,7 +572,8 @@ function radar_core_economic_shortcode( $attributes ) {
 		$card_url = $is_report ? home_url( '/informes/' . sanitize_title( $signal['reportPath'] ) . '/' ) : ( $signal['url'] ?? '' );
 		$link_target = $is_report ? '' : ' target="_blank" rel="noopener noreferrer"';
 		?>
-		<article class="radar-economic-card<?php echo ! empty( $signal['featured'] ) ? ' is-featured' : ''; ?><?php echo $is_report ? ' is-report' : ''; ?>" data-radar-economic-topics="<?php echo esc_attr( implode( ' ', $topic_slugs ) ); ?>">
+		<?php $palette = absint( crc32( (string) ( $signal['id'] ?? $title ) ) ) % 6; ?>
+		<article class="radar-economic-card news-palette-<?php echo absint( $palette ); ?><?php echo ! empty( $signal['featured'] ) ? ' is-featured' : ''; ?><?php echo $is_report ? ' is-report' : ''; ?>" data-radar-economic-topics="<?php echo esc_attr( implode( ' ', $topic_slugs ) ); ?>">
 			<a class="radar-economic-image is-loading" href="<?php echo esc_url( $card_url ); ?>"<?php echo $link_target; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
 				<span class="radar-economic-fallback" aria-hidden="true"><b><?php echo esc_html( strtoupper( mb_substr( $source, 0, 1 ) ) ); ?></b><small><?php echo esc_html( $sector ); ?></small><em><?php echo esc_html( $source ); ?></em></span>
 				<img src="<?php echo esc_url( $signal['imageUrl'] ?? '' ); ?>" alt="<?php echo esc_attr( $title ); ?>" loading="lazy" decoding="async">
@@ -583,6 +587,7 @@ function radar_core_economic_shortcode( $attributes ) {
 		<?php
 	}
 	echo '</div>';
+	if ( $is_carousel ) { echo '<div class="radar-economic-carousel-controls"><button type="button" data-carousel-prev aria-label="' . esc_attr__( 'Noticias anteriores', 'radar-core' ) . '">←</button><div data-carousel-dots aria-label="' . esc_attr__( 'Páginas de noticias', 'radar-core' ) . '"></div><button type="button" data-carousel-toggle aria-label="' . esc_attr__( 'Pausar carrusel', 'radar-core' ) . '">Ⅱ</button><button type="button" data-carousel-next aria-label="' . esc_attr__( 'Noticias siguientes', 'radar-core' ) . '">→</button></div></div>'; }
 	if ( ! empty( $payload['updatedAt'] ) ) { echo '<p class="radar-economic-updated">' . esc_html__( 'Última edición del Radar:', 'radar-core' ) . ' ' . esc_html( wp_date( 'd/m/Y H:i', strtotime( $payload['updatedAt'] ) ) ) . '</p>'; }
 	return ob_get_clean();
 }

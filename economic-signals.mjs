@@ -61,5 +61,5 @@ export function normalizeEconomicSignal(input={},previous=null,id=''){
 
 export function publicEconomicSignal(signal,origin=''){
  const base=String(origin||'').replace(/\/$/,'');
- return Object.fromEntries(['id','slug','title','summary','sector','topics','source','channel','url','date','state','impact','confidence','opportunity','risk','reportPath','reportKicker','reportPeriod','reportPdfUrl','reportDisclaimer','reportFigures','reportTimeline','expiresAt','featured','order','updatedAt'].map(key=>[key,signal[key]??'']).concat([['imageUrl',signal.imageUrl||`${base}/api/public/economic-preview/${encodeURIComponent(signal.id)}`]]));
+ return Object.fromEntries(['id','slug','title','summary','sector','topics','source','channel','url','date','state','impact','confidence','opportunity','risk','reportPath','reportKicker','reportPeriod','reportPdfUrl','reportDisclaimer','reportFigures','reportTimeline','expiresAt','featured','order','updatedAt'].map(key=>[key,signal[key]??'']).concat([['imageUrl',`${base}/api/public/economic-preview/${encodeURIComponent(signal.id)}`]]));
 }
