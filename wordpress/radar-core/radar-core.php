@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Radar Venezuela Core
  * Description: Inmuebles publicados y solicitudes privadas para Radar Venezuela.
- * Version: 0.5.4
+ * Version: 0.6.0
  * Requires at least: 6.5
  * Requires PHP: 8.1
  * Author: Radar Venezuela
@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'RADAR_CORE_VERSION', '0.5.4' );
+define( 'RADAR_CORE_VERSION', '0.6.0' );
 define( 'RADAR_CORE_URL', plugin_dir_url( __FILE__ ) );
 
 function radar_core_register_content() {
@@ -243,6 +243,10 @@ function radar_core_public_properties() {
 			'latitude' => $latitude,
 			'longitude' => $longitude,
 			'source' => esc_url_raw( (string) ( $item['source'] ?? '' ) ),
+			'firstSeenAt' => sanitize_text_field( (string) ( $item['firstSeenAt'] ?? '' ) ),
+			'lastSeenAt' => sanitize_text_field( (string) ( $item['lastSeenAt'] ?? '' ) ),
+			'previousPrice' => isset( $item['previousPrice'] ) && is_numeric( $item['previousPrice'] ) ? (float) $item['previousPrice'] : 0,
+			'priceChangedAt' => sanitize_text_field( (string) ( $item['priceChangedAt'] ?? '' ) ),
 		);
 	}
 	$response = rest_ensure_response( array( 'properties' => $properties, 'count' => count( $properties ) ) );

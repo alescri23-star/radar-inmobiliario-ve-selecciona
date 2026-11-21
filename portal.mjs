@@ -87,7 +87,13 @@ export function portal(database,options={}) {
    send(res,200,active.map(r=>({...Object.fromEntries(['id','titulo','foto','zona','operacion','precio','moneda','latitud','longitud','municipio','parroquia','calle','tipo','habitaciones','banos','superficie','descripcion','fuente','actualizadoEn','ubicacionPrecision','ubicacionFuente','ubicacionConsultadaEn'].map(k=>[k,r[k]??''])),marketReference:references[r.id]||null})));return true;
   }
   if(url.pathname==='/api/public/properties' && req.method==='GET'){
-   const properties=(await records('inmuebles')).filter(record=>record.estado==='activo').map(record=>({id:record.id||'',title:record.titulo||'Inmueble',photo:record.foto||record.fotos?.[0]||'',zone:record.zona||record.municipio||'',municipality:record.municipio||'',parish:record.parroquia||'',operation:record.operacion||'',price:record.precio||'',currency:record.moneda||'USD',type:record.tipo||'',bedrooms:record.habitaciones||'',bathrooms:record.banos||'',area:record.superficie||'',latitude:record.latitud||'',longitude:record.longitud||'',source:/^https:\/\//i.test(String(record.fuente||''))?record.fuente:''}));
+   const properties=(await records('inmuebles')).filter(record=>record.estado==='activo').map(record=>{
+    const history=Array.isArray(record.historial)?record.historial.filter(entry=>Number(entry?.precio)>0):[];
+    const currentPrice=Number(record.precio)||0;
+    const previous=[...history].slice(0,-1).reverse().find(entry=>Number(entry.precio)!==currentPrice);
+    const lastChange=history.length>1?history.at(-1):null;
+    return {id:record.id||'',title:record.titulo||'Inmueble',photo:record.foto||record.fotos?.[0]||'',zone:record.zona||record.municipio||'',municipality:record.municipio||'',parish:record.parroquia||'',operation:record.operacion||'',price:record.precio||'',currency:record.moneda||'USD',type:record.tipo||'',bedrooms:record.habitaciones||'',bathrooms:record.banos||'',area:record.superficie||'',latitude:record.latitud||'',longitude:record.longitud||'',source:/^https:\/\//i.test(String(record.fuente||''))?record.fuente:'',firstSeenAt:record.primeraDeteccion||record.creadoEn||'',lastSeenAt:record.ultimaDeteccion||record.actualizadoEn||'',previousPrice:previous?.precio||'',priceChangedAt:lastChange?.observadoEn||''};
+   });
    send(res,200,{properties,updatedAt:new Date().toISOString()});return true;
   }
   if(url.pathname==='/api/exchange-rates' && req.method==='GET'){

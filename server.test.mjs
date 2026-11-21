@@ -26,6 +26,7 @@ test('persistencia, edición, referencias y validación', async () => {
   assert.equal((await request('captures/run',{source:'remax'})).status,202);await new Promise(resolve=>setTimeout(resolve,0));assert.equal(sourceRuns,1);assert.equal((await(await fetch(base+'/api/sources',{headers:{Cookie:cookie}})).json()).capture.running,false);
   const payload={titulo:'Casa piloto',zona:'Barquisimeto',operacion:'venta',precio:'50000',moneda:'USD',estado:'activo',fuente:'Prueba',latitud:'10.067',longitud:'-69.347'};
   const response=await request('inmuebles',payload);assert.equal(response.status,201);const property=await response.json();
+  const publicCatalog=await(await fetch(base+'/api/public/properties')).json();assert.equal(publicCatalog.properties.length,1);assert.equal(typeof publicCatalog.properties[0].firstSeenAt,'string');assert.equal(publicCatalog.properties[0].historial,undefined);
   assert.equal((await request('inmuebles',{...payload,precio:'-1'})).status,400);
   assert.equal((await request('inmuebles',{...payload,latitud:'91'})).status,400);
   assert.equal((await request('inmuebles',{...payload,longitud:''})).status,400);
