@@ -4,7 +4,13 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 $hero_payload = radar_core_economic_signals( array( 'limit' => 60 ) );
 $hero_signals = is_array( $hero_payload['signals'] ?? null ) ? $hero_payload['signals'] : array();
-$hero_scenes = array();
+$hero_scenes = array(
+	array( 'imageUrl' => RADAR_CORE_URL . 'assets/banner-mercados.jpg', 'sector' => __( 'Mercados e inversión', 'radar-core' ), 'title' => __( 'El pulso financiero que mueve nuevas decisiones', 'radar-core' ), 'summary' => __( 'Capital, crédito, inflación y actividad empresarial vistos con contexto venezolano.', 'radar-core' ) ),
+	array( 'imageUrl' => RADAR_CORE_URL . 'assets/banner-energia.jpg', 'sector' => __( 'Petróleo y energía', 'radar-core' ), 'title' => __( 'La energía sigue marcando el ritmo de la economía', 'radar-core' ), 'summary' => __( 'Producción, electricidad, licencias y proyectos con impacto territorial.', 'radar-core' ) ),
+	array( 'imageUrl' => RADAR_CORE_URL . 'assets/banner-infraestructura.jpg', 'sector' => __( 'Infraestructura y logística', 'radar-core' ), 'title' => __( 'Donde aparecen obras, aparecen nuevas oportunidades', 'radar-core' ), 'summary' => __( 'Construcción, transporte, puertos y suelo productivo conectados en el Radar.', 'radar-core' ) ),
+	array( 'imageUrl' => RADAR_CORE_URL . 'assets/banner-tecnologia.jpg', 'sector' => __( 'Empresa y tecnología', 'radar-core' ), 'title' => __( 'Innovación venezolana con vocación de crecimiento', 'radar-core' ), 'summary' => __( 'Emprendimiento, telecomunicaciones y soluciones para una economía que cambia.', 'radar-core' ) ),
+	array( 'imageUrl' => RADAR_CORE_URL . 'assets/banner-territorio.jpg', 'sector' => __( 'Territorio productivo', 'radar-core' ), 'title' => __( 'Cada región cuenta una historia económica diferente', 'radar-core' ), 'summary' => __( 'Turismo, agricultura y desarrollo local observados desde todo el país.', 'radar-core' ) ),
+);
 $hero_sources = array();
 $hero_topics = array();
 
@@ -16,21 +22,6 @@ foreach ( $hero_signals as $signal ) {
 		if ( $topic ) { $hero_topics[ $topic ] = ( $hero_topics[ $topic ] ?? 0 ) + 1; }
 	}
 	if ( $source ) { $hero_sources[ $source ] = true; }
-}
-
-foreach ( $hero_signals as $signal ) {
-	if ( count( $hero_scenes ) >= 5 || empty( $signal['imageUrl'] ) ) { continue; }
-	$scene_key = radar_core_topic_slug( sanitize_text_field( $signal['sector'] ?? 'Economía' ) );
-	if ( in_array( $scene_key, wp_list_pluck( $hero_scenes, 'key' ), true ) ) { continue; }
-	$signal['key'] = $scene_key ?: 'economia';
-	$hero_scenes[] = $signal;
-}
-foreach ( $hero_signals as $signal ) {
-	if ( count( $hero_scenes ) >= 5 || empty( $signal['imageUrl'] ) ) { continue; }
-	$scene_id = (string) ( $signal['id'] ?? $signal['imageUrl'] );
-	if ( in_array( $scene_id, array_map( static function ( $scene ) { return (string) ( $scene['id'] ?? $scene['imageUrl'] ); }, $hero_scenes ), true ) ) { continue; }
-	$signal['key'] = radar_core_topic_slug( sanitize_text_field( $signal['sector'] ?? 'Economía' ) ) ?: 'economia';
-	$hero_scenes[] = $signal;
 }
 
 get_header();
@@ -57,17 +48,15 @@ get_header();
 			<div class="radar-market-orbit" aria-hidden="true"><i></i><i></i><i></i></div>
 			<div class="radar-market-scenes">
 				<?php foreach ( $hero_scenes as $index => $scene ) :
-					$title = sanitize_text_field( $scene['title'] ?? '' );
-					$source = sanitize_text_field( $scene['source'] ?? 'Radar Venezuela' );
-					$sector = sanitize_text_field( $scene['sector'] ?? 'Economía' );
-					$url = ! empty( $scene['reportPath'] ) ? home_url( '/informes/' . sanitize_title( $scene['reportPath'] ) . '/' ) : ( $scene['url'] ?? '' );
+					$title = sanitize_text_field( $scene['title'] );
+					$sector = sanitize_text_field( $scene['sector'] );
 				?>
 				<article class="radar-market-scene<?php echo 0 === $index ? ' is-active' : ''; ?>" data-market-scene aria-hidden="<?php echo 0 === $index ? 'false' : 'true'; ?>">
 					<img src="<?php echo esc_url( $scene['imageUrl'] ); ?>" alt="" loading="<?php echo 0 === $index ? 'eager' : 'lazy'; ?>" decoding="async">
 					<div class="radar-market-scene-copy">
 						<span><?php echo esc_html( $sector ); ?></span>
 						<h2><?php echo esc_html( $title ); ?></h2>
-						<a href="<?php echo esc_url( $url ); ?>"<?php echo empty( $scene['reportPath'] ) ? ' target="_blank" rel="noopener noreferrer"' : ''; ?>><?php echo esc_html( $source ); ?> →</a>
+						<p><?php echo esc_html( $scene['summary'] ); ?></p>
 					</div>
 				</article>
 				<?php endforeach; ?>
