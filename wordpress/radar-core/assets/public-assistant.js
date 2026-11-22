@@ -4,17 +4,24 @@
   const form = root.querySelector('.radar-public-search');
   const input = root.querySelector('#radar-public-question');
   const response = root.querySelector('.radar-public-response');
-  const answer = response.querySelector('p');
+  const answer = response.querySelector('[data-radar-answer]');
+  const criteria = response.querySelector('[data-radar-criteria]');
+  const followUp = response.querySelector('[data-radar-follow-up]');
   const results = response.querySelector('.radar-public-results');
   const submit = form.querySelector('button');
 
   const escape = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
   const money = item => item.price ? `${Number(item.price).toLocaleString('es-ES')} ${escape(item.currency || 'USD')}` : 'Consultar precio';
-  const card = item => `<article class="radar-public-result">${item.image ? `<img src="${escape(item.image)}" alt="" loading="lazy" decoding="async">` : '<span class="radar-public-result-placeholder">Foto pendiente</span>'}<div><span>${escape(item.operation || item.type || 'Inmueble')}</span><h3>${escape(item.title)}</h3><strong>${money(item)}</strong><p>${escape([item.zone, item.area ? `${item.area} m²` : '', item.bedrooms ? `${item.bedrooms} hab.` : ''].filter(Boolean).join(' · '))}</p>${item.unitPrice ? `<small>${Number(item.unitPrice).toLocaleString('es-ES')} ${escape(item.currency || 'USD')}/m²</small>` : ''}<a href="${escape(item.url)}">Ver inmueble →</a></div></article>`;
+  const card = item => {
+    const reasons = Array.isArray(item.reasons) ? item.reasons.map(reason => `<li>✓ ${escape(reason)}</li>`).join('') : '';
+    return `<article class="radar-public-result">${item.image ? `<img src="${escape(item.image)}" alt="" loading="lazy" decoding="async">` : '<span class="radar-public-result-placeholder">Foto pendiente</span>'}<div><span>${escape(item.operation || item.type || 'Inmueble')}</span><h3>${escape(item.title)}</h3><strong>${money(item)}</strong><p>${escape([item.zone, item.area ? `${item.area} m²` : '', item.bedrooms ? `${item.bedrooms} hab.` : '', item.bathrooms ? `${item.bathrooms} baños` : ''].filter(Boolean).join(' · '))}</p>${reasons ? `<ul class="radar-public-reasons">${reasons}</ul>` : ''}<a href="${escape(item.url)}">Ver inmueble →</a></div></article>`;
+  };
 
   async function search(question) {
     response.hidden = false;
     answer.textContent = 'Radar está revisando los inmuebles publicados…';
+    criteria.innerHTML = '';
+    followUp.textContent = '';
     results.innerHTML = '';
     submit.disabled = true;
     try {
@@ -26,6 +33,8 @@
       const payload = await request.json();
       if (!request.ok) throw new Error(payload.message || 'No pudimos completar la búsqueda.');
       answer.textContent = payload.answer;
+      criteria.innerHTML = Array.isArray(payload.criteria) ? payload.criteria.map(item => `<span>${escape(item)}</span>`).join('') : '';
+      followUp.textContent = payload.followUp || '';
       results.innerHTML = Array.isArray(payload.results) ? payload.results.map(card).join('') : '';
       response.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     } catch (error) {
