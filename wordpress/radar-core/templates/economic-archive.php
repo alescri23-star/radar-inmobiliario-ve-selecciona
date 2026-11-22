@@ -5,6 +5,12 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 $hero_payload = radar_core_economic_signals( array( 'limit' => 60 ) );
 $hero_signals = is_array( $hero_payload['signals'] ?? null ) ? $hero_payload['signals'] : array();
 $hero_scenes = array(
+	array( 'imageUrl' => RADAR_CORE_URL . 'assets/hero-city-caracas-v1.jpg', 'sector' => __( 'Caracas', 'radar-core' ), 'title' => __( 'Centro financiero y empresarial', 'radar-core' ), 'summary' => __( 'Capital, servicios y decisiones que conectan a Venezuela con nuevos mercados.', 'radar-core' ) ),
+	array( 'imageUrl' => RADAR_CORE_URL . 'assets/hero-city-maracaibo-v1.jpg', 'sector' => __( 'Maracaibo', 'radar-core' ), 'title' => __( 'Energía y economía del occidente', 'radar-core' ), 'summary' => __( 'Una ciudad vinculada al lago, la industria y la actividad petrolera.', 'radar-core' ) ),
+	array( 'imageUrl' => RADAR_CORE_URL . 'assets/hero-city-valencia-v1.jpg', 'sector' => __( 'Valencia', 'radar-core' ), 'title' => __( 'Industria, comercio y logística', 'radar-core' ), 'summary' => __( 'Uno de los principales corredores productivos y empresariales del país.', 'radar-core' ) ),
+	array( 'imageUrl' => RADAR_CORE_URL . 'assets/hero-city-barquisimeto-v1.jpg', 'sector' => __( 'Barquisimeto', 'radar-core' ), 'title' => __( 'Conexión comercial y productiva', 'radar-core' ), 'summary' => __( 'Un punto estratégico para servicios, distribución e inversión regional.', 'radar-core' ) ),
+	array( 'imageUrl' => RADAR_CORE_URL . 'assets/hero-city-puerto-la-cruz-v1.jpg', 'sector' => __( 'Puerto La Cruz', 'radar-core' ), 'title' => __( 'Puertos, turismo y energía', 'radar-core' ), 'summary' => __( 'Actividad costera, logística y oportunidades alrededor del Caribe.', 'radar-core' ) ),
+	array( 'imageUrl' => RADAR_CORE_URL . 'assets/hero-city-margarita-v1.jpg', 'sector' => __( 'Margarita', 'radar-core' ), 'title' => __( 'Turismo e inversión insular', 'radar-core' ), 'summary' => __( 'Hospitalidad, comercio y desarrollo local frente al mar Caribe.', 'radar-core' ) ),
 	array( 'imageUrl' => RADAR_CORE_URL . 'assets/banner-mercados.jpg', 'sector' => __( 'Mercados e inversión', 'radar-core' ), 'title' => __( 'El pulso financiero que mueve nuevas decisiones', 'radar-core' ), 'summary' => __( 'Capital, crédito, inflación y actividad empresarial vistos con contexto venezolano.', 'radar-core' ) ),
 	array( 'imageUrl' => RADAR_CORE_URL . 'assets/banner-energia.jpg', 'sector' => __( 'Petróleo y energía', 'radar-core' ), 'title' => __( 'La energía sigue marcando el ritmo de la economía', 'radar-core' ), 'summary' => __( 'Producción, electricidad, licencias y proyectos con impacto territorial.', 'radar-core' ) ),
 	array( 'imageUrl' => RADAR_CORE_URL . 'assets/banner-infraestructura.jpg', 'sector' => __( 'Infraestructura y logística', 'radar-core' ), 'title' => __( 'Donde aparecen obras, aparecen nuevas oportunidades', 'radar-core' ), 'summary' => __( 'Construcción, transporte, puertos y suelo productivo conectados en el Radar.', 'radar-core' ) ),
@@ -44,7 +50,7 @@ get_header();
 			</div>
 		</div>
 		<?php if ( ! empty( $hero_scenes ) ) : ?>
-		<div class="radar-market-visual" data-radar-market-visual data-interval="6000" aria-label="<?php esc_attr_e( 'Panorama económico destacado', 'radar-core' ); ?>">
+		<div class="radar-market-visual" data-radar-market-visual data-interval="6500" aria-label="<?php esc_attr_e( 'Panorama económico y urbano de Venezuela', 'radar-core' ); ?>">
 			<div class="radar-market-orbit" aria-hidden="true"><i></i><i></i><i></i></div>
 			<div class="radar-market-scenes">
 				<?php foreach ( $hero_scenes as $index => $scene ) :
