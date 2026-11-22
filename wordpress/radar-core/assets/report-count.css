@@ -1,0 +1,26 @@
+.radar-report-count {
+	min-height: 1.15em;
+	transform: translateY(7px);
+	opacity: .68;
+	transition: opacity .35s ease, transform .35s ease, text-shadow .5s ease;
+}
+
+.radar-report-count.is-counting {
+	transform: translateY(0);
+	opacity: 1;
+	text-shadow: 0 0 24px rgba(32, 104, 166, .24);
+}
+
+.radar-report-count.is-counted {
+	transform: translateY(0);
+	opacity: 1;
+	text-shadow: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.radar-report-count {
+		transform: none;
+		opacity: 1;
+		transition: none;
+	}
+}
