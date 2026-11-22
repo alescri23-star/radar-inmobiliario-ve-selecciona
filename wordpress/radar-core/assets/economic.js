@@ -80,9 +80,11 @@ document.addEventListener('DOMContentLoaded',()=>{
       cards.forEach(card=>{
         const visible=topic==='todo'||card.dataset.radarEconomicTopics.split(' ').includes(topic);
         card.dataset.filterMatch=visible?'true':'false';
+        card.hidden=!visible;
+        card.setAttribute('aria-hidden',visible?'false':'true');
         card.className=card.className.replace(/\sactive-topic-\S+/g,'');
         if(visible&&topic!=='todo')card.classList.add(`active-topic-${topic}`);
-		if(visible)card.classList.add('is-visible');
+		card.classList.toggle('is-visible',visible);
       });
       if(next?.radarRefresh)next.radarRefresh();
     }));
