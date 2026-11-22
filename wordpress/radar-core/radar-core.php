@@ -402,11 +402,11 @@ function radar_core_public_assistant_search( WP_REST_Request $request ) {
 	if ( empty( $results ) ) {
 		$answer = __( 'No encontré inmuebles publicados que cumplan todos esos criterios. No voy a inventar resultados: prueba ampliando el precio, la zona o el número de habitaciones.', 'radar-core' );
 	} elseif ( $opportunity ) {
-		$answer = sprintf( __( 'Analicé el inventario y encontré %d opciones comparables. Primero aparecen las de menor precio por metro cuadrado.', 'radar-core' ), count( $rows ) );
+		$answer = sprintf( _n( 'Analicé el inventario y encontré 1 opción comparable. Primero aparece la de menor precio por metro cuadrado.', 'Analicé el inventario y encontré %d opciones comparables. Primero aparecen las de menor precio por metro cuadrado.', count( $rows ), 'radar-core' ), count( $rows ) );
 	} elseif ( $cheap ) {
-		$answer = sprintf( __( 'Analicé el inventario y encontré %d opciones. Primero aparecen las de menor precio publicado.', 'radar-core' ), count( $rows ) );
+		$answer = sprintf( _n( 'Analicé el inventario y encontré 1 opción. Primero aparece la de menor precio publicado.', 'Analicé el inventario y encontré %d opciones. Primero aparecen las de menor precio publicado.', count( $rows ), 'radar-core' ), count( $rows ) );
 	} else {
-		$answer = sprintf( __( 'Analicé el inventario y encontré %d inmuebles que encajan con tu búsqueda.', 'radar-core' ), count( $rows ) );
+		$answer = sprintf( _n( 'Analicé el inventario y encontré 1 inmueble que encaja con tu búsqueda.', 'Analicé el inventario y encontré %d inmuebles que encajan con tu búsqueda.', count( $rows ), 'radar-core' ), count( $rows ) );
 	}
 	$follow_up = ( ! $operation || ! $type || ( ! $max_price && ! $tokens ) ) ? __( 'Para afinar más, añade operación, tipo, zona y presupuesto máximo.', 'radar-core' ) : '';
 	$response = rest_ensure_response( array( 'answer' => $answer, 'count' => count( $rows ), 'criteria' => $criteria, 'followUp' => $follow_up, 'results' => $results ) );
