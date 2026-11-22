@@ -10,6 +10,27 @@ document.addEventListener('DOMContentLoaded',()=>{
     if(img.complete)(img.naturalWidth?complete:fallback)();
   });
   document.querySelectorAll('.radar-economic-card').forEach(card=>card.classList.add('is-visible'));
+  document.querySelectorAll('[data-radar-market-visual]').forEach(visual=>{
+    const scenes=[...visual.querySelectorAll('[data-market-scene]')];
+    const dots=[...visual.querySelectorAll('[data-market-dot]')];
+    const toggle=visual.querySelector('[data-market-toggle]');
+    const interval=Math.max(4000,Number(visual.dataset.interval)||6000);
+    let current=0,timer,paused=false;
+    const show=index=>{
+      current=(index+scenes.length)%scenes.length;
+      scenes.forEach((scene,i)=>{const active=i===current;scene.classList.toggle('is-active',active);scene.setAttribute('aria-hidden',active?'false':'true')});
+      dots.forEach((dot,i)=>dot.classList.toggle('is-active',i===current));
+    };
+    const stop=()=>{clearInterval(timer);timer=undefined};
+    const start=()=>{stop();if(!paused&&scenes.length>1&&!matchMedia('(prefers-reduced-motion: reduce)').matches)timer=setInterval(()=>show(current+1),interval)};
+    visual.querySelector('[data-market-prev]')?.addEventListener('click',()=>{show(current-1);start()});
+    visual.querySelector('[data-market-next]')?.addEventListener('click',()=>{show(current+1);start()});
+    dots.forEach(dot=>dot.addEventListener('click',()=>{show(Number(dot.dataset.marketDot));start()}));
+    toggle?.addEventListener('click',()=>{paused=!paused;toggle.textContent=paused?'▶':'Ⅱ';toggle.ariaLabel=paused?'Reanudar escenas':'Pausar escenas';paused?stop():start()});
+    visual.addEventListener('mouseenter',stop);visual.addEventListener('mouseleave',start);
+    visual.addEventListener('focusin',stop);visual.addEventListener('focusout',start);
+    show(0);start();
+  });
   const carousels=[...document.querySelectorAll('[data-radar-economic-carousel]')];
   carousels.forEach(carousel=>{
     const grid=carousel.querySelector('.radar-economic-grid');

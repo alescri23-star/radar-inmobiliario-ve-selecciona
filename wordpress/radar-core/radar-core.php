@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Radar Venezuela Core
  * Description: Inmuebles publicados y solicitudes privadas para Radar Venezuela.
- * Version: 0.6.2
+ * Version: 0.6.4
  * Requires at least: 6.5
  * Requires PHP: 8.1
  * Author: Radar Venezuela
@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'RADAR_CORE_VERSION', '0.6.3' );
+define( 'RADAR_CORE_VERSION', '0.6.4' );
 define( 'RADAR_CORE_URL', plugin_dir_url( __FILE__ ) );
 
 function radar_core_register_content() {
